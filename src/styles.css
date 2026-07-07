@@ -1114,3 +1114,117 @@ h1 {
     grid-template-columns: 56px minmax(0, 1fr) !important;
   }
 }
+
+
+/* Patch 017: cleaner web sidebar, Discord-like profile bottom */
+
+.appSidebar {
+  display: flex;
+  flex-direction: column;
+}
+
+.workspaceHeader {
+  display: none !important;
+}
+
+.sidebarTop {
+  padding: 12px 10px 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
+}
+
+.searchBox {
+  margin: 0 !important;
+}
+
+.channelList {
+  flex: 1;
+  overflow: auto;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.chatHeaderActions {
+  gap: 12px;
+}
+
+.lockedBadge {
+  display: none !important;
+}
+
+.sidebarProfile {
+  height: 52px;
+  padding: 8px 8px;
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 30px;
+  gap: 8px;
+  align-items: center;
+  background: #0b0b0c;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.sidebarProfileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  object-fit: cover;
+  background: #1e1f22;
+}
+
+.sidebarProfileText {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.sidebarProfileText strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.88rem;
+  line-height: 1.1;
+}
+
+.sidebarProfileText span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #949ba4;
+  font-size: 0.74rem;
+  line-height: 1.1;
+}
+
+.profileSettingsButton {
+  width: 30px;
+  height: 30px;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  color: #b5bac1;
+  background: transparent;
+}
+
+.profileSettingsButton:hover {
+  background: #1e1f22;
+  color: #fff;
+}
+
+.appChatHeader {
+  justify-content: space-between;
+}
+
+.appChatHeader > div:first-child strong {
+  font-size: 0.98rem;
+}
+
+.appMessages {
+  padding-top: 18px;
+}
+
+@media (max-width: 760px) {
+  .sidebarProfile {
+    display: none;
+  }
+}

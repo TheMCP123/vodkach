@@ -444,17 +444,11 @@ function WebApp() {
       </aside>
 
       <aside className="appSidebar">
-        <div className="workspaceHeader">
-          <div>
-            <span>Workspace</span>
-            <strong>Vodkach</strong>
+        <div className="sidebarTop">
+          <div className="searchBox">
+            <Search size={15} />
+            <span>Search</span>
           </div>
-          <Settings size={18} />
-        </div>
-
-        <div className="searchBox">
-          <Search size={15} />
-          <span>Search</span>
         </div>
 
         <nav className="channelList">
@@ -472,6 +466,17 @@ function WebApp() {
             encrypted-files
           </button>
         </nav>
+
+        <div className="sidebarProfile">
+          <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
+          <div className="sidebarProfileText">
+            <strong>{currentDisplayName}</strong>
+            <span>@{auth.user.username}</span>
+          </div>
+          <button className="profileSettingsButton" type="button" aria-label="Settings">
+            <Settings size={16} />
+          </button>
+        </div>
       </aside>
 
       <section className="appChat">
@@ -482,10 +487,6 @@ function WebApp() {
           </div>
 
           <div className="chatHeaderActions">
-            <span className="lockedBadge">
-              <LockKeyhole size={14} />
-              encrypted
-            </span>
             <Bell size={18} />
             <UserRound size={18} />
           </div>

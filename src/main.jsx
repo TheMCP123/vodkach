@@ -79,6 +79,21 @@ async function storePrivateKeyJwk(jwk) {
   });
 }
 
+function getPublicJwkFromPrivateJwk(privateJwk) {
+  if (!privateJwk?.x || !privateJwk?.y) {
+    return null;
+  }
+
+  return {
+    kty: privateJwk.kty,
+    crv: privateJwk.crv,
+    x: privateJwk.x,
+    y: privateJwk.y,
+    ext: true,
+    key_ops: []
+  };
+}
+
 async function ensureDeviceKeyPair() {
   const existingPrivateKey = await getStoredPrivateKeyJwk();
 
@@ -86,7 +101,7 @@ async function ensureDeviceKeyPair() {
     return {
       deviceId: createLocalDeviceId(),
       privateKeyExists: true,
-      publicKeyJwk: null
+      publicKeyJwk: getPublicJwkFromPrivateJwk(existingPrivateKey)
     };
   }
 
@@ -114,22 +129,8 @@ async function ensureDeviceKeyPair() {
 async function registerCurrentDevice() {
   const device = await ensureDeviceKeyPair();
 
-  let publicKey = device.publicKeyJwk;
-
-  if (!publicKey) {
-    const storedPrivateKey = await getStoredPrivateKeyJwk();
-
-    /*
-      Existing local private key means this browser already generated keys.
-      The server may already know this device. If not, user can reset local
-      storage later when we add full device management.
-    */
-    return {
-      ok: true,
-      alreadyLocal: true,
-      deviceId: device.deviceId,
-      privateKeyExists: Boolean(storedPrivateKey)
-    };
+  if (!device.publicKeyJwk) {
+    throw new Error("Local private key exists, but public key could not be restored");
   }
 
   const response = await fetch("/api/device/register", {
@@ -141,7 +142,7 @@ async function registerCurrentDevice() {
     body: JSON.stringify({
       device_id: device.deviceId,
       device_name: getBrowserDeviceName(),
-      public_key: JSON.stringify(publicKey),
+      public_key: JSON.stringify(device.publicKeyJwk),
       key_algorithm: "p256-ecdh"
     })
   });

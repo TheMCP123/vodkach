@@ -35,12 +35,14 @@ button {
   font: inherit;
 }
 
-.page {
+/* Landing */
+
+.landingPage {
   width: min(1180px, calc(100% - 40px));
   margin: 0 auto;
 }
 
-.topbar {
+.landingHeader {
   height: 82px;
   display: flex;
   align-items: center;
@@ -67,7 +69,7 @@ button {
   font-weight: 950;
 }
 
-.nav {
+.landingNav {
   display: flex;
   gap: 24px;
   color: #a1a1aa;
@@ -75,11 +77,11 @@ button {
   font-weight: 650;
 }
 
-.nav a:hover {
+.landingNav a:hover {
   color: #fff;
 }
 
-.hero {
+.landingHero {
   min-height: calc(100vh - 82px);
   padding: 48px 0 82px;
   display: grid;
@@ -143,18 +145,13 @@ h1 {
   box-shadow: 0 18px 34px rgba(212, 29, 53, 0.22);
 }
 
-.primaryButton:disabled {
-  opacity: 0.92;
-  cursor: not-allowed;
-}
-
 .secondaryButton {
   background: #171717;
   color: #f5f5f5;
   border-color: rgba(255, 255, 255, 0.08);
 }
 
-.appPreview {
+.landingPreview {
   min-height: 510px;
   display: grid;
   grid-template-columns: 72px 188px minmax(0, 1fr);
@@ -165,7 +162,7 @@ h1 {
   box-shadow: 0 30px 80px rgba(0, 0, 0, 0.34);
 }
 
-.serverBar {
+.previewRail {
   padding: 18px 12px;
   background: #0b0b0b;
   display: flex;
@@ -175,8 +172,8 @@ h1 {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.serverLogo,
-.serverDot {
+.previewLogo,
+.previewDot {
   width: 46px;
   height: 46px;
   border-radius: 15px;
@@ -184,16 +181,16 @@ h1 {
   place-items: center;
 }
 
-.serverLogo {
+.previewLogo {
   background: #d41d35;
   font-weight: 950;
 }
 
-.serverDot {
+.previewDot {
   background: #1f1f1f;
 }
 
-.serverDot::after {
+.previewDot::after {
   content: "";
   width: 18px;
   height: 18px;
@@ -201,52 +198,48 @@ h1 {
   background: #52525b;
 }
 
-.serverDot.muted {
+.previewDot.muted {
   opacity: 0.55;
 }
 
-.sidebar {
+.previewSidebar {
   padding: 20px 14px;
   background: #151515;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
 }
 
-.sidebarTitle {
+.previewTitle {
   padding: 0 10px 16px;
   font-size: 1.02rem;
   font-weight: 850;
   letter-spacing: -0.04em;
 }
 
-.channel {
-  width: 100%;
+.previewChannel {
   margin: 0 0 6px;
   padding: 11px 12px;
-  border: 0;
   border-radius: 11px;
-  text-align: left;
-  background: transparent;
   color: #96969f;
   font-weight: 720;
 }
 
-.channel::before {
+.previewChannel::before {
   content: "# ";
   color: #52525b;
 }
 
-.channel.active {
+.previewChannel.active {
   background: rgba(255, 255, 255, 0.07);
   color: #fff;
 }
 
-.chat {
+.previewChat {
   position: relative;
   padding: 0 22px 22px;
   background: #111111;
 }
 
-.chatHeader {
+.previewChatHeader {
   height: 62px;
   margin: 0 -22px;
   padding: 0 22px;
@@ -257,7 +250,7 @@ h1 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.chatStatus {
+.previewSecure {
   display: inline-flex;
   align-items: center;
   gap: 7px;
@@ -266,14 +259,10 @@ h1 {
   font-weight: 750;
 }
 
-.messages {
-  padding-top: 24px;
-}
-
-.message {
+.previewMessage {
   display: flex;
   gap: 12px;
-  margin-bottom: 22px;
+  margin: 24px 0 0;
 }
 
 .avatar {
@@ -292,18 +281,20 @@ h1 {
   background: #991b1b;
 }
 
-.message strong {
+.previewMessage strong,
+.appMessage strong {
   display: block;
   margin-bottom: 4px;
 }
 
-.message p {
+.previewMessage p,
+.appMessage p {
   margin: 0;
   color: #a1a1aa;
   line-height: 1.5;
 }
 
-.composer {
+.previewComposer {
   position: absolute;
   left: 22px;
   right: 22px;
@@ -318,7 +309,7 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.07);
 }
 
-.info {
+.landingInfo {
   padding: 18px 0 74px;
   display: grid;
   grid-template-columns: 0.72fr 1.28fr;
@@ -334,7 +325,7 @@ h1 {
   text-transform: uppercase;
 }
 
-.info h2 {
+.landingInfo h2 {
   margin: 12px 0 0;
   max-width: 420px;
   font-size: clamp(2rem, 3.7vw, 3rem);
@@ -369,7 +360,7 @@ h1 {
   font-size: 0.95rem;
 }
 
-.footer {
+.landingFooter {
   height: 74px;
   display: flex;
   align-items: center;
@@ -379,23 +370,310 @@ h1 {
   font-size: 0.94rem;
 }
 
-.footer span:first-child {
+.landingFooter span:first-child {
   color: #f5f5f5;
   font-weight: 850;
 }
 
+/* Web App */
+
+.appShell {
+  width: 100vw;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 72px 260px minmax(0, 1fr) 280px;
+  background: #0b0b0c;
+  color: #f5f5f5;
+  overflow: hidden;
+}
+
+.appServers {
+  padding: 14px 12px;
+  background: #080808;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.appServerLogo,
+.serverButton {
+  width: 46px;
+  height: 46px;
+  border-radius: 15px;
+  display: grid;
+  place-items: center;
+}
+
+.appServerLogo {
+  background: #d41d35;
+  font-weight: 950;
+}
+
+.serverButton {
+  border: 0;
+  color: #a1a1aa;
+  background: #171717;
+}
+
+.serverButton.active {
+  color: #fff;
+  background: #262626;
+}
+
+.appSidebar {
+  min-width: 0;
+  background: #111111;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.workspaceHeader {
+  height: 72px;
+  padding: 0 18px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.workspaceHeader span {
+  color: #71717a;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 850;
+}
+
+.workspaceHeader strong {
+  display: block;
+  margin-top: 3px;
+  letter-spacing: -0.04em;
+}
+
+.searchBox {
+  height: 38px;
+  margin: 0 14px 18px;
+  padding: 0 12px;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #71717a;
+  background: #1a1a1a;
+}
+
+.channelList {
+  padding: 0 10px;
+}
+
+.channelList p {
+  margin: 0 8px 10px;
+  color: #71717a;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 850;
+}
+
+.channelButton {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 10px 10px;
+  border: 0;
+  border-radius: 11px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  background: transparent;
+  color: #a1a1aa;
+  text-align: left;
+  font-weight: 720;
+}
+
+.channelButton.active {
+  background: rgba(255, 255, 255, 0.075);
+  color: #fff;
+}
+
+.appChat {
+  min-width: 0;
+  position: relative;
+  background: #101010;
+  display: flex;
+  flex-direction: column;
+}
+
+.appChatHeader {
+  height: 72px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
+}
+
+.appChatHeader > div:first-child {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chatHash {
+  color: #71717a;
+  font-size: 1.2rem;
+}
+
+.chatHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  color: #a1a1aa;
+}
+
+.lockedBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #fca5a5;
+  font-size: 0.84rem;
+  font-weight: 760;
+}
+
+.appMessages {
+  padding: 24px 22px 92px;
+  overflow: auto;
+}
+
+.appMessage {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.messageMeta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.messageMeta span {
+  color: #71717a;
+  font-size: 0.8rem;
+}
+
+.messageComposer {
+  position: absolute;
+  left: 22px;
+  right: 22px;
+  bottom: 20px;
+  height: 52px;
+  border-radius: 14px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  color: #71717a;
+  background: #1a1a1a;
+  border: 1px solid rgba(255, 255, 255, 0.075);
+}
+
+.appDetails {
+  background: #111111;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 18px;
+}
+
+.profileCard {
+  padding: 20px;
+  border-radius: 18px;
+  background: #171717;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+}
+
+.profileAvatar {
+  width: 62px;
+  height: 62px;
+  border-radius: 20px;
+  display: grid;
+  place-items: center;
+  background: #d41d35;
+  font-weight: 950;
+  font-size: 1.25rem;
+  margin-bottom: 12px;
+}
+
+.profileCard span {
+  margin-top: 4px;
+  color: #a1a1aa;
+  font-size: 0.9rem;
+}
+
+.detailsBlock {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 18px;
+  background: #171717;
+}
+
+.detailsBlock p {
+  margin: 0 0 12px;
+  color: #71717a;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 850;
+}
+
+.statusLine {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  color: #f5f5f5;
+  font-size: 0.92rem;
+  margin-top: 10px;
+}
+
+.statusLine.muted {
+  color: #a1a1aa;
+}
+
+.statusDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: #ef4444;
+  box-shadow: 0 0 14px rgba(239, 68, 68, 0.75);
+}
+
+.statusDot.muted {
+  background: #52525b;
+  box-shadow: none;
+}
+
+@media (max-width: 1080px) {
+  .appShell {
+    grid-template-columns: 72px 240px minmax(0, 1fr);
+  }
+
+  .appDetails {
+    display: none;
+  }
+}
+
 @media (max-width: 980px) {
-  .hero,
-  .info {
+  .landingHero,
+  .landingInfo {
     grid-template-columns: 1fr;
   }
 
-  .hero {
+  .landingHero {
     padding-top: 36px;
     gap: 42px;
   }
 
-  .appPreview {
+  .landingPreview {
     min-height: 470px;
   }
 
@@ -408,16 +686,26 @@ h1 {
   }
 }
 
+@media (max-width: 760px) {
+  .appShell {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .appSidebar {
+    display: none;
+  }
+}
+
 @media (max-width: 680px) {
-  .page {
+  .landingPage {
     width: min(100% - 24px, 1180px);
   }
 
-  .topbar {
+  .landingHeader {
     height: 74px;
   }
 
-  .nav {
+  .landingNav {
     display: none;
   }
 
@@ -429,21 +717,21 @@ h1 {
     font-size: 1rem;
   }
 
-  .appPreview {
+  .landingPreview {
     grid-template-columns: 62px 1fr;
     min-height: 430px;
     border-radius: 22px;
   }
 
-  .sidebar {
+  .previewSidebar {
     display: none;
   }
 
-  .chat {
+  .previewChat {
     min-width: 0;
   }
 
-  .footer {
+  .landingFooter {
     flex-direction: column;
     align-items: flex-start;
     justify-content: center;

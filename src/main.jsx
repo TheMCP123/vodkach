@@ -1,25 +1,40 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
+import {
+  ArrowRight,
+  AtSign,
+  Bell,
+  FileText,
+  LockKeyhole,
+  MessageCircle,
+  Plus,
+  Search,
+  Settings,
+  ShieldCheck,
+  UserRound
+} from "lucide-react";
 import "./styles.css";
 
-function App() {
+const isWebApp =
+  typeof window !== "undefined" && window.location.hostname.startsWith("web.");
+
+function Landing() {
   return (
-    <main className="page">
-      <header className="topbar">
+    <main className="landingPage">
+      <header className="landingHeader">
         <a className="brand" href="/" aria-label="Vodkach home">
           <span className="brandIcon">V</span>
           <span>Vodkach</span>
         </a>
 
-        <nav className="nav">
+        <nav className="landingNav">
           <a href="#security">Security</a>
           <a href="#status">Status</a>
         </nav>
       </header>
 
-      <section className="hero">
-        <div className="heroLeft">
+      <section className="landingHero">
+        <div className="landingCopy">
           <div className="pill">
             <LockKeyhole size={14} />
             Private encrypted messenger
@@ -33,50 +48,61 @@ function App() {
           </p>
 
           <div className="buttons">
-            <button className="primaryButton" type="button" disabled>
+            <a className="primaryButton" href="https://web.vodkach.com">
               Open in Web
               <ArrowRight size={17} />
-            </button>
+            </a>
             <button className="secondaryButton" type="button">
               Coming soon
             </button>
           </div>
         </div>
 
-        <div className="appPreview" aria-label="Vodkach app preview">
-          <aside className="serverBar">
-            <div className="serverLogo">V</div>
-            <div className="serverDot" />
-            <div className="serverDot muted" />
+        <div className="landingPreview" aria-label="Vodkach app preview">
+          <aside className="previewRail">
+            <div className="previewLogo">V</div>
+            <div className="previewDot" />
+            <div className="previewDot muted" />
           </aside>
 
-          <aside className="sidebar">
-            <div className="sidebarTitle">Vodkach</div>
-            <button className="channel active">private</button>
-            <button className="channel">friends</button>
-            <button className="channel">files</button>
+          <aside className="previewSidebar">
+            <div className="previewTitle">Vodkach</div>
+            <div className="previewChannel active">private</div>
+            <div className="previewChannel">friends</div>
+            <div className="previewChannel">files</div>
           </aside>
 
-          <section className="chat">
-            <div className="chatHeader">
+          <section className="previewChat">
+            <div className="previewChatHeader">
               <span># private</span>
-              <span className="chatStatus">
+              <span className="previewSecure">
                 <ShieldCheck size={14} />
                 encrypted
               </span>
             </div>
 
-            <div className="messages">
-              <Message avatar="M" name="Max" text="No plain text in storage." />
-              <Message avatar="V" name="Vodkach" text="Encrypted payload only." accent />
+            <div className="previewMessage">
+              <div className="avatar">M</div>
+              <div>
+                <strong>Max</strong>
+                <p>No plain text in storage.</p>
+              </div>
             </div>
 
-            <div className="composer">Message #private</div>
+            <div className="previewMessage">
+              <div className="avatar accent">V</div>
+              <div>
+                <strong>Vodkach</strong>
+                <p>Encrypted payload only.</p>
+              </div>
+            </div>
+
+            <div className="previewComposer">Message #private</div>
           </section>
         </div>
       </section>
 
-      <section className="info" id="security">
+      <section className="landingInfo" id="security">
         <div>
           <span className="infoLabel">Security</span>
           <h2>Designed to reduce damage from leaks.</h2>
@@ -89,7 +115,7 @@ function App() {
         </div>
       </section>
 
-      <footer className="footer" id="status">
+      <footer className="landingFooter" id="status">
         <span>Vodkach</span>
         <span>Early private build</span>
       </footer>
@@ -97,15 +123,108 @@ function App() {
   );
 }
 
-function Message({ avatar, name, text, accent }) {
+function WebApp() {
   return (
-    <div className="message">
-      <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
-      <div>
-        <strong>{name}</strong>
-        <p>{text}</p>
-      </div>
-    </div>
+    <main className="appShell">
+      <aside className="appServers">
+        <div className="appServerLogo">V</div>
+        <button className="serverButton active" title="Vodkach">
+          <MessageCircle size={20} />
+        </button>
+        <button className="serverButton" title="Add">
+          <Plus size={20} />
+        </button>
+      </aside>
+
+      <aside className="appSidebar">
+        <div className="workspaceHeader">
+          <div>
+            <span>Workspace</span>
+            <strong>Vodkach</strong>
+          </div>
+          <Settings size={18} />
+        </div>
+
+        <div className="searchBox">
+          <Search size={15} />
+          <span>Search</span>
+        </div>
+
+        <nav className="channelList">
+          <p>Direct Messages</p>
+          <button className="channelButton active">
+            <AtSign size={16} />
+            max
+          </button>
+          <button className="channelButton">
+            <AtSign size={16} />
+            private-room
+          </button>
+          <button className="channelButton">
+            <FileText size={16} />
+            encrypted-files
+          </button>
+        </nav>
+      </aside>
+
+      <section className="appChat">
+        <header className="appChatHeader">
+          <div>
+            <span className="chatHash">#</span>
+            <strong>max</strong>
+          </div>
+
+          <div className="chatHeaderActions">
+            <span className="lockedBadge">
+              <LockKeyhole size={14} />
+              encrypted preview
+            </span>
+            <Bell size={18} />
+            <UserRound size={18} />
+          </div>
+        </header>
+
+        <div className="appMessages">
+          <AppMessage
+            avatar="M"
+            name="Max"
+            time="Today"
+            text="This is only the web shell. Auth, encryption keys, and real messages come next."
+          />
+          <AppMessage
+            avatar="V"
+            name="Vodkach"
+            time="System"
+            text="Database storage will receive encrypted payloads only."
+            accent
+          />
+        </div>
+
+        <div className="messageComposer">
+          <span>Message #max</span>
+        </div>
+      </section>
+
+      <aside className="appDetails">
+        <div className="profileCard">
+          <div className="profileAvatar">V</div>
+          <strong>Vodkach Web</strong>
+          <span>Private beta shell</span>
+        </div>
+
+        <div className="detailsBlock">
+          <p>Status</p>
+          <div className="statusLine">
+            <span className="statusDot" />
+            Web app interface ready
+          </div>
+          <div className="statusLine muted">
+            <span className="statusDot muted" />
+            Google login next
+          </div>
+        </div>
+      </aside>
+    </main>
   );
 }
 
@@ -118,4 +237,21 @@ function InfoItem({ title, text }) {
   );
 }
 
-createRoot(document.getElementById("root")).render(<App />);
+function AppMessage({ avatar, name, time, text, accent }) {
+  return (
+    <div className="appMessage">
+      <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
+      <div>
+        <div className="messageMeta">
+          <strong>{name}</strong>
+          <span>{time}</span>
+        </div>
+        <p>{text}</p>
+      </div>
+    </div>
+  );
+}
+
+createRoot(document.getElementById("root")).render(
+  isWebApp ? <WebApp /> : <Landing />
+);

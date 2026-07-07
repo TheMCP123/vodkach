@@ -1,133 +1,120 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ArrowRight, Check, LockKeyhole, ShieldCheck } from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck } from "lucide-react";
 import "./styles.css";
 
 function App() {
   return (
     <main className="page">
-      <header className="header">
+      <header className="topbar">
         <a className="brand" href="/" aria-label="Vodkach home">
-          <span className="brandMark">V</span>
+          <span className="brandIcon">V</span>
           <span>Vodkach</span>
         </a>
 
-        <nav className="nav" aria-label="Main navigation">
+        <nav className="nav">
           <a href="#security">Security</a>
-          <a href="#principles">Principles</a>
           <a href="#status">Status</a>
         </nav>
       </header>
 
       <section className="hero">
-        <div className="heroContent">
-          <p className="kicker">Private encrypted messenger</p>
+        <div className="heroLeft">
+          <div className="pill">
+            <LockKeyhole size={14} />
+            Private encrypted messenger
+          </div>
 
-          <h1>Secure communication without the noise.</h1>
+          <h1>Private messages. Clean interface.</h1>
 
           <p className="lead">
-            Vodkach is a browser-based private messenger designed around
-            encrypted chats, clean infrastructure, and less unnecessary data.
+            Vodkach is a web messenger focused on encrypted direct messages,
+            minimal data, and a calm interface.
           </p>
 
-          <div className="actions">
+          <div className="buttons">
             <button className="primaryButton" type="button" disabled>
               Open in Web
               <ArrowRight size={17} />
             </button>
-
             <button className="secondaryButton" type="button">
               Coming soon
             </button>
           </div>
         </div>
 
-        <aside className="securityPanel" id="security">
-          <div className="panelHeader">
-            <div>
-              <span className="panelLabel">Security model</span>
-              <h2>Built for encrypted storage</h2>
+        <div className="appPreview" aria-label="Vodkach app preview">
+          <aside className="serverBar">
+            <div className="serverLogo">V</div>
+            <div className="serverDot" />
+            <div className="serverDot muted" />
+          </aside>
+
+          <aside className="sidebar">
+            <div className="sidebarTitle">Vodkach</div>
+            <button className="channel active">private</button>
+            <button className="channel">friends</button>
+            <button className="channel">files</button>
+          </aside>
+
+          <section className="chat">
+            <div className="chatHeader">
+              <span># private</span>
+              <span className="chatStatus">
+                <ShieldCheck size={14} />
+                encrypted
+              </span>
             </div>
-            <LockKeyhole size={22} />
-          </div>
 
-          <div className="securityList">
-            <SecurityItem text="Messages stored as encrypted payloads" />
-            <SecurityItem text="Google login planned for account identity" />
-            <SecurityItem text="No password database for attackers to steal" />
-            <SecurityItem text="No promise to recover lost encrypted history" />
-          </div>
-        </aside>
+            <div className="messages">
+              <Message avatar="M" name="Max" text="No plain text in storage." />
+              <Message avatar="V" name="Vodkach" text="Encrypted payload only." accent />
+            </div>
+
+            <div className="composer">Message #private</div>
+          </section>
+        </div>
       </section>
 
-      <section className="principles" id="principles">
-        <article>
-          <span>01</span>
-          <h3>Privacy first</h3>
-          <p>
-            The product is designed so a database leak should not expose message
-            content.
-          </p>
-        </article>
-
-        <article>
-          <span>02</span>
-          <h3>Minimal data</h3>
-          <p>
-            Store what is required for the app to work. Avoid collecting useless
-            information.
-          </p>
-        </article>
-
-        <article>
-          <span>03</span>
-          <h3>Clean interface</h3>
-          <p>
-            Messaging should feel fast, readable, and focused — not overloaded.
-          </p>
-        </article>
-      </section>
-
-      <section className="statusSection" id="status">
+      <section className="info" id="security">
         <div>
-          <p className="sectionLabel">Project status</p>
-          <h2>Early private build.</h2>
-          <p>
-            Vodkach is currently in development. The first public goal is a
-            secure web client with Google login and encrypted direct messages.
-          </p>
+          <span className="infoLabel">Security</span>
+          <h2>Designed to reduce damage from leaks.</h2>
         </div>
 
-        <div className="statusCard">
-          <div className="statusRow">
-            <ShieldCheck size={18} />
-            <span>Domain setup in progress</span>
-          </div>
-          <div className="statusRow muted">
-            <Check size={18} />
-            <span>Landing page active</span>
-          </div>
-          <div className="statusRow muted">
-            <Check size={18} />
-            <span>Web app coming next</span>
-          </div>
+        <div className="infoGrid">
+          <InfoItem title="Encrypted storage" text="Messages are planned to be stored as ciphertext, not readable database text." />
+          <InfoItem title="Google login" text="Account identity through Google OAuth. No password database." />
+          <InfoItem title="No fake recovery" text="If encryption keys are lost, old message history cannot be restored." />
         </div>
       </section>
 
-      <footer className="footer">
+      <footer className="footer" id="status">
         <span>Vodkach</span>
-        <span>Private encrypted messenger.</span>
+        <span>Early private build</span>
       </footer>
     </main>
   );
 }
 
-function SecurityItem({ text }) {
+function Message({ avatar, name, text, accent }) {
   return (
-    <div className="securityItem">
-      <Check size={16} />
-      <span>{text}</span>
+    <div className="message">
+      <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
+      <div>
+        <strong>{name}</strong>
+        <p>{text}</p>
+      </div>
     </div>
+  );
+}
+
+function InfoItem({ title, text }) {
+  return (
+    <article className="infoItem">
+      <h3>{title}</h3>
+      <p>{text}</p>
+    </article>
   );
 }
 

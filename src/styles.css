@@ -1062,3 +1062,55 @@ h1 {
     width: min(100% - 20px, 1120px);
   }
 }
+
+
+/* Patch 016: web-only cleanup, no debug panel, default avatar */
+
+.appShell {
+  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
+}
+
+.appDetails {
+  display: none !important;
+}
+
+.lockedBadge {
+  color: #b5bac1;
+}
+
+.setupAvatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  display: block;
+  object-fit: cover;
+  margin-bottom: 16px;
+  background: #1e1f22;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.messageAvatarImage {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  display: block;
+  object-fit: cover;
+  flex: 0 0 auto;
+  background: #1e1f22;
+}
+
+.deviceError {
+  margin-left: 41px;
+}
+
+@media (max-width: 1080px) {
+  .appShell {
+    grid-template-columns: 64px 220px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .appShell {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+  }
+}

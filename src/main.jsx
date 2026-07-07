@@ -388,9 +388,9 @@ function WebApp() {
     return (
       <main className="authScreen">
         <form className="authCard usernameCard" onSubmit={saveProfile}>
-          <div className="authLogo">V</div>
+          <DefaultAvatar className="setupAvatar" alt="Default profile avatar" />
           <h1>Create profile</h1>
-          <p>Choose your public handle and display name.</p>
+          <p>Choose your public handle and display name. Avatar editing comes later.</p>
 
           <label className="fieldLabel">Username</label>
           <label className="usernameInput">
@@ -484,7 +484,7 @@ function WebApp() {
           <div className="chatHeaderActions">
             <span className="lockedBadge">
               <LockKeyhole size={14} />
-              encrypted preview
+              encrypted
             </span>
             <Bell size={18} />
             <UserRound size={18} />
@@ -495,14 +495,14 @@ function WebApp() {
           <AppMessage
             avatar={getInitial(currentDisplayName)}
             name={currentDisplayName}
-            time={`@${auth.user.username}`}
-            text="Profile is linked to your Google account."
+            time="now"
+            text="Welcome to Vodkach."
           />
           <AppMessage
             avatar="V"
             name="Vodkach"
             time="System"
-            text={deviceState.ready ? "Device key is ready. Next step: encrypted direct chats." : "Generating device key for encrypted direct messages..."}
+            text={deviceState.ready ? "This browser is ready for encrypted chats." : "Preparing this browser for encrypted chats..."}
             accent
           />
           {deviceState.error && (
@@ -516,32 +516,13 @@ function WebApp() {
           <span>Message #{auth.user.username}</span>
         </div>
       </section>
-
-      <aside className="appDetails">
-        <div className="profileCard">
-          <div className="profileAvatar">{getInitial(currentDisplayName)}</div>
-          <strong>{currentDisplayName}</strong>
-          <span>@{auth.user.username}</span>
-        </div>
-
-        <div className="detailsBlock">
-          <p>Status</p>
-          <div className="statusLine">
-            <span className="statusDot" />
-            Google login ready
-          </div>
-          <div className="statusLine">
-            <span className="statusDot" />
-            Username linked
-          </div>
-          <div className={deviceState.ready ? "statusLine" : "statusLine muted"}>
-            <span className={deviceState.ready ? "statusDot" : "statusDot muted"} />
-            {deviceState.ready ? "Device key ready" : "Device key pending"}
-          </div>
-        </div>
-      </aside>
     </main>
   );
+}
+
+
+function DefaultAvatar({ className = "avatarImage", alt = "Default avatar" }) {
+  return <img className={className} src="/default-avatar.png" alt={alt} draggable="false" />;
 }
 
 function getInitial(value) {
@@ -560,7 +541,11 @@ function InfoItem({ title, text }) {
 function AppMessage({ avatar, name, time, text, accent }) {
   return (
     <div className="appMessage">
-      <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
+      {avatar === "__default_avatar__" ? (
+        <DefaultAvatar className="messageAvatarImage" alt="User avatar" />
+      ) : (
+        <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
+      )}
       <div>
         <div className="messageMeta">
           <strong>{name}</strong>

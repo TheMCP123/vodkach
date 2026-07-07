@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
@@ -124,6 +124,118 @@ function Landing() {
 }
 
 function WebApp() {
+  const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
+  const [username, setUsername] = useState("");
+  const [usernameError, setUsernameError] = useState("");
+  const [savingUsername, setSavingUsername] = useState(false);
+
+  async function loadMe() {
+    const response = await fetch("/api/auth/me", { credentials: "include" });
+    const data = await response.json();
+    setAuth({
+      loading: false,
+      authenticated: data.authenticated,
+      user: data.user
+    });
+
+    if (data.user?.username) {
+      setUsername(data.user.username);
+    }
+  }
+
+  useEffect(() => {
+    loadMe().catch(() => {
+      setAuth({ loading: false, authenticated: false, user: null });
+    });
+  }, []);
+
+  async function saveUsername(event) {
+    event.preventDefault();
+    setUsernameError("");
+    setSavingUsername(true);
+
+    try {
+      const response = await fetch("/api/user/username", {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ username })
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || !data.ok) {
+        setUsernameError(data.error || "Failed to save username");
+        return;
+      }
+
+      await loadMe();
+    } finally {
+      setSavingUsername(false);
+    }
+  }
+
+  if (auth.loading) {
+    return (
+      <main className="authScreen">
+        <div className="authCard">
+          <div className="authLogo">V</div>
+          <h1>Loading Vodkach</h1>
+          <p>Checking secure session.</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (!auth.authenticated) {
+    return (
+      <main className="authScreen">
+        <div className="authCard">
+          <div className="authLogo">V</div>
+          <h1>Open Vodkach</h1>
+          <p>Sign in with Google to continue to the private web app.</p>
+          <a className="primaryButton authButton" href="/api/auth/google/start">
+            Continue with Google
+            <ArrowRight size={17} />
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  if (!auth.user?.username) {
+    return (
+      <main className="authScreen">
+        <form className="authCard usernameCard" onSubmit={saveUsername}>
+          <div className="authLogo">V</div>
+          <h1>Choose username</h1>
+          <p>This will be your public Vodkach handle.</p>
+
+          <label className="usernameInput">
+            <span>@</span>
+            <input
+              value={username}
+              onChange={(event) => setUsername(event.target.value)}
+              placeholder="username"
+              minLength={3}
+              maxLength={20}
+              autoFocus
+            />
+          </label>
+
+          {usernameError && <div className="formError">{usernameError}</div>}
+
+          <button className="primaryButton authButton" type="submit" disabled={savingUsername}>
+            {savingUsername ? "Saving..." : "Continue"}
+            <ArrowRight size={17} />
+          </button>
+        </form>
+      </main>
+    );
+  }
+
   return (
     <main className="appShell">
       <aside className="appServers">
@@ -154,7 +266,7 @@ function WebApp() {
           <p>Direct Messages</p>
           <button className="channelButton active">
             <AtSign size={16} />
-            max
+            {auth.user.username}
           </button>
           <button className="channelButton">
             <AtSign size={16} />
@@ -171,7 +283,7 @@ function WebApp() {
         <header className="appChatHeader">
           <div>
             <span className="chatHash">#</span>
-            <strong>max</strong>
+            <strong>{auth.user.username}</strong>
           </div>
 
           <div className="chatHeaderActions">
@@ -186,46 +298,54 @@ function WebApp() {
 
         <div className="appMessages">
           <AppMessage
-            avatar="M"
-            name="Max"
-            time="Today"
-            text="This is only the web shell. Auth, encryption keys, and real messages come next."
+            avatar={getInitial(auth.user.display_name || auth.user.email)}
+            name={auth.user.display_name || auth.user.email}
+            time="Logged in"
+            text="Google login works. Username is now linked to this account."
           />
           <AppMessage
             avatar="V"
             name="Vodkach"
             time="System"
-            text="Database storage will receive encrypted payloads only."
+            text="Next step: device key generation for encrypted direct messages."
             accent
           />
         </div>
 
         <div className="messageComposer">
-          <span>Message #max</span>
+          <span>Message #{auth.user.username}</span>
         </div>
       </section>
 
       <aside className="appDetails">
         <div className="profileCard">
-          <div className="profileAvatar">V</div>
-          <strong>Vodkach Web</strong>
-          <span>Private beta shell</span>
+          <div className="profileAvatar">{getInitial(auth.user.display_name || auth.user.email)}</div>
+          <strong>@{auth.user.username}</strong>
+          <span>{auth.user.email}</span>
         </div>
 
         <div className="detailsBlock">
           <p>Status</p>
           <div className="statusLine">
             <span className="statusDot" />
-            Web app interface ready
+            Google login ready
+          </div>
+          <div className="statusLine">
+            <span className="statusDot" />
+            Username linked
           </div>
           <div className="statusLine muted">
             <span className="statusDot muted" />
-            Google login next
+            Device keys next
           </div>
         </div>
       </aside>
     </main>
   );
+}
+
+function getInitial(value) {
+  return String(value || "V").trim().charAt(0).toUpperCase() || "V";
 }
 
 function InfoItem({ title, text }) {

@@ -5,7 +5,7 @@
 :root {
   color-scheme: dark;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-  background: #08080b;
+  background: #07070a;
   color: #f5f5f7;
 }
 
@@ -13,14 +13,9 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at 20% 10%, rgba(210, 24, 46, 0.22), transparent 34rem),
-    radial-gradient(circle at 80% 80%, rgba(95, 95, 105, 0.18), transparent 30rem),
-    #08080b;
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
+    radial-gradient(circle at 20% 12%, rgba(220, 38, 38, 0.22), transparent 34rem),
+    radial-gradient(circle at 82% 78%, rgba(100, 100, 110, 0.16), transparent 30rem),
+    #07070a;
 }
 
 button {
@@ -38,21 +33,21 @@ button {
   width: 22rem;
   height: 22rem;
   border-radius: 999px;
-  filter: blur(80px);
-  opacity: 0.45;
+  filter: blur(82px);
+  opacity: 0.42;
   pointer-events: none;
 }
 
 .backgroundGlowOne {
-  left: -6rem;
-  top: 7rem;
-  background: #d71931;
+  left: -7rem;
+  top: 8rem;
+  background: #dc2626;
 }
 
 .backgroundGlowTwo {
   right: -8rem;
-  bottom: 4rem;
-  background: #6e111d;
+  bottom: 5rem;
+  background: #7f1d1d;
 }
 
 .nav {
@@ -70,7 +65,7 @@ button {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-weight: 900;
+  font-weight: 950;
   letter-spacing: -0.04em;
   font-size: 1.2rem;
 }
@@ -85,24 +80,22 @@ button {
   box-shadow: 0 16px 35px rgba(215, 25, 49, 0.28);
 }
 
-.navLinks {
-  display: flex;
-  gap: 26px;
-  color: #a9a9b2;
-  font-weight: 700;
-  font-size: 0.95rem;
-}
-
-.navLinks a:hover {
-  color: #fff;
+.navStatus {
+  color: #fca5a5;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  background: rgba(127, 29, 29, 0.16);
+  border-radius: 999px;
+  padding: 9px 14px;
+  font-size: 0.9rem;
+  font-weight: 800;
 }
 
 .hero {
   width: min(1180px, calc(100% - 40px));
-  margin: 64px auto 0;
+  margin: 70px auto 0;
   display: grid;
-  grid-template-columns: 1fr 1.04fr;
-  gap: 52px;
+  grid-template-columns: 0.9fr 1.1fr;
+  gap: 54px;
   align-items: center;
   position: relative;
   z-index: 2;
@@ -113,28 +106,28 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  color: #ff5266;
-  border: 1px solid rgba(255, 82, 102, 0.22);
-  background: rgba(255, 82, 102, 0.08);
+  color: #fecaca;
+  border: 1px solid rgba(248, 113, 113, 0.22);
+  background: rgba(127, 29, 29, 0.15);
   border-radius: 999px;
   padding: 10px 14px;
-  font-weight: 800;
-  margin-bottom: 22px;
+  font-weight: 850;
+  margin-bottom: 24px;
 }
 
 .hero h1 {
   margin: 0;
-  font-size: clamp(2.8rem, 6vw, 5.7rem);
-  line-height: 0.92;
+  font-size: clamp(3.2rem, 7vw, 6.5rem);
+  line-height: 0.88;
   letter-spacing: -0.08em;
-  max-width: 780px;
+  max-width: 760px;
 }
 
 .hero p {
   color: #b7b7c1;
-  font-size: 1.15rem;
-  line-height: 1.7;
-  max-width: 640px;
+  font-size: 1.16rem;
+  line-height: 1.65;
+  max-width: 590px;
   margin: 26px 0 0;
 }
 
@@ -148,20 +141,25 @@ button {
 .primaryButton,
 .secondaryButton {
   border: 0;
-  min-height: 52px;
-  padding: 0 20px;
+  min-height: 54px;
+  padding: 0 22px;
   border-radius: 16px;
   display: inline-flex;
   align-items: center;
   gap: 10px;
   cursor: pointer;
-  font-weight: 900;
+  font-weight: 950;
 }
 
 .primaryButton {
   color: white;
   background: linear-gradient(135deg, #ff2039, #a80f21);
   box-shadow: 0 18px 40px rgba(215, 25, 49, 0.32);
+}
+
+.primaryButton:disabled {
+  opacity: 0.82;
+  cursor: not-allowed;
 }
 
 .secondaryButton {
@@ -199,9 +197,9 @@ button {
 .dark { background: #303039; }
 
 .messengerMock {
-  height: 440px;
+  height: 430px;
   display: grid;
-  grid-template-columns: 72px 180px 1fr;
+  grid-template-columns: 72px 178px 1fr;
   background: #101016;
 }
 
@@ -221,16 +219,12 @@ button {
   display: grid;
   place-items: center;
   color: #c7c7cf;
-  font-weight: 900;
+  font-weight: 950;
 }
 
 .serverIcon.active {
   background: linear-gradient(135deg, #ff263f, #7c0a17);
   color: #fff;
-}
-
-.serverIcon.dim {
-  opacity: 0.55;
 }
 
 .chatRail {
@@ -250,7 +244,7 @@ button {
   border-radius: 12px;
   margin-bottom: 6px;
   font-size: 0.9rem;
-  font-weight: 800;
+  font-weight: 850;
 }
 
 .channel.active {
@@ -267,7 +261,7 @@ button {
   height: 42px;
   display: flex;
   align-items: center;
-  font-weight: 900;
+  font-weight: 950;
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   margin: -18px -18px 22px;
   padding: 0 18px;
@@ -286,7 +280,7 @@ button {
   background: #2a2a34;
   display: grid;
   place-items: center;
-  font-weight: 900;
+  font-weight: 950;
 }
 
 .redAvatar {
@@ -302,6 +296,20 @@ button {
   margin: 0;
   color: #bbbcc7;
   line-height: 1.45;
+}
+
+.encryptedLine {
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #fecaca;
+  background: rgba(127, 29, 29, 0.16);
+  border: 1px solid rgba(248, 113, 113, 0.2);
+  border-radius: 14px;
+  padding: 10px 12px;
+  font-size: 0.9rem;
+  font-weight: 850;
 }
 
 .inputMock {
@@ -330,7 +338,7 @@ button {
 }
 
 .card {
-  padding: 26px;
+  padding: 24px;
   border-radius: 24px;
   background: rgba(18, 18, 25, 0.74);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -338,18 +346,18 @@ button {
 
 .card svg {
   color: #ff4056;
-  margin-bottom: 16px;
+  margin-bottom: 14px;
 }
 
 .card h2 {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
   letter-spacing: -0.04em;
 }
 
 .card p {
   margin: 0;
   color: #aaaab6;
-  line-height: 1.65;
+  line-height: 1.6;
 }
 
 @media (max-width: 920px) {
@@ -360,10 +368,6 @@ button {
 
   .cards {
     grid-template-columns: 1fr;
-  }
-
-  .navLinks {
-    display: none;
   }
 
   .messengerMock {
@@ -383,7 +387,7 @@ button {
   }
 
   .hero h1 {
-    font-size: 2.65rem;
+    font-size: 3rem;
   }
 
   .hero p {

@@ -11,39 +11,35 @@ function App() {
 
       <nav className="nav">
         <div className="brand">
-          <div className="brandMark">W</div>
+          <div className="brandMark">V</div>
           <span>Vodkach</span>
         </div>
 
-        <div className="navLinks">
-          <a href="#security">Security</a>
-          <a href="#private">Private</a>
-          <a href="#start">Start</a>
-        </div>
+        <div className="navStatus">Private Beta</div>
       </nav>
 
       <section className="hero">
         <div className="heroText">
           <div className="badge">
             <ShieldCheck size={16} />
-            Private encrypted messenger
+            encrypted messenger
           </div>
 
-          <h1>
-            Vodkach is a private messenger for people who do not trust random servers.
-          </h1>
+          <h1>Private chat. No bullshit.</h1>
 
           <p>
-            Dark, fast, and built around encryption from the first day. Messages should belong to users — not to databases, logs, or leaked backups.
+            Vodkach is a dark encrypted messenger for private conversations.
+            Fast, minimal, and built so leaked databases do not expose messages.
           </p>
 
-          <div className="actions" id="start">
-            <button className="primaryButton">
-              Coming soon
+          <div className="actions">
+            <button className="primaryButton" type="button" disabled>
+              Open in Web
               <ArrowRight size={18} />
             </button>
-            <button className="secondaryButton">
-              GitHub build
+
+            <button className="secondaryButton" type="button">
+              Coming soon
             </button>
           </div>
         </div>
@@ -57,60 +53,64 @@ function App() {
 
           <div className="messengerMock">
             <aside className="serverRail">
-              <div className="serverIcon active">W</div>
+              <div className="serverIcon active">V</div>
               <div className="serverIcon">+</div>
-              <div className="serverIcon dim">#</div>
             </aside>
 
             <aside className="chatRail">
               <h3>Vodkach</h3>
-              <div className="channel active"># encrypted-chat</div>
-              <div className="channel"># private-room</div>
-              <div className="channel"># dev-log</div>
+              <div className="channel active"># private</div>
+              <div className="channel"># friends</div>
+              <div className="channel"># files</div>
             </aside>
 
             <section className="chatArea">
-              <div className="chatTop"># encrypted-chat</div>
+              <div className="chatTop"># private</div>
 
               <div className="message">
                 <div className="avatar">M</div>
                 <div>
                   <strong>Max</strong>
-                  <p>Server stores ciphertext only.</p>
+                  <p>Plain text messages? Nah.</p>
                 </div>
               </div>
 
               <div className="message">
-                <div className="avatar redAvatar">W</div>
+                <div className="avatar redAvatar">V</div>
                 <div>
                   <strong>Vodkach</strong>
-                  <p>Database leak should not mean message leak.</p>
+                  <p>Only encrypted payloads hit the database.</p>
                 </div>
               </div>
 
-              <div className="inputMock">Message #encrypted-chat</div>
+              <div className="encryptedLine">
+                <LockKeyhole size={15} />
+                encrypted storage enabled
+              </div>
+
+              <div className="inputMock">Message #private</div>
             </section>
           </div>
         </div>
       </section>
 
-      <section className="cards" id="security">
+      <section className="cards">
         <article className="card">
           <LockKeyhole />
-          <h2>Encrypted by design</h2>
-          <p>No plain-text message storage. The future backend will store encrypted payloads, nonces, and metadata only.</p>
+          <h2>Encrypted</h2>
+          <p>Messages are planned to be stored as ciphertext, not readable text.</p>
         </article>
 
-        <article className="card" id="private">
+        <article className="card">
           <ShieldCheck />
-          <h2>Private first</h2>
-          <p>Google login for identity, device keys for encryption, and no fake “magic recovery” promises.</p>
+          <h2>Private</h2>
+          <p>No fake recovery promises. Lost keys mean lost history.</p>
         </article>
 
         <article className="card">
           <MessageCircle />
-          <h2>Discord-like feel</h2>
-          <p>Servers, rooms, direct messages, and real-time chat — but with Vodkach’s own black, gray, and red style.</p>
+          <h2>Simple</h2>
+          <p>Discord-like layout without copying Discord’s branding.</p>
         </article>
       </section>
     </main>

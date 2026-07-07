@@ -18,6 +18,155 @@ import "./styles.css";
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
 
+const DEVICE_ID_KEY = "vodkach_device_id";
+const PRIVATE_KEY_DB = "vodkach_crypto";
+const PRIVATE_KEY_STORE = "keys";
+const PRIVATE_KEY_NAME = "device_private_key";
+
+function bytesToBase64Url(bytes) {
+  let binary = "";
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+}
+
+function createLocalDeviceId() {
+  const existing = localStorage.getItem(DEVICE_ID_KEY);
+  if (existing) return existing;
+
+  const bytes = new Uint8Array(24);
+  crypto.getRandomValues(bytes);
+  const id = `web_${bytesToBase64Url(bytes)}`;
+  localStorage.setItem(DEVICE_ID_KEY, id);
+  return id;
+}
+
+function openKeyDb() {
+  return new Promise((resolve, reject) => {
+    const request = indexedDB.open(PRIVATE_KEY_DB, 1);
+
+    request.onupgradeneeded = () => {
+      request.result.createObjectStore(PRIVATE_KEY_STORE);
+    };
+
+    request.onsuccess = () => resolve(request.result);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function getStoredPrivateKeyJwk() {
+  const db = await openKeyDb();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PRIVATE_KEY_STORE, "readonly");
+    const store = tx.objectStore(PRIVATE_KEY_STORE);
+    const request = store.get(PRIVATE_KEY_NAME);
+
+    request.onsuccess = () => resolve(request.result || null);
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function storePrivateKeyJwk(jwk) {
+  const db = await openKeyDb();
+
+  return new Promise((resolve, reject) => {
+    const tx = db.transaction(PRIVATE_KEY_STORE, "readwrite");
+    const store = tx.objectStore(PRIVATE_KEY_STORE);
+    const request = store.put(jwk, PRIVATE_KEY_NAME);
+
+    request.onsuccess = () => resolve();
+    request.onerror = () => reject(request.error);
+  });
+}
+
+async function ensureDeviceKeyPair() {
+  const existingPrivateKey = await getStoredPrivateKeyJwk();
+
+  if (existingPrivateKey) {
+    return {
+      deviceId: createLocalDeviceId(),
+      privateKeyExists: true,
+      publicKeyJwk: null
+    };
+  }
+
+  const pair = await crypto.subtle.generateKey(
+    {
+      name: "ECDH",
+      namedCurve: "P-256"
+    },
+    true,
+    ["deriveKey", "deriveBits"]
+  );
+
+  const privateJwk = await crypto.subtle.exportKey("jwk", pair.privateKey);
+  const publicJwk = await crypto.subtle.exportKey("jwk", pair.publicKey);
+
+  await storePrivateKeyJwk(privateJwk);
+
+  return {
+    deviceId: createLocalDeviceId(),
+    privateKeyExists: true,
+    publicKeyJwk: publicJwk
+  };
+}
+
+async function registerCurrentDevice() {
+  const device = await ensureDeviceKeyPair();
+
+  let publicKey = device.publicKeyJwk;
+
+  if (!publicKey) {
+    const storedPrivateKey = await getStoredPrivateKeyJwk();
+
+    /*
+      Existing local private key means this browser already generated keys.
+      The server may already know this device. If not, user can reset local
+      storage later when we add full device management.
+    */
+    return {
+      ok: true,
+      alreadyLocal: true,
+      deviceId: device.deviceId,
+      privateKeyExists: Boolean(storedPrivateKey)
+    };
+  }
+
+  const response = await fetch("/api/device/register", {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "Content-Type": "application/json"
+    },
+    body: JSON.stringify({
+      device_id: device.deviceId,
+      device_name: getBrowserDeviceName(),
+      public_key: JSON.stringify(publicKey),
+      key_algorithm: "p256-ecdh"
+    })
+  });
+
+  const data = await response.json();
+
+  if (!response.ok || !data.ok) {
+    throw new Error(data.error || "Device registration failed");
+  }
+
+  return data;
+}
+
+function getBrowserDeviceName() {
+  const ua = navigator.userAgent || "";
+
+  if (ua.includes("Firefox")) return "Firefox Browser";
+  if (ua.includes("Edg")) return "Edge Browser";
+  if (ua.includes("Chrome")) return "Chrome Browser";
+  if (ua.includes("Safari")) return "Safari Browser";
+
+  return "Web Browser";
+}
+
+
 function Landing() {
   return (
     <main className="landingPage">
@@ -129,6 +278,7 @@ function WebApp() {
   const [displayName, setDisplayName] = useState("");
   const [formError, setFormError] = useState("");
   const [savingProfile, setSavingProfile] = useState(false);
+  const [deviceState, setDeviceState] = useState({ loading: false, ready: false, error: "" });
 
   async function loadMe() {
     const response = await fetch("/api/auth/me", { credentials: "include" });
@@ -153,6 +303,26 @@ function WebApp() {
       setAuth({ loading: false, authenticated: false, user: null });
     });
   }, []);
+
+  useEffect(() => {
+    if (!auth.authenticated || !auth.user?.username || deviceState.ready || deviceState.loading) {
+      return;
+    }
+
+    setDeviceState({ loading: true, ready: false, error: "" });
+
+    registerCurrentDevice()
+      .then(() => {
+        setDeviceState({ loading: false, ready: true, error: "" });
+      })
+      .catch((error) => {
+        setDeviceState({
+          loading: false,
+          ready: false,
+          error: error.message || "Device key setup failed"
+        });
+      });
+  }, [auth.authenticated, auth.user?.username, deviceState.ready, deviceState.loading]);
 
   async function saveProfile(event) {
     event.preventDefault();
@@ -331,9 +501,14 @@ function WebApp() {
             avatar="V"
             name="Vodkach"
             time="System"
-            text="Next step: device key generation for encrypted direct messages."
+            text={deviceState.ready ? "Device key is ready. Next step: encrypted direct chats." : "Generating device key for encrypted direct messages..."}
             accent
           />
+          {deviceState.error && (
+            <div className="deviceError">
+              Device key setup failed: {deviceState.error}
+            </div>
+          )}
         </div>
 
         <div className="messageComposer">
@@ -358,9 +533,9 @@ function WebApp() {
             <span className="statusDot" />
             Username linked
           </div>
-          <div className="statusLine muted">
-            <span className="statusDot muted" />
-            Device keys next
+          <div className={deviceState.ready ? "statusLine" : "statusLine muted"}>
+            <span className={deviceState.ready ? "statusDot" : "statusDot muted"} />
+            {deviceState.ready ? "Device key ready" : "Device key pending"}
           </div>
         </div>
       </aside>

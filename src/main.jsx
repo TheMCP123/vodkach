@@ -126,8 +126,9 @@ function Landing() {
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
-  const [usernameError, setUsernameError] = useState("");
-  const [savingUsername, setSavingUsername] = useState(false);
+  const [displayName, setDisplayName] = useState("");
+  const [formError, setFormError] = useState("");
+  const [savingProfile, setSavingProfile] = useState(false);
 
   async function loadMe() {
     const response = await fetch("/api/auth/me", { credentials: "include" });
@@ -141,6 +142,10 @@ function WebApp() {
     if (data.user?.username) {
       setUsername(data.user.username);
     }
+
+    if (data.user?.display_name) {
+      setDisplayName(data.user.display_name);
+    }
   }
 
   useEffect(() => {
@@ -149,10 +154,10 @@ function WebApp() {
     });
   }, []);
 
-  async function saveUsername(event) {
+  async function saveProfile(event) {
     event.preventDefault();
-    setUsernameError("");
-    setSavingUsername(true);
+    setFormError("");
+    setSavingProfile(true);
 
     try {
       const response = await fetch("/api/user/username", {
@@ -161,19 +166,22 @@ function WebApp() {
         headers: {
           "Content-Type": "application/json"
         },
-        body: JSON.stringify({ username })
+        body: JSON.stringify({
+          username,
+          display_name: displayName
+        })
       });
 
       const data = await response.json();
 
       if (!response.ok || !data.ok) {
-        setUsernameError(data.error || "Failed to save username");
+        setFormError(data.error || "Failed to save profile");
         return;
       }
 
       await loadMe();
     } finally {
-      setSavingUsername(false);
+      setSavingProfile(false);
     }
   }
 
@@ -208,33 +216,49 @@ function WebApp() {
   if (!auth.user?.username) {
     return (
       <main className="authScreen">
-        <form className="authCard usernameCard" onSubmit={saveUsername}>
+        <form className="authCard usernameCard" onSubmit={saveProfile}>
           <div className="authLogo">V</div>
-          <h1>Choose username</h1>
-          <p>This will be your public Vodkach handle.</p>
+          <h1>Create profile</h1>
+          <p>Choose your public handle and display name.</p>
 
+          <label className="fieldLabel">Username</label>
           <label className="usernameInput">
             <span>@</span>
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="username"
-              minLength={3}
-              maxLength={20}
+              placeholder="USERNAME"
+              minLength={1}
+              maxLength={16}
               autoFocus
             />
           </label>
+          <div className="fieldHint">A-Z, 0-9, underscore, dot. 1-16 characters.</div>
 
-          {usernameError && <div className="formError">{usernameError}</div>}
+          <label className="fieldLabel">Display Name</label>
+          <label className="usernameInput">
+            <input
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              placeholder="Max"
+              minLength={1}
+              maxLength={32}
+            />
+          </label>
+          <div className="fieldHint">Up to 16 visible characters. Control characters blocked.</div>
 
-          <button className="primaryButton authButton" type="submit" disabled={savingUsername}>
-            {savingUsername ? "Saving..." : "Continue"}
+          {formError && <div className="formError">{formError}</div>}
+
+          <button className="primaryButton authButton" type="submit" disabled={savingProfile}>
+            {savingProfile ? "Saving..." : "Continue"}
             <ArrowRight size={17} />
           </button>
         </form>
       </main>
     );
   }
+
+  const currentDisplayName = auth.user.display_name || auth.user.username;
 
   return (
     <main className="appShell">
@@ -298,10 +322,10 @@ function WebApp() {
 
         <div className="appMessages">
           <AppMessage
-            avatar={getInitial(auth.user.display_name || auth.user.email)}
-            name={auth.user.display_name || auth.user.email}
-            time="Logged in"
-            text="Google login works. Username is now linked to this account."
+            avatar={getInitial(currentDisplayName)}
+            name={currentDisplayName}
+            time={`@${auth.user.username}`}
+            text="Profile is linked to your Google account."
           />
           <AppMessage
             avatar="V"
@@ -319,9 +343,9 @@ function WebApp() {
 
       <aside className="appDetails">
         <div className="profileCard">
-          <div className="profileAvatar">{getInitial(auth.user.display_name || auth.user.email)}</div>
-          <strong>@{auth.user.username}</strong>
-          <span>{auth.user.email}</span>
+          <div className="profileAvatar">{getInitial(currentDisplayName)}</div>
+          <strong>{currentDisplayName}</strong>
+          <span>@{auth.user.username}</span>
         </div>
 
         <div className="detailsBlock">

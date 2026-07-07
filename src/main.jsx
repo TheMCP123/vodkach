@@ -1,35 +1,35 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ShieldCheck, LockKeyhole, MessageCircle, ArrowRight } from "lucide-react";
+import { ArrowRight, LockKeyhole, ShieldCheck, Sparkles } from "lucide-react";
 import "./styles.css";
 
 function App() {
   return (
     <main className="page">
-      <div className="backgroundGlow backgroundGlowOne" />
-      <div className="backgroundGlow backgroundGlowTwo" />
-
       <nav className="nav">
         <div className="brand">
           <div className="brandMark">V</div>
           <span>Vodkach</span>
         </div>
 
-        <div className="navStatus">Private Beta</div>
+        <div className="navRight">
+          <span className="statusDot" />
+          <span>Private beta</span>
+        </div>
       </nav>
 
       <section className="hero">
-        <div className="heroText">
-          <div className="badge">
-            <ShieldCheck size={16} />
+        <div className="heroCopy">
+          <div className="eyebrow">
+            <LockKeyhole size={15} />
             encrypted messenger
           </div>
 
-          <h1>Private chat. No bullshit.</h1>
+          <h1>Private messaging, built clean.</h1>
 
-          <p>
-            Vodkach is a dark encrypted messenger for private conversations.
-            Fast, minimal, and built so leaked databases do not expose messages.
+          <p className="lead">
+            Vodkach is a secure web messenger focused on encrypted chats,
+            simple design, and no unnecessary noise.
           </p>
 
           <div className="actions">
@@ -44,73 +44,65 @@ function App() {
           </div>
         </div>
 
-        <div className="previewCard">
-          <div className="windowHeader">
-            <span className="dot red" />
-            <span className="dot gray" />
-            <span className="dot dark" />
+        <div className="productCard" aria-label="Vodkach interface preview">
+          <div className="productTop">
+            <div>
+              <span className="label">Workspace</span>
+              <strong>Vodkach</strong>
+            </div>
+            <span className="secureBadge">
+              <ShieldCheck size={14} />
+              secure
+            </span>
           </div>
 
-          <div className="messengerMock">
-            <aside className="serverRail">
-              <div className="serverIcon active">V</div>
-              <div className="serverIcon">+</div>
+          <div className="productBody">
+            <aside className="rooms">
+              <span className="room active">private</span>
+              <span className="room">friends</span>
+              <span className="room">files</span>
             </aside>
 
-            <aside className="chatRail">
-              <h3>Vodkach</h3>
-              <div className="channel active"># private</div>
-              <div className="channel"># friends</div>
-              <div className="channel"># files</div>
-            </aside>
-
-            <section className="chatArea">
-              <div className="chatTop"># private</div>
-
+            <section className="chat">
               <div className="message">
                 <div className="avatar">M</div>
                 <div>
                   <strong>Max</strong>
-                  <p>Plain text messages? Nah.</p>
+                  <p>Messages should never live as plain text.</p>
                 </div>
               </div>
 
               <div className="message">
-                <div className="avatar redAvatar">V</div>
+                <div className="avatar accent">V</div>
                 <div>
                   <strong>Vodkach</strong>
-                  <p>Only encrypted payloads hit the database.</p>
+                  <p>Encrypted payload stored. Nothing extra.</p>
                 </div>
               </div>
 
-              <div className="encryptedLine">
-                <LockKeyhole size={15} />
-                encrypted storage enabled
-              </div>
-
-              <div className="inputMock">Message #private</div>
+              <div className="inputMock">Message private</div>
             </section>
           </div>
         </div>
       </section>
 
-      <section className="cards">
-        <article className="card">
-          <LockKeyhole />
-          <h2>Encrypted</h2>
-          <p>Messages are planned to be stored as ciphertext, not readable text.</p>
+      <section className="principles">
+        <article>
+          <LockKeyhole size={20} />
+          <h2>Encrypted storage</h2>
+          <p>Messages are planned as ciphertext-first, not database-readable text.</p>
         </article>
 
-        <article className="card">
-          <ShieldCheck />
-          <h2>Private</h2>
+        <article>
+          <ShieldCheck size={20} />
+          <h2>Private by default</h2>
           <p>No fake recovery promises. Lost keys mean lost history.</p>
         </article>
 
-        <article className="card">
-          <MessageCircle />
-          <h2>Simple</h2>
-          <p>Discord-like layout without copying Discord’s branding.</p>
+        <article>
+          <Sparkles size={20} />
+          <h2>Minimal interface</h2>
+          <p>Only what matters: chats, people, files, and control.</p>
         </article>
       </section>
     </main>

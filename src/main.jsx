@@ -1,6 +1,6 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { ShieldCheck, LockKeyhole, MessageCircle, Github, ArrowRight } from "lucide-react";
+import { ShieldCheck, LockKeyhole, MessageCircle, ArrowRight } from "lucide-react";
 import "./styles.css";
 
 function App() {
@@ -43,7 +43,6 @@ function App() {
               <ArrowRight size={18} />
             </button>
             <button className="secondaryButton">
-              <Github size={18} />
               GitHub build
             </button>
           </div>

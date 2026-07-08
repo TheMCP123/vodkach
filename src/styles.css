@@ -674,3 +674,39 @@ h1 {
     grid-column: 2;
   }
 }
+
+
+/* Patch 026: move profile content fully left */
+
+.bottomProfileBar {
+  left: -64px !important;
+  width: calc(100% + 64px) !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 30px !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 0 8px 0 10px !important;
+}
+
+.profileIdentityButton {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+}
+
+.profileSettingsButton {
+  grid-column: 2 !important;
+}
+
+.bottomProfileBar::before,
+.bottomProfileLeftPad {
+  display: none !important;
+}
+
+@media (max-width: 1080px) {
+  .bottomProfileBar {
+    left: -56px !important;
+    width: calc(100% + 56px) !important;
+    grid-template-columns: minmax(0, 1fr) 30px !important;
+  }
+}

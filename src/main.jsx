@@ -2,13 +2,11 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
-  AtSign,
   Bell,
   FileText,
   Home,
   LockKeyhole,
   MessageCircle,
-  Plus,
   Search,
   Settings,
   ShieldCheck,
@@ -274,6 +272,7 @@ function Landing() {
   );
 }
 
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -361,7 +360,7 @@ function WebApp() {
     return (
       <main className="authScreen">
         <div className="authCard">
-          <div className="authLogo">V</div>
+          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
           <h1>Loading Vodkach</h1>
           <p>Checking secure session.</p>
         </div>
@@ -373,7 +372,7 @@ function WebApp() {
     return (
       <main className="authScreen">
         <div className="authCard">
-          <div className="authLogo">V</div>
+          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
           <h1>Open Vodkach</h1>
           <p>Sign in with Google to continue to the private web app.</p>
           <a className="primaryButton authButton" href="/api/auth/google/start">
@@ -436,7 +435,7 @@ function WebApp() {
     <main className="appShell">
       <aside className="appServers">
         <button className="serverButton homeButton" title="Home">
-          <Home size={19} />
+          <Home size={18} />
         </button>
 
         <div className="serverDivider" />
@@ -444,75 +443,55 @@ function WebApp() {
         <button className="serverIconButton active" title="Vodkach">
           <img src="/vodkach.png" alt="Vodkach" draggable="false" />
         </button>
-
-        <button className="serverButton" title="Add">
-          <Plus size={20} />
-        </button>
       </aside>
 
       <aside className="appSidebar">
-        <div className="sidebarTop">
-          <div className="searchBox">
-            <Search size={15} />
-            <span>Search</span>
-          </div>
+        <div className="sidebarNav">
+          <button className="sidebarNavButton active" type="button">
+            <Search size={16} />
+            Search
+          </button>
+
+          <button className="sidebarNavButton" type="button">
+            <UserRound size={16} />
+            Friends
+          </button>
+
+          <button className="sidebarNavButton" type="button">
+            <FileText size={16} />
+            Shop
+          </button>
         </div>
 
         <nav className="channelList">
-          <p>Direct Messages</p>
+          <p>Chats</p>
           <button className="channelButton active">
-            <AtSign size={16} />
-            {auth.user.username}
-          </button>
-          <button className="channelButton">
-            <AtSign size={16} />
-            private-room
-          </button>
-          <button className="channelButton">
-            <FileText size={16} />
-            encrypted-files
+            <MessageCircle size={16} />
+            test
           </button>
         </nav>
-
-        <div className="sidebarProfile">
-          <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
-          <div className="sidebarProfileText">
-            <strong>{currentDisplayName}</strong>
-            <span>@{auth.user.username}</span>
-          </div>
-          <button className="profileSettingsButton" type="button" aria-label="Settings">
-            <Settings size={16} />
-          </button>
-        </div>
       </aside>
 
       <section className="appChat">
         <header className="appChatHeader">
           <div>
-            <span className="chatHash">#</span>
-            <strong>{auth.user.username}</strong>
+            <strong>test</strong>
           </div>
 
           <div className="chatHeaderActions">
             <Bell size={18} />
-            <UserRound size={18} />
+            <Settings size={18} />
           </div>
         </header>
 
         <div className="appMessages">
           <AppMessage
-            avatar={getInitial(currentDisplayName)}
+            avatar="__default_avatar__"
             name={currentDisplayName}
             time="now"
             text="Welcome to Vodkach."
           />
-          <AppMessage
-            avatar="V"
-            name="Vodkach"
-            time="System"
-            text={deviceState.ready ? "This browser is ready for encrypted chats." : "Preparing this browser for encrypted chats..."}
-            accent
-          />
+
           {deviceState.error && (
             <div className="deviceError">
               Device key setup failed: {deviceState.error}
@@ -521,13 +500,45 @@ function WebApp() {
         </div>
 
         <div className="messageComposer">
-          <span>Message #{auth.user.username}</span>
+          <span>Message test</span>
         </div>
       </section>
+
+      <div className="bottomProfileBar">
+        <div className="bottomProfileSpacer" />
+
+        <div className="bottomProfileMain">
+          <div className="bottomProfileIdentity">
+            <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
+            <div className="sidebarProfileText">
+              <strong>{currentDisplayName}</strong>
+              <span>@{auth.user.username}</span>
+            </div>
+          </div>
+
+          <div className="bottomProfileActions">
+            <button className="statusButton online" type="button" title="Online" aria-label="Online">
+              <span className="statusSymbol statusCircle" />
+            </button>
+            <button className="statusButton offline" type="button" title="Offline" aria-label="Offline">
+              <span className="statusSymbol statusCircle" />
+            </button>
+            <button className="statusButton sleeping" type="button" title="Sleeping" aria-label="Sleeping">
+              <span className="statusSymbol statusMoon" />
+            </button>
+            <button className="statusButton dnd" type="button" title="Do not disturb" aria-label="Do not disturb">
+              <span className="statusSymbol statusDnd" />
+            </button>
+
+            <button className="profileSettingsButton" type="button" aria-label="Settings">
+              <Settings size={16} />
+            </button>
+          </div>
+        </div>
+      </div>
     </main>
   );
 }
-
 
 function DefaultAvatar({ className = "avatarImage", alt = "Default avatar" }) {
   return <img className={className} src="/default-avatar.png" alt={alt} draggable="false" />;

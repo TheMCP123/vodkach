@@ -1974,3 +1974,246 @@ h1 {
     display: none !important;
   }
 }
+
+
+/* Patch 021: fix profile bar span, server buttons, header menu */
+
+.appShell {
+  display: grid !important;
+  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
+  grid-template-rows: 100vh !important;
+  overflow: hidden;
+}
+
+.appServers {
+  grid-column: 1 !important;
+  grid-row: 1 !important;
+  height: 100vh;
+  padding: 10px 9px;
+  background: #0b0c0e;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.appSidebar {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  height: 100vh;
+  min-height: 0;
+  display: flex !important;
+  flex-direction: column;
+  padding-bottom: 0 !important;
+  background: #121316;
+  border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.appChat {
+  grid-column: 3 !important;
+  grid-row: 1 !important;
+  height: 100vh;
+}
+
+.serverButton {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #b5bac1;
+  background: #1e1f22;
+}
+
+.serverButton:hover,
+.homeButton:hover {
+  color: #fff;
+  background: #2b2d31;
+}
+
+.homeButton {
+  color: #fff;
+  background: #1e1f22;
+}
+
+.serverDivider {
+  width: 28px;
+  height: 1px;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0;
+}
+
+.channelList {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+  padding-bottom: 10px;
+}
+
+.bottomProfileBar {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  bottom: auto !important;
+  height: 52px;
+  flex: 0 0 52px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) auto !important;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  background: #0f1012;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bottomProfileSpacer,
+.bottomProfileMain {
+  display: none !important;
+}
+
+.profileIdentityButton {
+  min-width: 0;
+  height: 40px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: transparent;
+  color: #f5f5f5;
+  text-align: left;
+}
+
+.profileIdentityButton:hover {
+  background: #1e1f22;
+}
+
+.profileAvatarWrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
+}
+
+.sidebarProfileAvatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: block;
+  object-fit: cover;
+}
+
+.profileStatusBadge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0f1012;
+}
+
+.profileStatusBadge .statusCircle {
+  width: 9px;
+  height: 9px;
+}
+
+.bottomProfileActions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.statusButton,
+.profileSettingsButton {
+  width: 26px;
+  height: 28px;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  background: transparent;
+  color: #b5bac1;
+}
+
+.statusButton:hover,
+.profileSettingsButton:hover {
+  color: #fff;
+  background: #1e1f22;
+}
+
+.chatHeaderActions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: #b5bac1;
+}
+
+.chatHeaderActions svg {
+  cursor: pointer;
+}
+
+.chatHeaderActions svg:hover {
+  color: #fff;
+}
+
+.statusMoon {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #f0b232;
+  position: relative;
+  overflow: hidden;
+}
+
+.statusMoon::after {
+  content: "";
+  position: absolute;
+  width: 11px;
+  height: 11px;
+  right: -4px;
+  top: -1px;
+  border-radius: 50%;
+  background: #0f1012;
+}
+
+.statusDnd {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ed4245;
+  position: relative;
+}
+
+.statusDnd::after {
+  content: "";
+  position: absolute;
+  left: 2.5px;
+  top: 5px;
+  width: 7px;
+  height: 2px;
+  border-radius: 999px;
+  background: #fff;
+}
+
+@media (max-width: 1080px) {
+  .appShell {
+    grid-template-columns: 56px 208px minmax(0, 1fr) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .appShell {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+  }
+
+  .appSidebar {
+    display: none !important;
+  }
+
+  .appChat {
+    grid-column: 2 !important;
+  }
+}

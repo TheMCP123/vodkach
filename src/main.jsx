@@ -2,12 +2,13 @@ import React, { useEffect, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
-  Bell,
   FileText,
   Home,
   LockKeyhole,
   MessageCircle,
+  MoreVertical,
   Phone,
+  Plus,
   Search,
   Settings,
   ShieldCheck,
@@ -440,6 +441,14 @@ function WebApp() {
         </button>
 
         <div className="serverDivider" />
+
+        <button className="serverButton" title="Add server">
+          <Plus size={19} />
+        </button>
+
+        <button className="serverButton" title="Search servers">
+          <Search size={18} />
+        </button>
       </aside>
 
       <aside className="appSidebar">
@@ -467,6 +476,41 @@ function WebApp() {
             test
           </button>
         </nav>
+
+        <div className="bottomProfileBar">
+          <button className="profileIdentityButton" type="button" title="Profile">
+            <span className="profileAvatarWrap">
+              <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
+              <span className="profileStatusBadge online">
+                <span className="statusSymbol statusCircle" />
+              </span>
+            </span>
+
+            <span className="sidebarProfileText">
+              <strong>{currentDisplayName}</strong>
+              <span>@{auth.user.username}</span>
+            </span>
+          </button>
+
+          <div className="bottomProfileActions">
+            <button className="statusButton online" type="button" title="Online" aria-label="Online">
+              <span className="statusSymbol statusCircle" />
+            </button>
+            <button className="statusButton offline" type="button" title="Offline" aria-label="Offline">
+              <span className="statusSymbol statusCircle" />
+            </button>
+            <button className="statusButton sleeping" type="button" title="Sleeping" aria-label="Sleeping">
+              <span className="statusSymbol statusMoon" />
+            </button>
+            <button className="statusButton dnd" type="button" title="Do not disturb" aria-label="Do not disturb">
+              <span className="statusSymbol statusDnd" />
+            </button>
+
+            <button className="profileSettingsButton" type="button" aria-label="Settings">
+              <Settings size={16} />
+            </button>
+          </div>
+        </div>
       </aside>
 
       <section className="appChat">
@@ -477,8 +521,7 @@ function WebApp() {
 
           <div className="chatHeaderActions">
             <Phone size={18} />
-            <Bell size={18} />
-            <Settings size={18} />
+            <MoreVertical size={19} />
           </div>
         </header>
 
@@ -502,40 +545,7 @@ function WebApp() {
         </div>
       </section>
 
-      <div className="bottomProfileBar">
-        <button className="profileIdentityButton" type="button" title="Profile">
-          <span className="profileAvatarWrap">
-            <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
-            <span className="profileStatusBadge online">
-              <span className="statusSymbol statusCircle" />
-            </span>
-          </span>
 
-          <span className="sidebarProfileText">
-            <strong>{currentDisplayName}</strong>
-            <span>@{auth.user.username}</span>
-          </span>
-        </button>
-
-        <div className="bottomProfileActions">
-          <button className="statusButton online" type="button" title="Online" aria-label="Online">
-            <span className="statusSymbol statusCircle" />
-          </button>
-          <button className="statusButton offline" type="button" title="Offline" aria-label="Offline">
-            <span className="statusSymbol statusCircle" />
-          </button>
-          <button className="statusButton sleeping" type="button" title="Sleeping" aria-label="Sleeping">
-            <span className="statusSymbol statusMoon" />
-          </button>
-          <button className="statusButton dnd" type="button" title="Do not disturb" aria-label="Do not disturb">
-            <span className="statusSymbol statusDnd" />
-          </button>
-
-          <button className="profileSettingsButton" type="button" aria-label="Settings">
-            <Settings size={16} />
-          </button>
-        </div>
-      </div>
     </main>
   );
 }

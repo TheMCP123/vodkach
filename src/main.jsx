@@ -477,7 +477,25 @@ function WebApp() {
           </button>
         </nav>
 
+        <div className="bottomProfileBar">
+          <button className="profileIdentityButton" type="button" title="Profile">
+            <span className="profileAvatarWrap">
+              <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
+              <span className="profileStatusBadge online" title="Online">
+                <span className="statusSymbol statusCircle" />
+              </span>
+            </span>
 
+            <span className="sidebarProfileText">
+              <strong>{currentDisplayName}</strong>
+              <span>@{auth.user.username}</span>
+            </span>
+          </button>
+
+          <button className="profileSettingsButton" type="button" aria-label="Settings">
+            <Settings size={16} />
+          </button>
+        </div>
       </aside>
 
       <section className="appChat">
@@ -512,30 +530,6 @@ function WebApp() {
         </div>
       </section>
 
-
-      <div className="bottomProfileBar">
-        <div className="bottomProfileLeftPad" />
-
-        <div className="bottomProfileMain">
-          <button className="profileIdentityButton" type="button" title="Profile">
-            <span className="profileAvatarWrap">
-              <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
-              <span className="profileStatusBadge online" title="Online" aria-label="Change status">
-                <span className="statusSymbol statusCircle" />
-              </span>
-            </span>
-
-            <span className="sidebarProfileText">
-              <strong>{currentDisplayName}</strong>
-              <span>@{auth.user.username}</span>
-            </span>
-          </button>
-
-          <button className="profileSettingsButton" type="button" aria-label="Settings">
-            <Settings size={16} />
-          </button>
-        </div>
-      </div>
 
     </main>
   );

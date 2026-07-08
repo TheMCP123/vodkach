@@ -7,21 +7,26 @@
   font-family:
     Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
-  background: #080808;
-  color: #f5f5f5;
+  background: #08090b;
+  color: #f4f5f7;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 }
 
-html {
-  scroll-behavior: smooth;
+html,
+body,
+#root {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100%;
+  width: 100%;
+  height: 100%;
+  background: #08090b;
+  color: #f4f5f7;
 }
 
 body {
-  margin: 0;
-  min-width: 320px;
-  min-height: 100vh;
-  background: #080808;
+  overflow: hidden;
 }
 
 a {
@@ -38,11 +43,13 @@ button {
   cursor: pointer;
 }
 
-/* Landing */
+/* Minimal landing fallback */
 
 .landingPage {
-  width: min(1180px, calc(100% - 40px));
+  width: min(1120px, calc(100% - 32px));
+  min-height: 100vh;
   margin: 0 auto;
+  background: #08090b;
 }
 
 .landingHeader {
@@ -56,39 +63,30 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 1rem;
   font-weight: 850;
-  letter-spacing: -0.035em;
 }
 
 .brandIcon {
   width: 34px;
   height: 34px;
-  border-radius: 7px;
+  border-radius: 8px;
   display: grid;
   place-items: center;
   background: #fc0303;
   color: #fff;
-  font-weight: 950;
 }
 
 .landingNav {
   display: flex;
   gap: 24px;
-  color: #a1a1aa;
-  font-size: 0.86rem;
-  font-weight: 650;
-}
-
-.landingNav a:hover {
-  color: #fff;
+  color: #aeb4bc;
+  font-size: 0.88rem;
 }
 
 .landingHero {
-  min-height: calc(100vh - 82px);
-  padding: 36px 0 62px;
+  min-height: calc(100vh - 66px);
   display: grid;
-  grid-template-columns: 0.82fr 1.18fr;
+  grid-template-columns: 0.85fr 1.15fr;
   gap: 44px;
   align-items: center;
 }
@@ -98,47 +96,46 @@ button {
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 8px 11px;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border-radius: 7px;
   color: #ffb3b3;
-  background: rgba(212, 29, 53, 0.1);
-  border: 1px solid rgba(248, 113, 113, 0.16);
-  font-size: 0.74rem;
-  font-weight: 750;
+  background: rgba(252, 3, 3, 0.08);
+  border: 1px solid rgba(252, 3, 3, 0.16);
+  font-size: 0.78rem;
+  font-weight: 760;
 }
 
 h1 {
   margin: 16px 0 0;
-  max-width: 620px;
-  font-size: clamp(3.35rem, 6vw, 5.95rem);
+  max-width: 560px;
+  font-size: clamp(2.8rem, 5.2vw, 4.8rem);
   line-height: 0.92;
-  letter-spacing: -0.082em;
+  letter-spacing: -0.065em;
 }
 
 .lead {
-  max-width: 560px;
+  max-width: 520px;
   margin: 18px 0 0;
-  color: #b4b4bd;
+  color: #aeb4bc;
   font-size: 1rem;
-  line-height: 1.65;
+  line-height: 1.55;
 }
 
 .buttons {
   margin-top: 24px;
   display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
+  gap: 10px;
 }
 
 .primaryButton,
 .secondaryButton {
   min-height: 42px;
-  padding: 0 14px;
+  padding: 0 15px;
   border-radius: 7px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
+  gap: 8px;
   border: 1px solid transparent;
   font-weight: 780;
 }
@@ -146,242 +143,30 @@ h1 {
 .primaryButton {
   background: #fc0303;
   color: #fff;
-  box-shadow: none;
-}
-
-.primaryButton:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
 }
 
 .secondaryButton {
-  background: #171717;
-  color: #f5f5f5;
+  background: #17181b;
   border-color: rgba(255, 255, 255, 0.08);
+  color: #f4f5f7;
 }
 
 .landingPreview {
-  min-height: 440px;
+  min-height: 420px;
   display: grid;
   grid-template-columns: 62px 168px minmax(0, 1fr);
   overflow: hidden;
   border-radius: 8px;
-  background: #101010;
+  background: #101114;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: none;
 }
 
-.previewRail {
-  padding: 12px 10px;
-  background: #0b0b0b;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 10px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.previewLogo,
-.previewDot {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-}
-
-.previewLogo {
-  background: #fc0303;
-  font-weight: 950;
-}
-
-.previewDot {
-  background: #1f1f1f;
-}
-
-.previewDot::after {
-  content: "";
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  background: #52525b;
-}
-
-.previewDot.muted {
-  opacity: 0.55;
-}
-
-.previewSidebar {
-  padding: 14px 10px;
-  background: #151515;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.previewTitle {
-  padding: 0 8px 10px;
-  font-size: 0.96rem;
-  font-weight: 850;
-  letter-spacing: -0.04em;
-}
-
-.previewChannel {
-  margin: 0 0 6px;
-  padding: 8px 9px;
-  border-radius: 6px;
-  color: #96969f;
-  font-weight: 720;
-}
-
-.previewChannel::before {
-  content: "# ";
-  color: #52525b;
-}
-
-.previewChannel.active {
-  background: rgba(255, 255, 255, 0.07);
-  color: #fff;
-}
-
-.previewChat {
-  position: relative;
-  padding: 0 22px 22px;
-  background: #111111;
-}
-
-.previewChatHeader {
-  height: 42px;
-  margin: 0 -22px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-weight: 850;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.previewSecure {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #ffb3b3;
-  font-size: 0.78rem;
-  font-weight: 750;
-}
-
-.previewMessage {
-  display: flex;
-  gap: 7px;
-  margin: 18px 0 0;
-}
-
-.avatar {
-  width: 34px;
-  height: 34px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  background: #2a2a2a;
-  color: #fff;
-  font-weight: 850;
-  flex: 0 0 auto;
-}
-
-.avatar.accent {
-  background: #b60202;
-}
-
-.previewMessage strong,
-.appMessage strong {
-  display: block;
-  margin-bottom: 4px;
-}
-
-.previewMessage p,
-.appMessage p {
-  margin: 0;
-  color: #a1a1aa;
-  line-height: 1.5;
-}
-
-.previewComposer {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 22px;
-  height: 42px;
-  border-radius: 7px;
-  display: flex;
-  align-items: center;
-  padding: 0 12px;
-  color: #71717a;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-}
-
-.landingInfo {
-  padding: 18px 0 74px;
-  display: grid;
-  grid-template-columns: 0.72fr 1.28fr;
-  gap: 30px;
-  align-items: start;
-}
-
-.infoLabel {
-  color: #fc0303;
-  font-size: 0.78rem;
-  font-weight: 850;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-}
-
-.landingInfo h2 {
-  margin: 12px 0 0;
-  max-width: 420px;
-  font-size: clamp(2rem, 3.7vw, 3rem);
-  line-height: 1.02;
-  letter-spacing: -0.065em;
-}
-
-.infoGrid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-}
-
-.infoItem {
-  padding: 16px;
-  min-height: 178px;
-  border-radius: 7px;
-  background: #111111;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-}
-
-.infoItem h3 {
-  margin: 0 0 10px;
-  font-size: 1.04rem;
-  letter-spacing: -0.035em;
-}
-
-.infoItem p {
-  margin: 0;
-  color: #a1a1aa;
-  line-height: 1.55;
-  font-size: 0.95rem;
-}
-
+.previewRail,
+.previewSidebar,
+.previewChat,
+.landingInfo,
 .landingFooter {
-  height: 42px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  color: #71717a;
-  border-top: 1px solid rgba(255, 255, 255, 0.075);
-  font-size: 0.86rem;
-}
-
-.landingFooter span:first-child {
-  color: #f5f5f5;
-  font-weight: 850;
+  display: none;
 }
 
 /* Auth */
@@ -392,40 +177,51 @@ h1 {
   display: grid;
   place-items: center;
   padding: 24px;
-  background: #080808;
+  background: #08090b;
 }
 
 .authCard {
   width: min(440px, 100%);
   padding: 22px;
   border-radius: 8px;
-  background: #111111;
+  background: #111214;
   border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: none;
 }
 
-.authLogo {
-  width: 42px;
-  height: 42px;
-  border-radius: 8px;
+.authLogo,
+.authBrandIcon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
   display: grid;
   place-items: center;
+  object-fit: cover;
+  margin-bottom: 14px;
   background: #fc0303;
   color: #fff;
   font-weight: 950;
-  margin-bottom: 14px;
+}
+
+.setupAvatar {
+  width: 58px;
+  height: 58px;
+  border-radius: 10px;
+  display: block;
+  object-fit: cover;
+  margin-bottom: 16px;
+  background: #1e1f22;
 }
 
 .authCard h1 {
   margin: 0;
-  font-size: 2.2rem;
+  font-size: 1.9rem;
   line-height: 0.95;
-  letter-spacing: -0.07em;
+  letter-spacing: -0.06em;
 }
 
 .authCard p {
-  margin: 14px 0 24px;
-  color: #a1a1aa;
+  margin: 14px 0 22px;
+  color: #aeb4bc;
   line-height: 1.55;
 }
 
@@ -437,20 +233,19 @@ h1 {
 .fieldLabel {
   display: block;
   margin: 16px 0 8px;
-  color: #f5f5f5;
-  font-size: 0.82rem;
+  font-size: 0.9rem;
   font-weight: 760;
 }
 
 .usernameInput {
   height: 42px;
   width: 100%;
-  padding: 0 14px;
-  border-radius: 7px;
+  padding: 0 12px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
-  background: #1a1a1a;
+  background: #1e1f22;
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -464,914 +259,84 @@ h1 {
   border: 0;
   outline: 0;
   background: transparent;
-  color: #f5f5f5;
+  color: #f4f5f7;
 }
 
 .fieldHint {
   margin-top: 7px;
-  color: #71717a;
-  font-size: 0.78rem;
-  line-height: 1.35;
+  color: #7f858f;
+  font-size: 0.84rem;
 }
 
 .formError {
   margin: 14px 0 10px;
   color: #ffb3b3;
-  font-size: 0.78rem;
+  font-size: 0.92rem;
 }
 
-/* Web App */
+/* Web app */
 
 .appShell {
+  position: relative;
   width: 100vw;
   height: 100vh;
-  display: grid;
-  grid-template-columns: 64px 232px minmax(0, 1fr) 248px;
-  background: #0b0b0c;
-  color: #f5f5f5;
-  overflow: hidden;
-}
-
-.appServers {
-  padding: 14px 12px;
-  background: #080808;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 7px;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.appServerLogo,
-.serverButton {
-  width: 34px;
-  height: 34px;
-  border-radius: 8px;
-  display: grid;
-  place-items: center;
-}
-
-.appServerLogo {
-  background: #fc0303;
-  font-weight: 950;
-}
-
-.serverButton {
-  border: 0;
-  color: #a1a1aa;
-  background: #171717;
-}
-
-.serverButton.active {
-  color: #fff;
-  background: #262626;
-}
-
-.appSidebar {
-  min-width: 0;
-  background: #111111;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.workspaceHeader {
-  height: 56px;
-  padding: 0 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.workspaceHeader span {
-  color: #71717a;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 850;
-}
-
-.workspaceHeader strong {
-  display: block;
-  margin-top: 3px;
-  letter-spacing: -0.04em;
-}
-
-.searchBox {
-  height: 38px;
-  margin: 0 14px 18px;
-  padding: 0 12px;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #71717a;
-  background: #1a1a1a;
-}
-
-.channelList {
-  padding: 0 10px;
-}
-
-.channelList p {
-  margin: 0 8px 10px;
-  color: #71717a;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 850;
-}
-
-.channelButton {
-  width: 100%;
-  margin-bottom: 6px;
-  padding: 10px 10px;
-  border: 0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  background: transparent;
-  color: #a1a1aa;
-  text-align: left;
-  font-weight: 720;
-}
-
-.channelButton.active {
-  background: rgba(255, 255, 255, 0.075);
-  color: #fff;
-}
-
-.appChat {
-  min-width: 0;
-  position: relative;
-  background: #101010;
-  display: flex;
-  flex-direction: column;
-}
-
-.appChatHeader {
-  height: 56px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.065);
-}
-
-.appChatHeader > div:first-child {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.chatHash {
-  color: #71717a;
-  font-size: 1.2rem;
-}
-
-.chatHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #a1a1aa;
-}
-
-.lockedBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 7px;
-  color: #ffb3b3;
-  font-size: 0.78rem;
-  font-weight: 760;
-}
-
-.appMessages {
-  padding: 18px 16px 76px;
-  overflow: auto;
-}
-
-.appMessage {
-  display: flex;
-  gap: 7px;
-  margin-bottom: 16px;
-}
-
-.messageMeta {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-}
-
-.messageMeta span {
-  color: #71717a;
-  font-size: 0.74rem;
-}
-
-.messageComposer {
-  position: absolute;
-  left: 22px;
-  right: 22px;
-  bottom: 20px;
-  height: 42px;
-  border-radius: 7px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  color: #71717a;
-  background: #1a1a1a;
-  border: 1px solid rgba(255, 255, 255, 0.075);
-}
-
-.appDetails {
-  background: #111111;
-  border-left: 1px solid rgba(255, 255, 255, 0.06);
-  padding: 14px;
-}
-
-.profileCard {
-  padding: 16px;
-  border-radius: 7px;
-  background: #171717;
-  display: grid;
-  justify-items: center;
-  text-align: center;
-}
-
-.profileAvatar {
-  width: 50px;
-  height: 42px;
-  border-radius: 7px;
-  display: grid;
-  place-items: center;
-  background: #fc0303;
-  font-weight: 950;
-  font-size: 1.25rem;
-  margin-bottom: 8px;
-}
-
-.profileCard span {
-  margin-top: 4px;
-  color: #a1a1aa;
-  font-size: 0.82rem;
-  max-width: 100%;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.detailsBlock {
-  margin-top: 16px;
-  padding: 14px;
-  border-radius: 7px;
-  background: #171717;
-}
-
-.detailsBlock p {
-  margin: 0 0 12px;
-  color: #71717a;
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  font-weight: 850;
-}
-
-.statusLine {
-  display: flex;
-  align-items: center;
-  gap: 7px;
-  color: #f5f5f5;
-  font-size: 0.78rem;
-  margin-top: 10px;
-}
-
-.statusLine.muted {
-  color: #a1a1aa;
-}
-
-.statusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 6px;
-  background: #fc0303;
-  box-shadow: none;
-}
-
-.statusDot.muted {
-  background: #52525b;
-  box-shadow: none;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 64px 220px minmax(0, 1fr);
-  }
-
-  .appDetails {
-    display: none;
-  }
-}
-
-@media (max-width: 980px) {
-  .landingHero,
-  .landingInfo {
-    grid-template-columns: 1fr;
-  }
-
-  .landingHero {
-    padding-top: 36px;
-    gap: 30px;
-  }
-
-  .landingPreview {
-    min-height: 410px;
-  }
-
-  .infoGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .infoItem {
-    min-height: unset;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr);
-  }
-
-  .appSidebar {
-    display: none;
-  }
-}
-
-@media (max-width: 680px) {
-  .landingPage {
-    width: min(100% - 24px, 1180px);
-  }
-
-  .landingHeader {
-    height: 42px;
-  }
-
-  .landingNav {
-    display: none;
-  }
-
-  h1 {
-    font-size: 3.35rem;
-  }
-
-  .lead {
-    font-size: 1rem;
-  }
-
-  .landingPreview {
-    grid-template-columns: 56px 1fr;
-    min-height: 380px;
-    border-radius: 22px;
-  }
-
-  .previewSidebar {
-    display: none;
-  }
-
-  .previewChat {
-    min-width: 0;
-  }
-
-  .landingFooter {
-    flex-direction: column;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 6px;
-  }
-}
-
-
-.deviceError {
-  width: fit-content;
-  max-width: 640px;
-  margin: 4px 0 22px 52px;
-  padding: 10px 12px;
-  border-radius: 7px;
-  color: #ffb3b3;
-  background: rgba(127, 29, 29, 0.22);
-  border: 1px solid rgba(248, 113, 113, 0.2);
-  font-size: 0.78rem;
-}
-
-
-/* Patch 015: compact Discord-like UI tuning */
-
-:root {
-  font-size: 14px;
-}
-
-body {
-  background: #080808;
-}
-
-.landingPage {
-  width: min(1120px, calc(100% - 32px));
-}
-
-.landingHero {
-  min-height: calc(100vh - 66px);
-}
-
-h1 {
-  max-width: 560px;
-  font-size: clamp(2.7rem, 5.2vw, 4.8rem);
-  letter-spacing: -0.065em;
-}
-
-.lead {
-  max-width: 500px;
-}
-
-.primaryButton,
-.secondaryButton {
-  padding: 0 15px;
-}
-
-.landingPreview,
-.authCard,
-.infoItem,
-.appShell,
-.profileCard,
-.detailsBlock {
-  box-shadow: none;
-}
-
-.pill {
-  border-radius: 6px;
-  padding: 6px 9px;
-}
-
-.landingPreview {
-  min-height: 420px;
-}
-
-.appShell {
-  grid-template-columns: 64px 232px minmax(0, 1fr) 248px;
-}
-
-.appServers {
-  padding: 10px 9px;
-}
-
-.appServerLogo,
-.serverButton {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-}
-
-.serverButton {
-  color: #b5bac1;
-  background: #1e1f22;
-}
-
-.serverButton.active {
-  background: #2b2d31;
-}
-
-.appSidebar {
-  background: #111214;
-}
-
-.workspaceHeader {
-  height: 54px;
-  padding: 0 14px;
-}
-
-.searchBox {
-  height: 32px;
-  margin: 0 10px 12px;
-  padding: 0 10px;
-  border-radius: 5px;
-  background: #1e1f22;
-}
-
-.channelList {
-  padding: 0 8px;
-}
-
-.channelButton {
-  padding: 7px 8px;
-  margin-bottom: 2px;
-  border-radius: 5px;
-}
-
-.appChat {
-  background: #151618;
-}
-
-.appChatHeader {
-  height: 54px;
-  padding: 0 16px;
-}
-
-.appMessages {
-  padding: 16px 16px 70px;
-}
-
-.appMessage {
-  margin-bottom: 14px;
-}
-
-.avatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 9px;
-}
-
-.messageComposer {
-  left: 16px;
-  right: 16px;
-  bottom: 14px;
-  height: 42px;
-  border-radius: 7px;
-  background: #1e1f22;
-}
-
-.appDetails {
-  padding: 12px;
-  background: #111214;
-}
-
-.profileCard,
-.detailsBlock {
-  padding: 14px;
-  border-radius: 7px;
-  background: #17181b;
-}
-
-.profileAvatar {
-  width: 46px;
-  height: 46px;
-  border-radius: 12px;
-}
-
-.authScreen {
-  background: #080808;
-}
-
-.authCard {
-  border-radius: 8px;
-  padding: 22px;
-}
-
-.authLogo {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-}
-
-.authCard h1 {
-  font-size: 1.9rem;
-}
-
-.usernameInput {
-  height: 42px;
-  border-radius: 6px;
-}
-
-.deviceError {
-  border-radius: 6px;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 64px 220px minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr);
-  }
-}
-
-@media (max-width: 680px) {
-  h1 {
-    font-size: 2.8rem;
-  }
-
-  .landingPage {
-    width: min(100% - 20px, 1120px);
-  }
-}
-
-
-/* Patch 016: web-only cleanup, no debug panel, default avatar */
-
-.appShell {
-  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
-}
-
-.appDetails {
-  display: none !important;
-}
-
-.lockedBadge {
-  color: #b5bac1;
-}
-
-.setupAvatar {
-  width: 58px;
-  height: 58px;
-  border-radius: 10px;
-  display: block;
-  object-fit: cover;
-  margin-bottom: 16px;
-  background: #1e1f22;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.messageAvatarImage {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  display: block;
-  object-fit: cover;
-  flex: 0 0 auto;
-  background: #1e1f22;
-}
-
-.deviceError {
-  margin-left: 41px;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 64px 220px minmax(0, 1fr) !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-}
-
-
-/* Patch 017: cleaner web sidebar, Discord-like profile bottom */
-
-.appSidebar {
-  display: flex;
-  flex-direction: column;
-}
-
-.workspaceHeader {
-  display: none !important;
-}
-
-.sidebarTop {
-  padding: 12px 10px 10px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.055);
-}
-
-.searchBox {
-  margin: 0 !important;
-}
-
-.channelList {
-  flex: 1;
-  overflow: auto;
-  padding-top: 12px;
-  padding-bottom: 12px;
-}
-
-.chatHeaderActions {
-  gap: 12px;
-}
-
-.lockedBadge {
-  display: none !important;
-}
-
-.sidebarProfile {
-  height: 52px;
-  padding: 8px 8px;
-  display: grid;
-  grid-template-columns: 32px minmax(0, 1fr) 30px;
-  gap: 8px;
-  align-items: center;
-  background: #0b0b0c;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.sidebarProfileAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
-  object-fit: cover;
-  background: #1e1f22;
-}
-
-.sidebarProfileText {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-.sidebarProfileText strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.88rem;
-  line-height: 1.1;
-}
-
-.sidebarProfileText span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #949ba4;
-  font-size: 0.74rem;
-  line-height: 1.1;
-}
-
-.profileSettingsButton {
-  width: 30px;
-  height: 30px;
-  border: 0;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  color: #b5bac1;
-  background: transparent;
-}
-
-.profileSettingsButton:hover {
-  background: #1e1f22;
-  color: #fff;
-}
-
-.appChatHeader {
-  justify-content: space-between;
-}
-
-.appChatHeader > div:first-child strong {
-  font-size: 0.98rem;
-}
-
-.appMessages {
-  padding-top: 18px;
-}
-
-@media (max-width: 760px) {
-  .sidebarProfile {
-    display: none;
-  }
-}
-
-
-/* Patch 018: Vodkach icon, home button, red accent */
-
-.appServerLogo {
-  display: none !important;
-}
-
-.serverIconButton {
-  width: 38px;
-  height: 38px;
-  padding: 0;
-  border: 0;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  overflow: hidden;
-}
-
-.serverIconButton img {
-  width: 38px;
-  height: 38px;
-  display: block;
-  object-fit: cover;
-  border-radius: 10px;
-}
-
-.serverIconButton.active {
-  background: transparent;
-}
-
-.homeButton {
-  color: #fff;
-  background: #1e1f22;
-}
-
-.homeButton:hover,
-.serverButton:hover {
-  color: #fff;
-  background: #2b2d31;
-}
-
-.serverDivider {
-  width: 32px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
-  margin: 1px 0;
-}
-
-.brandIcon,
-.previewLogo,
-.authLogo,
-.profileAvatar,
-.avatar.accent {
-  background: #fc0303 !important;
-}
-
-.primaryButton {
-  background: #fc0303 !important;
-}
-
-.statusDot {
-  background: #fc0303 !important;
-}
-
-.usernameInput span,
-.infoLabel,
-.previewSecure,
-.chatStatus,
-.pill,
-.lockedBadge {
-  color: #ffb3b3 !important;
-}
-
-
-/* Patch 019: cleaner web structure */
-
-.appShell {
   display: grid;
   grid-template-columns: 64px 232px minmax(0, 1fr);
-  grid-template-rows: minmax(0, 1fr) 52px;
-  width: 100vw;
-  height: 100vh;
+  grid-template-rows: 100vh;
+  overflow: hidden;
   background: #0f1012;
+  color: #f4f5f7;
 }
 
 .appServers {
   grid-column: 1;
   grid-row: 1;
+  height: 100vh;
+  padding: 10px 9px 62px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 10px;
-  padding: 10px 9px;
   background: #0b0c0e;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.serverButton,
+.homeButton {
+  width: 38px;
+  height: 38px;
+  border: 0;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #b5bac1;
+  background: #1e1f22;
+}
+
+.serverButton:hover,
+.homeButton:hover {
+  color: #fff;
+  background: #2b2d31;
+}
+
+.serverDivider {
+  width: 28px;
+  height: 1px;
+  flex: 0 0 auto;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .appSidebar {
   grid-column: 2;
   grid-row: 1;
-  min-width: 0;
+  height: 100vh;
+  min-height: 0;
+  position: relative;
   display: flex;
   flex-direction: column;
+  padding-bottom: 52px;
   background: #121316;
   border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.appChat {
-  grid-column: 3;
-  grid-row: 1 / 3;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  background: #16171a;
-}
-
-.sidebarTop,
-.workspaceHeader,
-.sidebarProfile,
-.appDetails,
-.appServerLogo,
-.lockedBadge {
-  display: none !important;
-}
-
-.serverIconButton,
-.serverButton {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-}
-
-.serverIconButton img {
-  width: 38px;
-  height: 38px;
-  border-radius: 10px;
-}
-
-.serverDivider {
-  width: 32px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.12);
 }
 
 .sidebarNav {
@@ -1381,7 +346,8 @@ h1 {
   border-bottom: 1px solid rgba(255, 255, 255, 0.055);
 }
 
-.sidebarNavButton {
+.sidebarNavButton,
+.channelButton {
   width: 100%;
   padding: 8px 9px;
   border: 0;
@@ -1395,18 +361,21 @@ h1 {
   font-weight: 720;
 }
 
-.sidebarNavButton:hover {
+.sidebarNavButton:hover,
+.channelButton:hover {
   color: #fff;
   background: #1e1f22;
 }
 
-.sidebarNavButton.active {
+.sidebarNavButton.active,
+.channelButton.active {
   color: #fff;
   background: #2b2d31;
 }
 
 .channelList {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 10px 8px 12px;
 }
@@ -1420,44 +389,38 @@ h1 {
   font-weight: 850;
 }
 
-.channelButton {
-  width: 100%;
-  margin-bottom: 2px;
-  padding: 8px 9px;
-  border: 0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #b5bac1;
-  background: transparent;
-  text-align: left;
-  font-weight: 720;
-}
-
-.channelButton:hover {
-  color: #fff;
+.chatListAvatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  object-fit: cover;
+  flex: 0 0 auto;
   background: #1e1f22;
 }
 
-.channelButton.active {
-  color: #fff;
-  background: #2b2d31;
+.appChat {
+  grid-column: 3;
+  grid-row: 1;
+  height: 100vh;
+  min-height: 0;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  background: #16171a;
 }
 
 .appChatHeader {
-  height: 54px;
+  flex: 0 0 54px;
   padding: 0 16px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   background: #151619;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .appChatHeader strong {
   font-size: 0.96rem;
-  letter-spacing: -0.02em;
 }
 
 .chatHeaderActions {
@@ -1467,8 +430,17 @@ h1 {
   color: #b5bac1;
 }
 
+.chatHeaderActions svg {
+  cursor: pointer;
+}
+
+.chatHeaderActions svg:hover {
+  color: #fff;
+}
+
 .appMessages {
-  flex: 1;
+  flex: 1 1 auto;
+  min-height: 0;
   overflow: auto;
   padding: 18px 16px 70px;
 }
@@ -1479,14 +451,20 @@ h1 {
   margin-bottom: 16px;
 }
 
-.messageAvatarImage {
+.messageAvatarImage,
+.avatar {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  display: block;
+  display: grid;
+  place-items: center;
   object-fit: cover;
-  background: #1e1f22;
   flex: 0 0 auto;
+  background: #1e1f22;
+}
+
+.avatar.accent {
+  background: #fc0303;
 }
 
 .messageMeta {
@@ -1504,6 +482,12 @@ h1 {
   font-size: 0.73rem;
 }
 
+.appMessage p {
+  margin: 0;
+  color: #b5bac1;
+  line-height: 1.45;
+}
+
 .messageComposer {
   position: absolute;
   left: 16px;
@@ -1514,48 +498,86 @@ h1 {
   display: flex;
   align-items: center;
   padding: 0 12px;
-  color: #7f848e;
+  color: #7f858f;
   background: #1e1f22;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+/* Profile bar: lives inside sidebar but extends left under server rail */
+
 .bottomProfileBar {
-  grid-column: 1 / 3;
-  grid-row: 2;
+  position: absolute;
+  left: -64px;
+  bottom: 0;
+  width: calc(100% + 64px);
+  height: 52px;
   display: grid;
-  grid-template-columns: 64px minmax(0, 1fr);
+  grid-template-columns: 64px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px 0 10px;
   background: #0f1012;
   border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.bottomProfileSpacer {
   border-right: 1px solid rgba(255, 255, 255, 0.06);
+  z-index: 20;
 }
 
-.bottomProfileMain {
+.profileIdentityButton {
+  grid-column: 2;
   min-width: 0;
-  padding: 0 8px 0 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  background: #121316;
-}
-
-.bottomProfileIdentity {
-  min-width: 0;
+  height: 40px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   gap: 8px;
+  background: transparent;
+  color: #f4f5f7;
+  text-align: left;
+}
+
+.profileIdentityButton:hover {
+  background: #1e1f22;
+}
+
+.profileAvatarWrap {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 auto;
 }
 
 .sidebarProfileAvatar {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 50%;
+  display: block;
   object-fit: cover;
   background: #1e1f22;
-  flex: 0 0 auto;
+}
+
+.profileStatusBadge {
+  position: absolute;
+  right: -2px;
+  bottom: -2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #0f1012;
+  cursor: pointer;
+}
+
+.profileStatusBadge .statusCircle {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+}
+
+.profileStatusBadge.online .statusCircle {
+  background: #23a55a;
 }
 
 .sidebarProfileText {
@@ -1564,103 +586,51 @@ h1 {
   gap: 1px;
 }
 
-.sidebarProfileText strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.86rem;
-  line-height: 1.1;
-}
-
+.sidebarProfileText strong,
 .sidebarProfileText span {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.sidebarProfileText strong {
+  font-size: 0.84rem;
+  line-height: 1.05;
+}
+
+.sidebarProfileText span {
   color: #949ba4;
-  font-size: 0.73rem;
-  line-height: 1.1;
+  font-size: 0.72rem;
+  line-height: 1.05;
 }
 
-.bottomProfileActions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.statusButton,
 .profileSettingsButton {
+  grid-column: 3;
   width: 28px;
   height: 28px;
   border: 0;
-  border-radius: 6px;
+  border-radius: 5px;
   display: grid;
   place-items: center;
   background: transparent;
   color: #b5bac1;
 }
 
-.statusButton:hover,
 .profileSettingsButton:hover {
   color: #fff;
   background: #1e1f22;
 }
 
-.statusSymbol {
-  display: block;
-  position: relative;
-}
-
-.statusCircle {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-}
-
-.statusButton.online .statusCircle {
-  background: #23a55a;
-}
-
-.statusButton.offline .statusCircle {
-  background: #80848e;
-}
-
-.statusMoon {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #f0b232;
-  overflow: hidden;
-}
-
-.statusMoon::after {
-  content: "";
-  position: absolute;
-  width: 9px;
-  height: 9px;
-  right: -1px;
-  top: 1px;
-  border-radius: 999px;
-  background: #121316;
-}
-
-.statusDnd {
-  width: 12px;
-  height: 12px;
-  border-radius: 999px;
-  background: #ed4245;
-}
-
-.statusDnd::after {
-  content: "";
-  position: absolute;
-  left: 2px;
-  top: 5px;
-  width: 8px;
-  height: 2px;
-  border-radius: 999px;
-  background: #fff;
+.bottomProfileActions,
+.statusButton,
+.workspaceHeader,
+.sidebarTop,
+.sidebarProfile,
+.appDetails,
+.appServerLogo,
+.lockedBadge {
+  display: none !important;
 }
 
 .deviceError {
@@ -1674,926 +644,33 @@ h1 {
   border: 1px solid rgba(252, 3, 3, 0.18);
 }
 
-.authBrandIcon {
-  width: 40px;
-  height: 40px;
-  border-radius: 10px;
-  display: block;
-  object-fit: cover;
-  margin-bottom: 14px;
-  background: #1e1f22;
-}
-
 @media (max-width: 1080px) {
   .appShell {
     grid-template-columns: 56px 208px minmax(0, 1fr);
   }
 
+  .appServers {
+    padding-bottom: 62px;
+  }
+
   .bottomProfileBar {
-    grid-template-columns: 56px minmax(0, 1fr);
+    left: -56px;
+    width: calc(100% + 56px);
+    grid-template-columns: 56px minmax(0, 1fr) 30px;
   }
 }
 
 @media (max-width: 760px) {
   .appShell {
     grid-template-columns: 56px minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) 52px;
   }
 
-  .appSidebar {
-    display: none;
+  .appSidebar,
+  .bottomProfileBar {
+    display: none !important;
   }
 
   .appChat {
     grid-column: 2;
-  }
-
-  .bottomProfileBar {
-    grid-column: 1 / 2;
-    grid-template-columns: 56px;
-  }
-
-  .bottomProfileSpacer {
-    display: none;
-  }
-
-  .bottomProfileMain {
-    display: none;
-  }
-}
-
-
-/* Patch 020: Discord-like profile polish */
-
-.appShell {
-  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
-  grid-template-rows: minmax(0, 1fr) !important;
-}
-
-.appServers {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-}
-
-.appSidebar {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  position: relative;
-  padding-bottom: 52px;
-}
-
-.appChat {
-  grid-column: 3 !important;
-  grid-row: 1 !important;
-}
-
-.serverIconButton {
-  display: none !important;
-}
-
-.serverDivider {
-  width: 28px;
-  margin: 0;
-}
-
-.chatUser {
-  gap: 8px;
-}
-
-.chatListAvatar {
-  width: 22px;
-  height: 22px;
-  border-radius: 50%;
-  object-fit: cover;
-  flex: 0 0 auto;
-  background: #1e1f22;
-}
-
-.bottomProfileBar {
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  height: 52px;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  background: #0f1012;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.bottomProfileSpacer,
-.bottomProfileMain {
-  display: none !important;
-}
-
-.profileIdentityButton {
-  min-width: 0;
-  height: 40px;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: #f5f5f5;
-  text-align: left;
-}
-
-.profileIdentityButton:hover {
-  background: #1e1f22;
-}
-
-.profileAvatarWrap {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-}
-
-.sidebarProfileAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: block;
-  object-fit: cover;
-  background: #1e1f22;
-}
-
-.profileStatusBadge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #0f1012;
-}
-
-.profileStatusBadge .statusCircle {
-  width: 9px;
-  height: 9px;
-}
-
-.bottomProfileActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.statusButton,
-.profileSettingsButton {
-  width: 26px;
-  height: 28px;
-  border: 0;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  color: #b5bac1;
-}
-
-.statusButton:hover,
-.profileSettingsButton:hover {
-  color: #fff;
-  background: #1e1f22;
-}
-
-.statusCircle {
-  width: 11px;
-  height: 11px;
-  border-radius: 999px;
-}
-
-.statusButton.online .statusCircle,
-.profileStatusBadge.online .statusCircle {
-  background: #23a55a;
-}
-
-.statusButton.offline .statusCircle {
-  background: #80848e;
-}
-
-.statusMoon {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #f0b232;
-  position: relative;
-  overflow: hidden;
-}
-
-.statusMoon::after {
-  content: "";
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  right: -4px;
-  top: -1px;
-  border-radius: 50%;
-  background: #0f1012;
-}
-
-.statusDnd {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ed4245;
-  position: relative;
-}
-
-.statusDnd::after {
-  content: "";
-  position: absolute;
-  left: 2.5px;
-  top: 5px;
-  width: 7px;
-  height: 2px;
-  border-radius: 999px;
-  background: #fff;
-}
-
-.sidebarProfileText {
-  min-width: 0;
-  display: grid;
-  gap: 1px;
-}
-
-.sidebarProfileText strong {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  font-size: 0.84rem;
-  line-height: 1.05;
-}
-
-.sidebarProfileText span {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: #949ba4;
-  font-size: 0.72rem;
-  line-height: 1.05;
-}
-
-.chatHeaderActions svg {
-  cursor: pointer;
-}
-
-.chatHeaderActions svg:hover {
-  color: #fff;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 56px 208px minmax(0, 1fr) !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-
-  .appSidebar {
-    display: none !important;
-  }
-
-  .appChat {
-    grid-column: 2 !important;
-  }
-
-  .bottomProfileBar {
-    display: none !important;
-  }
-}
-
-
-/* Patch 021: fix profile bar span, server buttons, header menu */
-
-.appShell {
-  display: grid !important;
-  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
-  grid-template-rows: 100vh !important;
-  overflow: hidden;
-}
-
-.appServers {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  height: 100vh;
-  padding: 10px 9px;
-  background: #0b0c0e;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.appSidebar {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  height: 100vh;
-  min-height: 0;
-  display: flex !important;
-  flex-direction: column;
-  padding-bottom: 0 !important;
-  background: #121316;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.appChat {
-  grid-column: 3 !important;
-  grid-row: 1 !important;
-  height: 100vh;
-}
-
-.serverButton {
-  width: 38px;
-  height: 38px;
-  border: 0;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  color: #b5bac1;
-  background: #1e1f22;
-}
-
-.serverButton:hover,
-.homeButton:hover {
-  color: #fff;
-  background: #2b2d31;
-}
-
-.homeButton {
-  color: #fff;
-  background: #1e1f22;
-}
-
-.serverDivider {
-  width: 28px;
-  height: 1px;
-  flex: 0 0 auto;
-  background: rgba(255, 255, 255, 0.12);
-  margin: 0;
-}
-
-.channelList {
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding-bottom: 10px;
-}
-
-.bottomProfileBar {
-  position: static !important;
-  left: auto !important;
-  right: auto !important;
-  bottom: auto !important;
-  height: 52px;
-  flex: 0 0 52px;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) auto !important;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  background: #0f1012;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.bottomProfileSpacer,
-.bottomProfileMain {
-  display: none !important;
-}
-
-.profileIdentityButton {
-  min-width: 0;
-  height: 40px;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: #f5f5f5;
-  text-align: left;
-}
-
-.profileIdentityButton:hover {
-  background: #1e1f22;
-}
-
-.profileAvatarWrap {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-}
-
-.sidebarProfileAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: block;
-  object-fit: cover;
-}
-
-.profileStatusBadge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #0f1012;
-}
-
-.profileStatusBadge .statusCircle {
-  width: 9px;
-  height: 9px;
-}
-
-.bottomProfileActions {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-}
-
-.statusButton,
-.profileSettingsButton {
-  width: 26px;
-  height: 28px;
-  border: 0;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  color: #b5bac1;
-}
-
-.statusButton:hover,
-.profileSettingsButton:hover {
-  color: #fff;
-  background: #1e1f22;
-}
-
-.chatHeaderActions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: #b5bac1;
-}
-
-.chatHeaderActions svg {
-  cursor: pointer;
-}
-
-.chatHeaderActions svg:hover {
-  color: #fff;
-}
-
-.statusMoon {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #f0b232;
-  position: relative;
-  overflow: hidden;
-}
-
-.statusMoon::after {
-  content: "";
-  position: absolute;
-  width: 11px;
-  height: 11px;
-  right: -4px;
-  top: -1px;
-  border-radius: 50%;
-  background: #0f1012;
-}
-
-.statusDnd {
-  width: 12px;
-  height: 12px;
-  border-radius: 50%;
-  background: #ed4245;
-  position: relative;
-}
-
-.statusDnd::after {
-  content: "";
-  position: absolute;
-  left: 2.5px;
-  top: 5px;
-  width: 7px;
-  height: 2px;
-  border-radius: 999px;
-  background: #fff;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 56px 208px minmax(0, 1fr) !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-
-  .appSidebar {
-    display: none !important;
-  }
-
-  .appChat {
-    grid-column: 2 !important;
-  }
-}
-
-
-/* Patch 022: profile spans under server rail, status only on avatar */
-
-.appShell {
-  display: grid !important;
-  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
-  grid-template-rows: minmax(0, 1fr) 52px !important;
-  overflow: hidden;
-}
-
-.appServers {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  height: auto !important;
-}
-
-.appSidebar {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  height: auto !important;
-  padding-bottom: 0 !important;
-}
-
-.appChat {
-  grid-column: 3 !important;
-  grid-row: 1 / 3 !important;
-  height: auto !important;
-}
-
-.bottomProfileBar {
-  grid-column: 1 / 3 !important;
-  grid-row: 2 !important;
-  position: static !important;
-  height: 52px !important;
-  display: grid !important;
-  grid-template-columns: 64px minmax(0, 1fr) !important;
-  align-items: stretch;
-  padding: 0 !important;
-  background: #0f1012 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  z-index: 5;
-}
-
-.bottomProfileLeftPad {
-  background: #0b0c0e;
-  border-right: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.bottomProfileMain {
-  min-width: 0;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 30px;
-  align-items: center;
-  gap: 6px;
-  padding: 0 8px;
-  background: #0f1012;
-}
-
-.bottomProfileActions,
-.statusButton,
-.bottomProfileSpacer {
-  display: none !important;
-}
-
-.profileIdentityButton {
-  min-width: 0;
-  height: 40px;
-  padding: 0 6px;
-  border: 0;
-  border-radius: 6px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: transparent;
-  color: #f5f5f5;
-  text-align: left;
-}
-
-.profileIdentityButton:hover {
-  background: #1e1f22;
-}
-
-.profileAvatarWrap {
-  position: relative;
-  width: 32px;
-  height: 32px;
-  flex: 0 0 auto;
-}
-
-.sidebarProfileAvatar {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  display: block;
-  object-fit: cover;
-}
-
-.profileStatusBadge {
-  position: absolute;
-  right: -2px;
-  bottom: -2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  display: grid;
-  place-items: center;
-  background: #0f1012;
-  cursor: pointer;
-}
-
-.profileStatusBadge:hover {
-  filter: brightness(1.12);
-}
-
-.profileStatusBadge .statusCircle {
-  width: 9px;
-  height: 9px;
-  border-radius: 50%;
-}
-
-.profileStatusBadge.online .statusCircle {
-  background: #23a55a;
-}
-
-.profileSettingsButton {
-  width: 28px;
-  height: 28px;
-  border: 0;
-  border-radius: 5px;
-  display: grid;
-  place-items: center;
-  background: transparent;
-  color: #b5bac1;
-}
-
-.profileSettingsButton:hover {
-  color: #fff;
-  background: #1e1f22;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 56px 208px minmax(0, 1fr) !important;
-  }
-
-  .bottomProfileBar {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-    grid-template-rows: minmax(0, 1fr) !important;
-  }
-
-  .appSidebar,
-  .bottomProfileBar {
-    display: none !important;
-  }
-
-  .appChat {
-    grid-column: 2 !important;
-    grid-row: 1 !important;
-  }
-}
-
-
-/* Patch 024: black screen fix + safe Discord-like bottom profile */
-
-.appShell {
-  position: relative !important;
-  display: grid !important;
-  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
-  grid-template-rows: 100vh !important;
-  width: 100vw !important;
-  height: 100vh !important;
-  min-height: 100vh !important;
-  overflow: hidden !important;
-  background: #0f1012 !important;
-}
-
-.appServers {
-  grid-column: 1 !important;
-  grid-row: 1 !important;
-  height: 100vh !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  align-items: center !important;
-  gap: 10px !important;
-  padding: 10px 9px !important;
-  background: #0b0c0e !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-.appSidebar {
-  grid-column: 2 !important;
-  grid-row: 1 !important;
-  height: 100vh !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  padding-bottom: 52px !important;
-  background: #121316 !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-.appChat {
-  grid-column: 3 !important;
-  grid-row: 1 !important;
-  height: 100vh !important;
-  min-height: 0 !important;
-  display: flex !important;
-  flex-direction: column !important;
-  background: #16171a !important;
-  border-left: 0 !important;
-}
-
-.channelList {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow: auto !important;
-}
-
-.bottomProfileBar {
-  position: absolute !important;
-  left: 0 !important;
-  bottom: 0 !important;
-  width: 296px !important;
-  height: 52px !important;
-  display: grid !important;
-  grid-template-columns: 64px minmax(0, 1fr) !important;
-  padding: 0 !important;
-  background: #0f1012 !important;
-  border-top: 1px solid rgba(255, 255, 255, 0.06) !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-  z-index: 20 !important;
-}
-
-.bottomProfileLeftPad {
-  display: block !important;
-  background: #0b0c0e !important;
-  border-right: 1px solid rgba(255, 255, 255, 0.06) !important;
-}
-
-.bottomProfileMain {
-  min-width: 0 !important;
-  height: 52px !important;
-  display: grid !important;
-  grid-template-columns: minmax(0, 1fr) 30px !important;
-  align-items: center !important;
-  gap: 6px !important;
-  padding: 0 8px !important;
-  background: #0f1012 !important;
-}
-
-.bottomProfileActions,
-.statusButton,
-.bottomProfileSpacer {
-  display: none !important;
-}
-
-.profileIdentityButton {
-  width: 100% !important;
-  min-width: 0 !important;
-  height: 40px !important;
-  padding: 0 6px !important;
-  border: 0 !important;
-  border-radius: 6px !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  background: transparent !important;
-  color: #f5f5f5 !important;
-  text-align: left !important;
-}
-
-.profileIdentityButton:hover {
-  background: #1e1f22 !important;
-}
-
-.profileAvatarWrap {
-  position: relative !important;
-  width: 32px !important;
-  height: 32px !important;
-  flex: 0 0 auto !important;
-}
-
-.sidebarProfileAvatar {
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 50% !important;
-  display: block !important;
-  object-fit: cover !important;
-}
-
-.profileStatusBadge {
-  position: absolute !important;
-  right: -2px !important;
-  bottom: -2px !important;
-  width: 14px !important;
-  height: 14px !important;
-  border-radius: 50% !important;
-  display: grid !important;
-  place-items: center !important;
-  background: #0f1012 !important;
-  cursor: pointer !important;
-}
-
-.profileStatusBadge .statusCircle {
-  width: 9px !important;
-  height: 9px !important;
-  border-radius: 50% !important;
-}
-
-.profileStatusBadge.online .statusCircle {
-  background: #23a55a !important;
-}
-
-.profileSettingsButton {
-  width: 28px !important;
-  height: 28px !important;
-  border: 0 !important;
-  border-radius: 5px !important;
-  display: grid !important;
-  place-items: center !important;
-  background: transparent !important;
-  color: #b5bac1 !important;
-}
-
-.profileSettingsButton:hover {
-  color: #fff !important;
-  background: #1e1f22 !important;
-}
-
-.appChatHeader {
-  flex: 0 0 54px !important;
-}
-
-.appMessages {
-  flex: 1 1 auto !important;
-  min-height: 0 !important;
-  overflow: auto !important;
-}
-
-.messageComposer {
-  position: absolute !important;
-  left: 16px !important;
-  right: 16px !important;
-  bottom: 14px !important;
-  height: 42px !important;
-}
-
-@media (max-width: 1080px) {
-  .appShell {
-    grid-template-columns: 56px 208px minmax(0, 1fr) !important;
-  }
-
-  .bottomProfileBar {
-    width: 264px !important;
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-}
-
-@media (max-width: 760px) {
-  .appShell {
-    grid-template-columns: 56px minmax(0, 1fr) !important;
-  }
-
-  .appSidebar,
-  .bottomProfileBar {
-    display: none !important;
-  }
-
-  .appChat {
-    grid-column: 2 !important;
   }
 }

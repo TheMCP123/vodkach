@@ -7,6 +7,7 @@ import {
   Home,
   LockKeyhole,
   MessageCircle,
+  Phone,
   Search,
   Settings,
   ShieldCheck,
@@ -439,10 +440,6 @@ function WebApp() {
         </button>
 
         <div className="serverDivider" />
-
-        <button className="serverIconButton active" title="Vodkach">
-          <img src="/vodkach.png" alt="Vodkach" draggable="false" />
-        </button>
       </aside>
 
       <aside className="appSidebar">
@@ -465,8 +462,8 @@ function WebApp() {
 
         <nav className="channelList">
           <p>Chats</p>
-          <button className="channelButton active">
-            <MessageCircle size={16} />
+          <button className="channelButton chatUser active">
+            <DefaultAvatar className="chatListAvatar" alt="Test chat avatar" />
             test
           </button>
         </nav>
@@ -479,6 +476,7 @@ function WebApp() {
           </div>
 
           <div className="chatHeaderActions">
+            <Phone size={18} />
             <Bell size={18} />
             <Settings size={18} />
           </div>
@@ -505,35 +503,37 @@ function WebApp() {
       </section>
 
       <div className="bottomProfileBar">
-        <div className="bottomProfileSpacer" />
-
-        <div className="bottomProfileMain">
-          <div className="bottomProfileIdentity">
+        <button className="profileIdentityButton" type="button" title="Profile">
+          <span className="profileAvatarWrap">
             <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
-            <div className="sidebarProfileText">
-              <strong>{currentDisplayName}</strong>
-              <span>@{auth.user.username}</span>
-            </div>
-          </div>
-
-          <div className="bottomProfileActions">
-            <button className="statusButton online" type="button" title="Online" aria-label="Online">
+            <span className="profileStatusBadge online">
               <span className="statusSymbol statusCircle" />
-            </button>
-            <button className="statusButton offline" type="button" title="Offline" aria-label="Offline">
-              <span className="statusSymbol statusCircle" />
-            </button>
-            <button className="statusButton sleeping" type="button" title="Sleeping" aria-label="Sleeping">
-              <span className="statusSymbol statusMoon" />
-            </button>
-            <button className="statusButton dnd" type="button" title="Do not disturb" aria-label="Do not disturb">
-              <span className="statusSymbol statusDnd" />
-            </button>
+            </span>
+          </span>
 
-            <button className="profileSettingsButton" type="button" aria-label="Settings">
-              <Settings size={16} />
-            </button>
-          </div>
+          <span className="sidebarProfileText">
+            <strong>{currentDisplayName}</strong>
+            <span>@{auth.user.username}</span>
+          </span>
+        </button>
+
+        <div className="bottomProfileActions">
+          <button className="statusButton online" type="button" title="Online" aria-label="Online">
+            <span className="statusSymbol statusCircle" />
+          </button>
+          <button className="statusButton offline" type="button" title="Offline" aria-label="Offline">
+            <span className="statusSymbol statusCircle" />
+          </button>
+          <button className="statusButton sleeping" type="button" title="Sleeping" aria-label="Sleeping">
+            <span className="statusSymbol statusMoon" />
+          </button>
+          <button className="statusButton dnd" type="button" title="Do not disturb" aria-label="Do not disturb">
+            <span className="statusSymbol statusDnd" />
+          </button>
+
+          <button className="profileSettingsButton" type="button" aria-label="Settings">
+            <Settings size={16} />
+          </button>
         </div>
       </div>
     </main>

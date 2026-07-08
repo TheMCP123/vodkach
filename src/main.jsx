@@ -5,6 +5,7 @@ import {
   AtSign,
   Bell,
   FileText,
+  Home,
   LockKeyhole,
   MessageCircle,
   Plus,
@@ -434,10 +435,16 @@ function WebApp() {
   return (
     <main className="appShell">
       <aside className="appServers">
-        <div className="appServerLogo">V</div>
-        <button className="serverButton active" title="Vodkach">
-          <MessageCircle size={20} />
+        <button className="serverButton homeButton" title="Home">
+          <Home size={19} />
         </button>
+
+        <div className="serverDivider" />
+
+        <button className="serverIconButton active" title="Vodkach">
+          <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+        </button>
+
         <button className="serverButton" title="Add">
           <Plus size={20} />
         </button>

@@ -309,6 +309,8 @@ function WebApp() {
   const [selectedProfile, setSelectedProfile] = useState(null);
   const [profileDraftInitialized, setProfileDraftInitialized] = useState(false);
   const [turnstileWidgetId, setTurnstileWidgetId] = useState(null);
+  const [captchaStarted, setCaptchaStarted] = useState(false);
+  const [captchaVerified, setCaptchaVerified] = useState(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -424,7 +426,11 @@ function WebApp() {
 
     if (!profileDraftInitialized && data.user) {
       setDisplayName(data.user.username ? (data.user.display_name || "") : "");
-      setAvatarPreview(data.user.avatar_url || "/default-avatar.png");
+      setAvatarPreview(
+        data.user.username
+          ? (data.user.avatar_url || "/default-avatar.png")
+          : "/default-avatar.png"
+      );
       setProfileDraftInitialized(true);
     }
   }
@@ -475,7 +481,7 @@ function WebApp() {
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
   useEffect(() => {
-    if (!turnstileSiteKey || auth.user?.username) return;
+    if (!turnstileSiteKey || auth.user?.username || !captchaStarted) return;
 
     let cancelled = false;
     let attempts = 0;
@@ -497,11 +503,16 @@ function WebApp() {
         sitekey: turnstileSiteKey,
         theme: "dark",
         size: "flexible",
-        callback: () => setFormError(""),
+        callback: () => {
+          setCaptchaVerified(true);
+          setFormError("");
+        },
         "expired-callback": () => {
+          setCaptchaVerified(false);
           setFormError("Cloudflare verification expired. Complete it again.");
         },
         "error-callback": () => {
+          setCaptchaVerified(false);
           setFormError("Cloudflare verification could not load.");
         }
       });
@@ -526,7 +537,7 @@ function WebApp() {
     return () => {
       cancelled = true;
     };
-  }, [turnstileSiteKey, auth.user?.username]);
+  }, [turnstileSiteKey, auth.user?.username, captchaStarted]);
 
   useEffect(() => {
     const user = auth.user;
@@ -632,8 +643,8 @@ function WebApp() {
         ? window.turnstile.getResponse(turnstileWidgetId)
         : "";
 
-    if (turnstileSiteKey && !turnstileToken) {
-      setFormError("Complete the Cloudflare verification");
+    if (turnstileSiteKey && (!captchaStarted || !captchaVerified || !turnstileToken)) {
+      setFormError("Click Verify and complete the Cloudflare check");
       return;
     }
 
@@ -659,6 +670,7 @@ function WebApp() {
       if (turnstileWidgetId !== null && window.turnstile) {
         window.turnstile.reset(turnstileWidgetId);
       }
+      setCaptchaVerified(false);
     } finally {
       setSavingProfile(false);
     }
@@ -936,7 +948,11 @@ function WebApp() {
                   className="avatarClearButton"
                   type="button"
                   title="Clear avatar"
-                  onClick={() => setAvatarPreview("/default-avatar.png")}
+                  onClick={() => {
+                    setAvatarPreview("/default-avatar.png");
+                    const input = document.querySelector(".avatarEditButton input");
+                    if (input) input.value = "";
+                  }}
                 >
                   ×
                 </button>
@@ -976,7 +992,35 @@ function WebApp() {
           </div>
 
           {turnstileSiteKey ? (
-            <div id="vodkach-turnstile" className="turnstileBox" />
+            <div className="captchaSection">
+              {!captchaStarted ? (
+                <button
+                  className="captchaStartButton"
+                  type="button"
+                  onClick={() => {
+                    setCaptchaStarted(true);
+                    setCaptchaVerified(false);
+                    setFormError("");
+                  }}
+                >
+                  <span className="captchaCheckbox" aria-hidden="true" />
+                  <span>
+                    <strong>Verify you are human</strong>
+                    <small>Cloudflare Turnstile</small>
+                  </span>
+                </button>
+              ) : (
+                <>
+                  <div id="vodkach-turnstile" className="turnstileBox" />
+                  {captchaVerified && (
+                    <div className="captchaVerifiedState">
+                      <span>✓</span>
+                      Verification complete
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           ) : (
             <div className="turnstileSetupNotice">
               Turnstile is not configured yet.

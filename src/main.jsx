@@ -1129,26 +1129,31 @@ function AdminApp() {
     return <main className="adminLoginScreen"><div className="adminLoginCard">Loading admin...</div></main>;
   }
 
-  if (!auth.authenticated) {
+  const adminLoginAttempted =
+    new URLSearchParams(window.location.search).get("attempted") === "1";
+
+  if (!auth.admin && !adminLoginAttempted) {
     return (
       <main className="adminLoginScreen">
         <div className="adminLoginCard">
           <img src="/vodkach.png" alt="Vodkach" />
           <h1>Vodkach Admin</h1>
           <p>Sign in with an administrator Google account.</p>
-          <a href="/api/auth/google/start?return_to=/admin">Continue with Google</a>
+          <a href="/api/admin/login">Continue with Google</a>
         </div>
       </main>
     );
   }
 
   if (!auth.admin) {
-    window.setTimeout(() => window.location.replace("/"), 900);
+    window.setTimeout(() => window.location.replace("/"), 1800);
     return (
       <main className="adminLoginScreen">
         <div className="adminLoginCard">
           <h1>Access denied</h1>
-          <p>This Google account is not listed in ADMIN_EMAILS.</p>
+          <p>
+            {auth.user?.email || "This Google account"} is not listed in ADMIN_EMAILS.
+          </p>
         </div>
       </main>
     );

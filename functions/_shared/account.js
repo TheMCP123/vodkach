@@ -2,8 +2,13 @@ import { json } from "./auth.js";
 
 export function getAdminEmails(env) {
   return String(env.ADMIN_EMAILS || "")
-    .split(",")
-    .map((email) => email.trim().toLowerCase())
+    .split(/[;,\n\s]+/)
+    .map((email) =>
+      email
+        .trim()
+        .replace(/^["']|["']$/g, "")
+        .toLowerCase()
+    )
     .filter(Boolean);
 }
 

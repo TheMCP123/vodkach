@@ -85,6 +85,56 @@ export async function onRequestPost(context) {
 
   const username = normalizeUsername(body.username);
   const displayName = normalizeDisplayName(body.display_name ?? body.displayName);
+  const avatarUrl = body.avatar_url ? String(body.avatar_url) : null;
+  const turnstileToken = String(body.turnstile_token || "");
+
+
+  if (env.TURNSTILE_SECRET_KEY) {
+    if (!turnstileToken) {
+      return json({ ok: false, error: "Cloudflare verification is required" }, { status: 400 });
+    }
+
+    const form = new FormData();
+    form.set("secret", env.TURNSTILE_SECRET_KEY);
+    form.set("response", turnstileToken);
+
+    const remoteIp = request.headers.get("CF-Connecting-IP");
+    if (remoteIp) form.set("remoteip", remoteIp);
+
+    const verifyResponse = await fetch(
+      "https://challenges.cloudflare.com/turnstile/v0/siteverify",
+      {
+        method: "POST",
+        body: form
+      }
+    );
+
+    const verification = await verifyResponse.json();
+
+    if (!verification.success) {
+      return json(
+        {
+          ok: false,
+          error: "Cloudflare verification failed"
+        },
+        { status: 400 }
+      );
+    }
+  }
+
+  if (
+    avatarUrl &&
+    (!avatarUrl.startsWith("data:image/webp;base64,") || avatarUrl.length > 750000)
+  ) {
+    return json(
+      {
+        ok: false,
+        field: "avatar",
+        error: "Avatar is invalid or too large"
+      },
+      { status: 400 }
+    );
+  }
 
   const usernameError = validateUsername(username);
   if (usernameError) {
@@ -114,14 +164,20 @@ export async function onRequestPost(context) {
   }
 
   await env.DB.prepare(
-    "UPDATE users SET username = ?, display_name = ?, updated_at = datetime('now') WHERE id = ?"
+    `UPDATE users
+     SET username = ?,
+         display_name = ?,
+         avatar_url = ?,
+         updated_at = datetime('now')
+     WHERE id = ?`
   )
-    .bind(username, displayName, user.id)
+    .bind(username, displayName, avatarUrl, user.id)
     .run();
 
   return json({
     ok: true,
     username,
-    display_name: displayName
+    display_name: displayName,
+    avatar_url: avatarUrl
   });
 }

@@ -464,6 +464,7 @@
               <button class="secondary" data-action="temp-ban" data-user="${escapeHtml(user.id)}">Temp ban</button>
               <button class="danger" data-action="block" data-user="${escapeHtml(user.id)}">Block</button>
               <button data-action="unban" data-user="${escapeHtml(user.id)}">Unban</button>
+              <button class="danger" data-action="delete" data-user="${escapeHtml(user.id)}">Delete account</button>
             </div>
           </article>
         `).join("")
@@ -502,6 +503,10 @@
       if (action === "reject") return post("/api/admin/requests/reject", { user_id: userId });
       if (action === "block") return post("/api/admin/users/block", { user_id: userId });
       if (action === "unban") return post("/api/admin/users/unban", { user_id: userId });
+      if (action === "delete") {
+        if (!confirm("Delete this account and all related data permanently?")) return;
+        return post("/api/admin/users/delete", { user_id: userId });
+      }
       if (action === "unban-email") return post("/api/admin/banned-emails/unban", { email: button.dataset.email });
 
       if (action === "temp-ban") {

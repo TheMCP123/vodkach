@@ -1472,3 +1472,226 @@ h1 {
   font-weight: 900;
   line-height: 1;
 }
+
+
+/* Patch 037: refined account UI, instant updates, profile panel */
+
+.discordStatusIcon.pending {
+  display: none !important;
+}
+
+.refinedCreateCard {
+  width: min(520px, calc(100vw - 32px));
+  padding: 26px;
+}
+
+.createProfileHeader {
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  margin: 18px 0 22px;
+}
+
+.createProfileHeader h1 {
+  margin: 0 0 6px;
+  font-size: 1.55rem;
+}
+
+.createProfileHeader p {
+  margin: 0;
+  font-size: .88rem;
+}
+
+.avatarEditor {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  flex: 0 0 auto;
+}
+
+.createAvatarPreview {
+  width: 82px;
+  height: 82px;
+  border-radius: 18px;
+  display: block;
+  object-fit: cover;
+  background: #101114;
+  border: 1px solid rgba(255,255,255,.08);
+}
+
+.avatarEditButton,
+.avatarClearButton {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border: 3px solid #17181c;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #fc0303;
+}
+
+.avatarEditButton {
+  right: -7px;
+  bottom: -5px;
+}
+
+.avatarEditButton input {
+  display: none;
+}
+
+.avatarClearButton {
+  right: -7px;
+  top: -7px;
+  border: 0;
+  background: #2b2d31;
+  font-size: 1.2rem;
+  line-height: 1;
+}
+
+.customPencilIcon {
+  position: relative;
+  width: 12px;
+  height: 4px;
+  border-radius: 2px;
+  background: currentColor;
+  transform: rotate(-45deg);
+}
+
+.customPencilIcon::after {
+  content: "";
+  position: absolute;
+  right: -3px;
+  top: 0;
+  border-left: 4px solid currentColor;
+  border-top: 2px solid transparent;
+  border-bottom: 2px solid transparent;
+}
+
+.createFields {
+  display: grid;
+  gap: 0;
+}
+
+.turnstileBox {
+  margin: 18px 0 14px;
+  min-height: 65px;
+}
+
+.turnstileSetupNotice {
+  margin: 18px 0 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #ffcc66;
+  background: rgba(255,204,102,.08);
+  border: 1px solid rgba(255,204,102,.14);
+  font-size: .8rem;
+}
+
+.createAccountButton {
+  margin-top: 6px;
+}
+
+.appShell {
+  grid-template-columns: 64px 232px minmax(0, 1fr) 260px !important;
+}
+
+.appChat {
+  grid-column: 3 !important;
+}
+
+.memberProfilePanel {
+  grid-column: 4;
+  grid-row: 1;
+  height: 100vh;
+  overflow: auto;
+  background: #121316;
+  border-left: 1px solid rgba(255,255,255,.06);
+}
+
+.profileBanner {
+  height: 92px;
+  background: linear-gradient(135deg, #251113, #3b1114);
+}
+
+.memberProfileBody {
+  position: relative;
+  padding: 58px 16px 18px;
+}
+
+.memberProfileAvatar {
+  position: absolute;
+  left: 16px;
+  top: -42px;
+  width: 84px;
+  height: 84px;
+  border-radius: 50%;
+  object-fit: cover;
+  background: #1e1f22;
+  border: 6px solid #121316;
+}
+
+.memberProfileBody h2 {
+  margin: 0 0 2px;
+  font-size: 1.1rem;
+}
+
+.memberProfileBody > span {
+  color: #949ba4;
+  font-size: .78rem;
+}
+
+.memberProfileSection {
+  margin-top: 18px;
+  padding-top: 14px;
+  display: grid;
+  gap: 5px;
+  border-top: 1px solid rgba(255,255,255,.06);
+}
+
+.memberProfileSection strong {
+  font-size: .72rem;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.memberProfileSection span {
+  color: #aeb4bc;
+  font-size: .82rem;
+}
+
+.profilePanelEmpty {
+  min-height: 100%;
+  display: grid;
+  place-items: center;
+  padding: 18px;
+  color: #6f747c;
+  text-align: center;
+  font-size: .82rem;
+}
+
+.appMessage {
+  animation: messageIn .14s ease-out;
+}
+
+@keyframes messageIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 1180px) {
+  .appShell {
+    grid-template-columns: 64px 232px minmax(0, 1fr) !important;
+  }
+
+  .memberProfilePanel {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .createProfileHeader {
+    align-items: flex-start;
+  }
+}

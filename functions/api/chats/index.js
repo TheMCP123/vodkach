@@ -30,6 +30,7 @@ export async function onRequestGet(context) {
       other_users.username AS other_username,
       other_users.display_name AS other_display_name,
       other_users.avatar_url AS other_avatar_url,
+      other_users.created_at AS other_created_at,
       latest_messages.id AS latest_message_id,
       latest_messages.sender_user_id AS latest_sender_user_id,
       latest_messages.created_at AS latest_message_created_at
@@ -73,7 +74,8 @@ export async function onRequestGet(context) {
           id: row.other_user_id,
           username: row.other_username,
           display_name: row.other_display_name,
-          avatar_url: row.other_avatar_url
+          avatar_url: row.other_avatar_url,
+          created_at: row.other_created_at
         }
       : null,
     latest_message: row.latest_message_id

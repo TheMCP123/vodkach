@@ -304,6 +304,9 @@ function WebApp() {
   const [chatText, setChatText] = useState("");
   const [busy, setBusy] = useState(false);
   const [uiError, setUiError] = useState("");
+  const [avatarPreview, setAvatarPreview] = useState("");
+  const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
+  const [selectedProfile, setSelectedProfile] = useState(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -327,6 +330,71 @@ function WebApp() {
     return data;
   }
 
+  function getAvatar(user) {
+    return user?.avatar_url || "/default-avatar.png";
+  }
+
+  async function handleAvatarFile(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Choose an image file");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      if (image.width > 1024 || image.height > 1024) {
+        setFormError("Avatar must be 1024×1024 px or smaller");
+        return;
+      }
+
+      const size = Math.min(512, Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext("2d");
+
+      context.fillStyle = "#101114";
+      context.fillRect(0, 0, size, size);
+
+      const scale = Math.max(size / image.width, size / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      context.drawImage(
+        image,
+        (size - width) / 2,
+        (size - height) / 2,
+        width,
+        height
+      );
+
+      setAvatarPreview(canvas.toDataURL("image/webp", 0.82));
+      setFormError("");
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setFormError("Could not read this image");
+    };
+
+    image.src = objectUrl;
+  }
+
+  async function loadTurnstile() {
+    try {
+      const response = await fetch("/api/config/public", { credentials: "include" });
+      const data = await response.json();
+      setTurnstileSiteKey(data.turnstile_site_key || "");
+    } catch {
+      setTurnstileSiteKey("");
+    }
+  }
+
   async function loadMe() {
     const response = await fetch("/api/auth/me", { credentials: "include" });
     const data = await response.json();
@@ -339,6 +407,7 @@ function WebApp() {
 
     if (data.user?.username) setUsername(data.user.username);
     if (data.user?.display_name) setDisplayName(data.user.display_name);
+    if (data.user?.avatar_url) setAvatarPreview(data.user.avatar_url);
   }
 
   async function loadSocial() {
@@ -365,6 +434,41 @@ function WebApp() {
       setAuth({ loading: false, authenticated: false, user: null });
     });
   }, []);
+
+  useEffect(() => {
+    if (!auth.authenticated) return;
+
+    const timer = window.setInterval(() => {
+      loadMe().catch(() => {});
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, [auth.authenticated]);
+
+  useEffect(() => {
+    if (
+      auth.authenticated &&
+      auth.user?.access_status === "approved" &&
+      !auth.user?.username
+    ) {
+      loadTurnstile();
+    }
+  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
+
+  useEffect(() => {
+    if (!turnstileSiteKey || auth.user?.username) return;
+
+    const existing = document.querySelector('script[data-vodkach-turnstile="1"]');
+
+    if (!existing) {
+      const script = document.createElement("script");
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.async = true;
+      script.defer = true;
+      script.dataset.vodkachTurnstile = "1";
+      document.head.appendChild(script);
+    }
+  }, [turnstileSiteKey, auth.user?.username]);
 
   useEffect(() => {
     const user = auth.user;
@@ -408,11 +512,37 @@ function WebApp() {
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
   useEffect(() => {
+    if (
+      !auth.authenticated ||
+      auth.user?.access_status !== "approved" ||
+      !auth.user?.username
+    ) {
+      return;
+    }
+
+    const timer = window.setInterval(() => {
+      loadSocial().catch(() => {});
+    }, 2000);
+
+    return () => window.clearInterval(timer);
+  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
+
+  useEffect(() => {
     if (!activeChat?.id) {
       setMessages([]);
       return;
     }
     loadMessages(activeChat).catch((error) => setUiError(error.message));
+  }, [activeChat?.id]);
+
+  useEffect(() => {
+    if (!activeChat?.id) return;
+
+    const timer = window.setInterval(() => {
+      loadMessages(activeChat).catch(() => {});
+    }, 1000);
+
+    return () => window.clearInterval(timer);
   }, [activeChat?.id]);
 
   useEffect(() => {
@@ -438,6 +568,15 @@ function WebApp() {
   async function saveProfile(event) {
     event.preventDefault();
     setFormError("");
+
+    const turnstileToken =
+      event.currentTarget.querySelector('[name="cf-turnstile-response"]')?.value || "";
+
+    if (turnstileSiteKey && !turnstileToken) {
+      setFormError("Complete the Cloudflare verification");
+      return;
+    }
+
     setSavingProfile(true);
 
     try {
@@ -445,7 +584,9 @@ function WebApp() {
         method: "POST",
         body: JSON.stringify({
           username,
-          display_name: displayName
+          display_name: displayName,
+          avatar_url: avatarPreview || null,
+          turnstile_token: turnstileToken
         })
       });
       await loadMe();
@@ -538,6 +679,22 @@ function WebApp() {
     setBusy(true);
     setUiError("");
 
+    const clientMessageId = crypto.randomUUID();
+    const optimisticMessage = {
+      id: `optimistic_${clientMessageId}`,
+      chat_id: activeChat.id,
+      sender_user_id: auth.user.id,
+      client_message_id: clientMessageId,
+      body_ciphertext: text,
+      body_algorithm: "plain-v0",
+      created_at: new Date().toISOString(),
+      sender: auth.user,
+      optimistic: true
+    };
+
+    setMessages((current) => [...current, optimisticMessage]);
+    setChatText("");
+
     try {
       await api("/api/messages", {
         method: "POST",
@@ -545,14 +702,16 @@ function WebApp() {
           chat_id: activeChat.id,
           body_ciphertext: text,
           body_algorithm: "plain-v0",
-          client_message_id: crypto.randomUUID(),
+          client_message_id: clientMessageId,
           sender_device_id: localStorage.getItem(DEVICE_ID_KEY) || null
         })
       });
 
-      setChatText("");
       await Promise.all([loadMessages(activeChat), loadSocial()]);
     } catch (error) {
+      setMessages((current) =>
+        current.filter((message) => message.id !== `optimistic_${clientMessageId}`)
+      );
       setUiError(error.message);
     } finally {
       setBusy(false);
@@ -601,10 +760,7 @@ function WebApp() {
             <img src="/vodkach.png" alt="Vodkach" draggable="false" />
             <span>Vodkach</span>
           </div>
-          <div className="discordStatusIcon pending">
-            <span aria-hidden="true">…</span>
-          </div>
-          <h1>Pending approval</h1>
+<h1>Pending approval</h1>
           <p>Your request was sent. Access must be approved before account creation.</p>
           <div className="discordAccountBox">
             <span>Signed in as</span>
@@ -685,43 +841,89 @@ function WebApp() {
   if (!auth.user?.username) {
     return (
       <main className="authScreen discordAuthScreen">
-        <form className="discordAuthCard accountCreateCard" onSubmit={saveProfile}>
+        <form className="discordAuthCard accountCreateCard refinedCreateCard" onSubmit={saveProfile}>
           <div className="discordAuthBrand">
             <img src="/vodkach.png" alt="Vodkach" draggable="false" />
             <span>Vodkach</span>
           </div>
-          <DefaultAvatar className="setupAvatar discordSetupAvatar" alt="Default profile avatar" />
-          <h1>Create your account</h1>
-          <p>Your access was approved. Choose your public identity.</p>
 
-          <label className="discordFieldLabel">Username</label>
-          <label className="discordInput">
-            <span>@</span>
-            <input
-              value={username}
-              onChange={(event) => setUsername(event.target.value)}
-              placeholder="username"
-              minLength={1}
-              maxLength={16}
-              autoFocus
-            />
-          </label>
-          <div className="discordFieldHint">A–Z, 0–9, underscore, dot. 1–16 characters.</div>
+          <div className="createProfileHeader">
+            <div className="avatarEditor">
+              <img
+                className="createAvatarPreview"
+                src={avatarPreview || "/default-avatar.png"}
+                alt="Profile avatar"
+              />
 
-          <label className="discordFieldLabel">Display Name</label>
-          <label className="discordInput">
-            <input
-              value={displayName}
-              onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Display name"
-              minLength={1}
-              maxLength={16}
+              <label className="avatarEditButton" title="Upload avatar">
+                <span className="customPencilIcon" aria-hidden="true" />
+                <input
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp,image/gif"
+                  onChange={(event) => handleAvatarFile(event.target.files?.[0])}
+                />
+              </label>
+
+              {avatarPreview && (
+                <button
+                  className="avatarClearButton"
+                  type="button"
+                  title="Clear avatar"
+                  onClick={() => setAvatarPreview("")}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+
+            <div>
+              <h1>Create your account</h1>
+              <p>Choose how people will see you in Vodkach.</p>
+            </div>
+          </div>
+
+          <div className="createFields">
+            <label className="discordFieldLabel">Username</label>
+            <label className="discordInput">
+              <span>@</span>
+              <input
+                value={username}
+                onChange={(event) => setUsername(event.target.value)}
+                placeholder="username"
+                minLength={1}
+                maxLength={16}
+                autoFocus
+              />
+            </label>
+
+            <label className="discordFieldLabel">Display Name</label>
+            <label className="discordInput">
+              <input
+                value={displayName}
+                onChange={(event) => setDisplayName(event.target.value)}
+                placeholder="Display name"
+                minLength={1}
+                maxLength={16}
+              />
+            </label>
+          </div>
+
+          {turnstileSiteKey ? (
+            <div
+              className="cf-turnstile turnstileBox"
+              data-sitekey={turnstileSiteKey}
+              data-theme="dark"
+              data-size="flexible"
             />
-          </label>
+          ) : (
+            <div className="turnstileSetupNotice">
+              Turnstile is not configured yet.
+            </div>
+          )}
 
           {formError && <div className="formError">{formError}</div>}
 
-          <button className="discordPrimaryButton" type="submit" disabled={savingProfile}>
+          <button className="discordPrimaryButton createAccountButton" type="submit" disabled={savingProfile}>
             {savingProfile ? "Creating..." : "Create account"}
           </button>
         </form>
@@ -781,7 +983,7 @@ function WebApp() {
                 setView("chat");
               }}
             >
-              <DefaultAvatar className="chatListAvatar" alt="Chat avatar" />
+              <img className="chatListAvatar" src={getAvatar(chat.other_user)} alt="Chat avatar" />
               <span>
                 {chat.other_user?.display_name ||
                   chat.other_user?.username ||
@@ -795,7 +997,7 @@ function WebApp() {
         <div className="bottomProfileBar">
           <button className="profileIdentityButton" type="button" title="Profile">
             <span className="profileAvatarWrap">
-              <DefaultAvatar className="sidebarProfileAvatar" alt="Profile avatar" />
+              <img className="sidebarProfileAvatar" src={getAvatar(auth.user)} alt="Profile avatar" />
               <span className="profileStatusBadge online" title="Online">
                 <span className="statusSymbol statusCircle" />
               </span>
@@ -877,7 +1079,7 @@ function WebApp() {
 
                       return (
                         <div className="socialRow" key={user.id}>
-                          <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                          <img className="socialAvatar" src={getAvatar(user)} alt="User avatar" />
                           <div className="socialIdentity">
                             <strong>{user.display_name || user.username}</strong>
                             <span>@{user.username}</span>
@@ -911,7 +1113,7 @@ function WebApp() {
                   <div className="socialList">
                     {incoming.map((request) => (
                       <div className="socialRow" key={request.id}>
-                        <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                        <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
                           <strong>{request.display_name || request.username}</strong>
                           <span>@{request.username}</span>
@@ -938,7 +1140,7 @@ function WebApp() {
 
                     {outgoing.map((request) => (
                       <div className="socialRow" key={request.id}>
-                        <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                        <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
                           <strong>{request.display_name || request.username}</strong>
                           <span>@{request.username}</span>
@@ -963,7 +1165,7 @@ function WebApp() {
                     )}
                     {friends.map((friend) => (
                       <div className="socialRow" key={friend.id}>
-                        <DefaultAvatar className="socialAvatar" alt="Friend avatar" />
+                        <img className="socialAvatar" src={getAvatar(friend)} alt="Friend avatar" />
                         <div className="socialIdentity">
                           <strong>{friend.display_name || friend.username}</strong>
                           <span>@{friend.username}</span>
@@ -993,7 +1195,7 @@ function WebApp() {
             <div className="appMessages">
               {messages.length === 0 && (
                 <div className="chatStart">
-                  <DefaultAvatar className="chatStartAvatar" alt="Chat avatar" />
+                  <img className="chatStartAvatar" src={getAvatar(activeChat?.other_user)} alt="Chat avatar" />
                   <h2>{activeTitle}</h2>
                   <p>This is the beginning of your direct chat.</p>
                 </div>
@@ -1039,6 +1241,37 @@ function WebApp() {
           </button>
         )}
       </section>
+
+      <aside className="memberProfilePanel">
+        {activeChat?.other_user ? (
+          <>
+            <div className="profileBanner" />
+            <div className="memberProfileBody">
+              <img
+                className="memberProfileAvatar"
+                src={getAvatar(activeChat.other_user)}
+                alt="Profile avatar"
+              />
+              <h2>
+                {activeChat.other_user.display_name ||
+                  activeChat.other_user.username}
+              </h2>
+              <span>@{activeChat.other_user.username}</span>
+
+              <div className="memberProfileSection">
+                <strong>Account Created</strong>
+                <span>
+                  {activeChat.other_user.created_at
+                    ? new Date(activeChat.other_user.created_at).toLocaleDateString()
+                    : "Unknown"}
+                </span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="profilePanelEmpty">Open a chat to view profile</div>
+        )}
+      </aside>
     </main>
   );
 }
@@ -1068,6 +1301,71 @@ function AdminApp() {
       throw new Error(data.error || `Request failed (${response.status})`);
     }
     return data;
+  }
+
+  function getAvatar(user) {
+    return user?.avatar_url || "/default-avatar.png";
+  }
+
+  async function handleAvatarFile(file) {
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      setFormError("Choose an image file");
+      return;
+    }
+
+    const objectUrl = URL.createObjectURL(file);
+    const image = new Image();
+
+    image.onload = () => {
+      URL.revokeObjectURL(objectUrl);
+
+      if (image.width > 1024 || image.height > 1024) {
+        setFormError("Avatar must be 1024×1024 px or smaller");
+        return;
+      }
+
+      const size = Math.min(512, Math.max(image.width, image.height));
+      const canvas = document.createElement("canvas");
+      canvas.width = size;
+      canvas.height = size;
+      const context = canvas.getContext("2d");
+
+      context.fillStyle = "#101114";
+      context.fillRect(0, 0, size, size);
+
+      const scale = Math.max(size / image.width, size / image.height);
+      const width = image.width * scale;
+      const height = image.height * scale;
+      context.drawImage(
+        image,
+        (size - width) / 2,
+        (size - height) / 2,
+        width,
+        height
+      );
+
+      setAvatarPreview(canvas.toDataURL("image/webp", 0.82));
+      setFormError("");
+    };
+
+    image.onerror = () => {
+      URL.revokeObjectURL(objectUrl);
+      setFormError("Could not read this image");
+    };
+
+    image.src = objectUrl;
+  }
+
+  async function loadTurnstile() {
+    try {
+      const response = await fetch("/api/config/public", { credentials: "include" });
+      const data = await response.json();
+      setTurnstileSiteKey(data.turnstile_site_key || "");
+    } catch {
+      setTurnstileSiteKey("");
+    }
   }
 
   async function loadMe() {

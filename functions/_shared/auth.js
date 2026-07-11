@@ -137,6 +137,12 @@ export async function getCurrentUser(request, env) {
       users.username,
       users.display_name,
       users.avatar_url,
+      users.access_status,
+      users.requested_at,
+      users.approved_at,
+      users.approved_by,
+      users.rejected_at,
+      users.disabled_at,
       users.created_at
     FROM sessions
     JOIN users ON users.id = sessions.user_id

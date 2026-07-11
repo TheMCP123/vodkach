@@ -114,8 +114,10 @@ export async function onRequestGet(context) {
         email,
         email_verified,
         display_name,
-        avatar_url
-      ) VALUES (?, ?, ?, ?, ?, ?)`
+        avatar_url,
+        access_status,
+        requested_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now'))`
     )
       .bind(userId, profile.sub, profile.email, emailVerified, displayName, avatarUrl)
       .run();

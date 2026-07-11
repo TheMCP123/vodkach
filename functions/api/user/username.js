@@ -1,4 +1,5 @@
 import { getCurrentUser, json } from "../../_shared/auth.js";
+import { requireApprovedUser } from "../../_shared/account.js";
 
 const USERNAME_REGEX = /^[A-Za-z0-9_.]{1,16}$/;
 const DISPLAY_NAME_MAX_LENGTH = 16;

@@ -31,6 +31,17 @@ export async function onRequestGet(context) {
       other_users.display_name AS other_display_name,
       other_users.avatar_url AS other_avatar_url,
       other_users.verified AS other_verified,
+      other_users.pronouns AS other_pronouns,
+      other_users.bio AS other_bio,
+      other_users.status_preference AS other_status_preference,
+      other_users.last_seen_at AS other_last_seen_at,
+      CASE
+        WHEN other_users.status_preference = 'offline' THEN 'offline'
+        WHEN other_users.last_seen_at IS NOT NULL
+          AND datetime(other_users.last_seen_at) >= datetime('now', '-70 seconds')
+          THEN other_users.status_preference
+        ELSE 'offline'
+      END AS other_effective_status,
       other_users.created_at AS other_created_at,
       latest_messages.id AS latest_message_id,
       latest_messages.sender_user_id AS latest_sender_user_id,
@@ -77,6 +88,11 @@ export async function onRequestGet(context) {
           display_name: row.other_display_name,
           avatar_url: row.other_avatar_url,
           verified: Boolean(row.other_verified),
+          pronouns: row.other_pronouns,
+          bio: row.other_bio,
+          status_preference: row.other_status_preference,
+          last_seen_at: row.other_last_seen_at,
+          effective_status: row.other_effective_status || "offline",
           created_at: row.other_created_at
         }
       : null,

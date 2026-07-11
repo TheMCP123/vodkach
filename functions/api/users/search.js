@@ -36,7 +36,18 @@ export async function onRequestGet(context) {
       username,
       display_name,
       avatar_url,
-      verified
+      verified,
+      pronouns,
+      bio,
+      status_preference,
+      last_seen_at,
+      CASE
+        WHEN status_preference = 'offline' THEN 'offline'
+        WHEN last_seen_at IS NOT NULL
+          AND datetime(last_seen_at) >= datetime('now', '-70 seconds')
+          THEN status_preference
+        ELSE 'offline'
+      END AS effective_status
     FROM users
     WHERE username IS NOT NULL
       AND access_status = 'approved'

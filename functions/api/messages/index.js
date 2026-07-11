@@ -95,6 +95,17 @@ export async function onRequestGet(context) {
         users.display_name AS sender_display_name,
         users.avatar_url AS sender_avatar_url,
         users.verified AS sender_verified,
+        users.pronouns AS sender_pronouns,
+        users.bio AS sender_bio,
+        users.status_preference AS sender_status_preference,
+        users.last_seen_at AS sender_last_seen_at,
+        CASE
+          WHEN users.status_preference = 'offline' THEN 'offline'
+          WHEN users.last_seen_at IS NOT NULL
+            AND datetime(users.last_seen_at) >= datetime('now', '-70 seconds')
+            THEN users.status_preference
+          ELSE 'offline'
+        END AS sender_effective_status,
         reply_messages.body_ciphertext AS reply_text,
         reply_users.display_name AS reply_sender_display_name,
         reply_users.username AS reply_sender_username
@@ -126,6 +137,17 @@ export async function onRequestGet(context) {
         users.display_name AS sender_display_name,
         users.avatar_url AS sender_avatar_url,
         users.verified AS sender_verified,
+        users.pronouns AS sender_pronouns,
+        users.bio AS sender_bio,
+        users.status_preference AS sender_status_preference,
+        users.last_seen_at AS sender_last_seen_at,
+        CASE
+          WHEN users.status_preference = 'offline' THEN 'offline'
+          WHEN users.last_seen_at IS NOT NULL
+            AND datetime(users.last_seen_at) >= datetime('now', '-70 seconds')
+            THEN users.status_preference
+          ELSE 'offline'
+        END AS sender_effective_status,
         reply_messages.body_ciphertext AS reply_text,
         reply_users.display_name AS reply_sender_display_name,
         reply_users.username AS reply_sender_username
@@ -173,7 +195,12 @@ export async function onRequestGet(context) {
       username: row.sender_username,
       display_name: row.sender_display_name,
       avatar_url: row.sender_avatar_url,
-      verified: Boolean(row.sender_verified)
+      verified: Boolean(row.sender_verified),
+      pronouns: row.sender_pronouns,
+      bio: row.sender_bio,
+      status_preference: row.sender_status_preference,
+      last_seen_at: row.sender_last_seen_at,
+      effective_status: row.sender_effective_status || "offline"
     }
   }));
 

@@ -283,6 +283,73 @@ function Landing() {
 
 
 
+
+function ReplyActionIcon() {
+  return (
+    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M9.2 7.2 4.5 12l4.7 4.8" />
+      <path d="M5 12h7.4c4.2 0 6.6 2.1 7.1 5.8-.9-2-2.8-3-5.8-3H9.8" />
+    </svg>
+  );
+}
+
+function EditActionIcon() {
+  return (
+    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="m5 17.8.8-4.1L15.9 3.6a2 2 0 0 1 2.8 0l1.7 1.7a2 2 0 0 1 0 2.8L10.3 18.2 6.2 19Z" />
+      <path d="m14.4 5.1 4.5 4.5" />
+    </svg>
+  );
+}
+
+function DeleteActionIcon() {
+  return (
+    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4.5 7h15" />
+      <path d="M9 7V4.8h6V7" />
+      <path d="m7 7 .8 12h8.4L17 7" />
+      <path d="M10 10.5v5.5M14 10.5v5.5" />
+    </svg>
+  );
+}
+
+function StatusGlyph({ status }) {
+  if (status === "sleeping") {
+    return <span className="statusMoon" aria-hidden="true" />;
+  }
+
+  if (status === "dnd") {
+    return <span className="statusDnd" aria-hidden="true">−</span>;
+  }
+
+  return <span className={`statusDot ${status || "offline"}`} aria-hidden="true" />;
+}
+
+function parseServerDate(value) {
+  if (!value) return new Date(NaN);
+  const normalized =
+    typeof value === "string" &&
+    !/[zZ]|[+-]\d\d:\d\d$/.test(value)
+      ? `${value.replace(" ", "T")}Z`
+      : value;
+  return new Date(normalized);
+}
+
+function formatLocalTime(value) {
+  const date = parseServerDate(value);
+  if (!Number.isFinite(date.getTime())) return "";
+  return date.toLocaleTimeString([], {
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function formatLocalDate(value) {
+  const date = parseServerDate(value);
+  if (!Number.isFinite(date.getTime())) return "Unknown";
+  return date.toLocaleDateString();
+}
+
 function VerifiedBadge({ className = "" }) {
   return (
     <span
@@ -332,6 +399,13 @@ function WebApp() {
   const [soundEnabled, setSoundEnabled] = useState(
     localStorage.getItem("vodkach_message_sound") !== "off"
   );
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    pronouns: "",
+    bio: ""
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
   const [uiError, setUiError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
@@ -346,6 +420,7 @@ function WebApp() {
   const notificationsReadyRef = useRef(false);
   const messageAudioRef = useRef(null);
   const sendingMessageRef = useRef(false);
+  const draftHydratingRef = useRef(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -617,6 +692,13 @@ function WebApp() {
       setUsername(data.user.username);
     }
 
+    if (data.user) {
+      setProfileForm({
+        pronouns: data.user.pronouns || "",
+        bio: data.user.bio || ""
+      });
+    }
+
     if (!profileDraftInitialized && data.user) {
       setDisplayName(data.user.username ? (data.user.display_name || "") : "");
       setAvatarPreview(
@@ -767,6 +849,55 @@ function WebApp() {
 
   useEffect(() => {
     if (
+      !auth.authenticated ||
+      auth.user?.access_status !== "approved" ||
+      !auth.user?.username
+    ) {
+      return;
+    }
+
+    let stopped = false;
+
+    async function heartbeat() {
+      if (stopped) return;
+
+      try {
+        const data = await api("/api/presence/heartbeat", {
+          method: "POST",
+          body: JSON.stringify({})
+        });
+
+        setAuth((current) => ({
+          ...current,
+          user: current.user
+            ? {
+                ...current.user,
+                effective_status: data.effective_status,
+                last_seen_at: data.last_seen_at
+              }
+            : current.user
+        }));
+      } catch {
+        // Presence failures must not break the app.
+      }
+    }
+
+    heartbeat();
+    const timer = window.setInterval(heartbeat, 25000);
+
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+    };
+  }, [
+    auth.authenticated,
+    auth.user?.access_status,
+    auth.user?.username,
+    auth.user?.status_preference
+  ]);
+
+  useEffect(() => {
+    if (
       auth.authenticated &&
       auth.user?.access_status === "approved" &&
       !auth.user?.username
@@ -910,6 +1041,66 @@ function WebApp() {
   }, [activeChat?.id]);
 
   useEffect(() => {
+    if (!activeChat?.id) {
+      setChatText("");
+      setEditingMessage(null);
+      setReplyingTo(null);
+      return;
+    }
+
+    draftHydratingRef.current = true;
+
+    try {
+      const raw = localStorage.getItem(getDraftKey(activeChat.id));
+      const draft = raw ? JSON.parse(raw) : null;
+
+      setChatText(draft?.text || "");
+
+      const editTarget = draft?.editingMessageId
+        ? messages.find((message) => message.id === draft.editingMessageId)
+        : null;
+      const replyTarget = draft?.replyingToId
+        ? messages.find((message) => message.id === draft.replyingToId)
+        : null;
+
+      setEditingMessage(editTarget || null);
+      setReplyingTo(replyTarget || null);
+    } catch {
+      setChatText("");
+      setEditingMessage(null);
+      setReplyingTo(null);
+    }
+
+    queueMicrotask(() => {
+      draftHydratingRef.current = false;
+    });
+  }, [activeChat?.id]);
+
+  useEffect(() => {
+    if (draftHydratingRef.current || !activeChat?.id) return;
+    persistCurrentDraft();
+  }, [
+    chatText,
+    editingMessage?.id,
+    replyingTo?.id,
+    activeChat?.id
+  ]);
+
+  useEffect(() => {
+    function persistBeforeLeave() {
+      persistCurrentDraft();
+    }
+
+    window.addEventListener("beforeunload", persistBeforeLeave);
+    document.addEventListener("visibilitychange", persistBeforeLeave);
+
+    return () => {
+      window.removeEventListener("beforeunload", persistBeforeLeave);
+      document.removeEventListener("visibilitychange", persistBeforeLeave);
+    };
+  }, [chatText, editingMessage?.id, replyingTo?.id, activeChat?.id]);
+
+  useEffect(() => {
     const query = searchQuery.trim().replace(/^@+/, "");
 
     if (!query || friendsTab !== "add") {
@@ -1045,6 +1236,84 @@ function WebApp() {
     }
   }
 
+  async function updateStatus(status) {
+    setStatusMenuOpen(false);
+
+    try {
+      const data = await api("/api/presence/status", {
+        method: "POST",
+        body: JSON.stringify({ status })
+      });
+
+      setAuth((current) => ({
+        ...current,
+        user: current.user
+          ? {
+              ...current.user,
+              status_preference: data.status_preference,
+              effective_status: data.effective_status
+            }
+          : current.user
+      }));
+
+      loadSocial().catch(() => {});
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function saveProfileSettings(event) {
+    event.preventDefault();
+    setSavingSettings(true);
+    setUiError("");
+
+    try {
+      const data = await api("/api/user/profile", {
+        method: "POST",
+        body: JSON.stringify(profileForm)
+      });
+
+      setAuth((current) => ({
+        ...current,
+        user: current.user
+          ? {
+              ...current.user,
+              pronouns: data.pronouns,
+              bio: data.bio
+            }
+          : current.user
+      }));
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setSavingSettings(false);
+    }
+  }
+
+  function getDraftKey(chatId) {
+    return chatId ? `vodkach_draft_${auth.user?.id || "user"}_${chatId}` : null;
+  }
+
+  function persistCurrentDraft(nextText = chatText, nextEditing = editingMessage, nextReply = replyingTo) {
+    const key = getDraftKey(activeChat?.id);
+    if (!key) return;
+
+    const payload = {
+      text: nextText,
+      editingMessageId: nextEditing?.id || null,
+      editingOriginalText: nextEditing?.body_ciphertext || null,
+      replyingToId: nextReply?.id || null,
+      updatedAt: Date.now()
+    };
+
+    if (!payload.text && !payload.editingMessageId && !payload.replyingToId) {
+      localStorage.removeItem(key);
+      return;
+    }
+
+    localStorage.setItem(key, JSON.stringify(payload));
+  }
+
   async function deleteMessage(message) {
     setMessageMenu(null);
 
@@ -1090,6 +1359,9 @@ function WebApp() {
           body_ciphertext: text
         })
       });
+
+      const draftKey = getDraftKey(target.chat_id || activeChat?.id);
+      if (draftKey) localStorage.removeItem(draftKey);
 
       setMessages((current) =>
         current.map((message) =>
@@ -1188,6 +1460,9 @@ function WebApp() {
           reply_to_message_id: replyingTo?.id || null
         })
       });
+
+      const draftKey = getDraftKey(chatId);
+      if (draftKey) localStorage.removeItem(draftKey);
 
       if (data.message) {
         setMessages((current) =>
@@ -1660,9 +1935,17 @@ function WebApp() {
           <button className="profileIdentityButton" type="button" title="Profile">
             <span className="profileAvatarWrap">
               <img className="sidebarProfileAvatar" src={getAvatar(auth.user)} alt="Profile avatar" />
-              <span className="profileStatusBadge online" title="Online">
-                <span className="statusSymbol statusCircle" />
-              </span>
+              <button
+                className={`profileStatusBadge ${auth.user.effective_status || "offline"}`}
+                type="button"
+                aria-label="Change status"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  setStatusMenuOpen((open) => !open);
+                }}
+              >
+                <StatusGlyph status={auth.user.effective_status || "offline"} />
+              </button>
             </span>
 
             <span className="sidebarProfileText">
@@ -1674,11 +1957,37 @@ function WebApp() {
             </span>
           </button>
 
+          {statusMenuOpen && (
+            <div
+              className="statusPicker"
+              onClick={(event) => event.stopPropagation()}
+            >
+              {[
+                ["online", "Online"],
+                ["sleeping", "Sleeping"],
+                ["dnd", "Do Not Disturb"],
+                ["offline", "Invisible"]
+              ].map(([value, label]) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={
+                    auth.user.status_preference === value ? "active" : ""
+                  }
+                  onClick={() => updateStatus(value)}
+                >
+                  <StatusGlyph status={value} />
+                  <span>{label}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
           <button
             className="profileSettingsButton"
             type="button"
             aria-label="Settings"
-            onClick={() => setView("settings")}
+            onClick={() => setSettingsOpen(true)}
           >
             <Settings size={16} />
           </button>
@@ -1870,86 +2179,9 @@ function WebApp() {
           </>
         )}
 
-        {view === "settings" && (
-          <section className="settingsPage">
-            <aside className="settingsNav">
-              <h2>User Settings</h2>
-              <button
-                className={settingsTab === "account" ? "active" : ""}
-                type="button"
-                onClick={() => setSettingsTab("account")}
-              >
-                My Account
-              </button>
-              <button
-                className={settingsTab === "notifications" ? "active" : ""}
-                type="button"
-                onClick={() => setSettingsTab("notifications")}
-              >
-                Notifications
-              </button>
-            </aside>
-
-            <div className="settingsContent">
-              {settingsTab === "account" && (
-                <>
-                  <h1>My Account</h1>
-                  <div className="settingsAccountCard">
-                    <img src={getAvatar(auth.user)} alt="Profile avatar" />
-                    <div>
-                      <strong className="nameWithBadge">
-                        <span className="displayNameText">{currentDisplayName}</span>
-                        {auth.user.verified ? <VerifiedBadge /> : null}
-                      </strong>
-                      <span>@{auth.user.username}</span>
-                      <small>{auth.user.email}</small>
-                    </div>
-                  </div>
-                  <button className="settingsDangerButton" type="button" onClick={logout}>
-                    Sign Out
-                  </button>
-                </>
-              )}
-
-              {settingsTab === "notifications" && (
-                <>
-                  <h1>Notifications</h1>
-                  <label className="settingsToggleRow">
-                    <div>
-                      <strong>Message sounds</strong>
-                      <span>Play a sound for incoming messages outside the active chat.</span>
-                    </div>
-                    <input
-                      type="checkbox"
-                      checked={soundEnabled}
-                      onChange={(event) => {
-                        const enabled = event.target.checked;
-                        setSoundEnabled(enabled);
-                        localStorage.setItem(
-                          "vodkach_message_sound",
-                          enabled ? "on" : "off"
-                        );
-                      }}
-                    />
-                  </label>
-                </>
-              )}
-            </div>
-          </section>
-        )}
-
         {view === "chat" && activeChat && (
           <>
-            <header className="appChatHeader">
-              <div className="chatHeaderIdentity">
-                <strong className="nameWithBadge">
-                  <span className="displayNameText">{activeTitle}</span>
-                  {activeChat.other_user?.verified ? <VerifiedBadge /> : null}
-                </strong>
-                {activeChat.other_user?.username ? (
-                  <span>@{activeChat.other_user.username}</span>
-                ) : null}
-              </div>
+            <header className="appChatHeader chatHeaderActionsOnly">
               <div className="chatHeaderActions">
                 <Phone size={18} />
                 <MoreVertical size={19} />
@@ -1973,10 +2205,7 @@ function WebApp() {
                   avatarUrl={getAvatar(message.sender)}
                   name={message.sender?.display_name || message.sender?.username || "User"}
                   verified={Boolean(message.sender?.verified)}
-                  time={new Date(message.created_at).toLocaleTimeString([], {
-                    hour: "2-digit",
-                    minute: "2-digit"
-                  })}
+                  time={formatLocalTime(message.created_at)}
                   text={message.deleted_at ? "Message deleted" : message.body_ciphertext}
                   onContextMenu={(event) => {
                     event.preventDefault();
@@ -2061,7 +2290,8 @@ function WebApp() {
             onClick={(event) => event.stopPropagation()}
           >
             <button type="button" onClick={() => beginReply(messageMenu.message)}>
-              Reply
+              <ReplyActionIcon />
+              <span>Reply</span>
             </button>
 
             {messageMenu.message.sender_user_id === auth.user.id &&
@@ -2070,7 +2300,8 @@ function WebApp() {
                   type="button"
                   onClick={() => beginEdit(messageMenu.message)}
                 >
-                  Edit
+                  <EditActionIcon />
+                  <span>Edit</span>
                 </button>
               )}
 
@@ -2079,8 +2310,153 @@ function WebApp() {
               type="button"
               onClick={() => deleteMessage(messageMenu.message)}
             >
-              Delete For Everyone
+              <DeleteActionIcon />
+              <span>Delete For Everyone</span>
             </button>
+          </div>
+        )}
+
+        {settingsOpen && (
+          <div className="settingsOverlay" role="dialog" aria-modal="true">
+            <div className="settingsModal">
+              <aside className="settingsModalNav">
+                <div className="settingsNavUser">
+                  <img src={getAvatar(auth.user)} alt="Profile avatar" />
+                  <div>
+                    <strong>{currentDisplayName}</strong>
+                    <span>@{auth.user.username}</span>
+                  </div>
+                </div>
+
+                <h2>User Settings</h2>
+                <button
+                  className={settingsTab === "account" ? "active" : ""}
+                  type="button"
+                  onClick={() => setSettingsTab("account")}
+                >
+                  My Account
+                </button>
+                <button
+                  className={settingsTab === "profile" ? "active" : ""}
+                  type="button"
+                  onClick={() => setSettingsTab("profile")}
+                >
+                  Profiles
+                </button>
+                <button
+                  className={settingsTab === "notifications" ? "active" : ""}
+                  type="button"
+                  onClick={() => setSettingsTab("notifications")}
+                >
+                  Notifications
+                </button>
+                <div className="settingsNavDivider" />
+                <button type="button" className="danger" onClick={logout}>
+                  Log Out
+                </button>
+              </aside>
+
+              <section className="settingsModalContent">
+                <button
+                  className="settingsCloseButton"
+                  type="button"
+                  onClick={() => setSettingsOpen(false)}
+                  aria-label="Close settings"
+                >
+                  ×
+                </button>
+
+                {settingsTab === "account" && (
+                  <>
+                    <h1>My Account</h1>
+                    <div className="settingsAccountHero">
+                      <div className="settingsAccountBanner" />
+                      <div className="settingsAccountBody">
+                        <img src={getAvatar(auth.user)} alt="Profile avatar" />
+                        <div>
+                          <strong className="nameWithBadge">
+                            <span className="displayNameText">
+                              {currentDisplayName}
+                            </span>
+                            {auth.user.verified ? <VerifiedBadge /> : null}
+                          </strong>
+                          <span>@{auth.user.username}</span>
+                          <small>{auth.user.email}</small>
+                        </div>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                {settingsTab === "profile" && (
+                  <form className="profileSettingsForm" onSubmit={saveProfileSettings}>
+                    <h1>Profiles</h1>
+
+                    <label>
+                      <span>Pronouns</span>
+                      <input
+                        value={profileForm.pronouns}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            pronouns: event.target.value
+                          }))
+                        }
+                        maxLength={40}
+                        placeholder="e.g. he/him"
+                      />
+                    </label>
+
+                    <label>
+                      <span>About Me</span>
+                      <textarea
+                        value={profileForm.bio}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            bio: event.target.value
+                          }))
+                        }
+                        maxLength={190}
+                        rows={6}
+                        placeholder="Tell people a little about yourself"
+                      />
+                      <small>{profileForm.bio.length}/190</small>
+                    </label>
+
+                    <button type="submit" disabled={savingSettings}>
+                      {savingSettings ? "Saving..." : "Save Changes"}
+                    </button>
+                  </form>
+                )}
+
+                {settingsTab === "notifications" && (
+                  <>
+                    <h1>Notifications</h1>
+                    <label className="settingsToggleRow">
+                      <div>
+                        <strong>Message sounds</strong>
+                        <span>
+                          Play a sound for messages outside your active chat.
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={soundEnabled}
+                        onChange={(event) => {
+                          const enabled = event.target.checked;
+                          setSoundEnabled(enabled);
+                          localStorage.setItem(
+                            "vodkach_message_sound",
+                            enabled ? "on" : "off"
+                          );
+                        }}
+                      />
+                    </label>
+                  </>
+                )}
+              </section>
+            </div>
           </div>
         )}
 
@@ -2110,12 +2486,38 @@ function WebApp() {
               </h2>
               <span>@{activeChat.other_user.username}</span>
 
+              {activeChat.other_user.pronouns ? (
+                <span className="memberPronouns">
+                  {activeChat.other_user.pronouns}
+                </span>
+              ) : null}
+
+              <div className="memberStatusLine">
+                <StatusGlyph
+                  status={activeChat.other_user.effective_status || "offline"}
+                />
+                <span>
+                  {activeChat.other_user.effective_status === "dnd"
+                    ? "Do Not Disturb"
+                    : activeChat.other_user.effective_status === "sleeping"
+                      ? "Sleeping"
+                      : activeChat.other_user.effective_status === "online"
+                        ? "Online"
+                        : "Offline"}
+                </span>
+              </div>
+
+              {activeChat.other_user.bio ? (
+                <div className="memberProfileSection">
+                  <strong>About Me</strong>
+                  <p>{activeChat.other_user.bio}</p>
+                </div>
+              ) : null}
+
               <div className="memberProfileSection">
                 <strong>Account Created</strong>
                 <span>
-                  {activeChat.other_user.created_at
-                    ? new Date(activeChat.other_user.created_at).toLocaleDateString()
-                    : "Unknown"}
+                  {formatLocalDate(activeChat.other_user.created_at)}
                 </span>
               </div>
             </div>
@@ -2146,6 +2548,13 @@ function AdminApp() {
   const [soundEnabled, setSoundEnabled] = useState(
     localStorage.getItem("vodkach_message_sound") !== "off"
   );
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [statusMenuOpen, setStatusMenuOpen] = useState(false);
+  const [profileForm, setProfileForm] = useState({
+    pronouns: "",
+    bio: ""
+  });
+  const [savingSettings, setSavingSettings] = useState(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -2463,8 +2872,8 @@ function shouldGroupMessage(previous, current) {
   if (!previous || !current) return false;
   if (previous.sender_user_id !== current.sender_user_id) return false;
 
-  const previousTime = new Date(previous.created_at).getTime();
-  const currentTime = new Date(current.created_at).getTime();
+  const previousTime = parseServerDate(previous.created_at).getTime();
+  const currentTime = parseServerDate(current.created_at).getTime();
 
   if (!Number.isFinite(previousTime) || !Number.isFinite(currentTime)) {
     return false;

@@ -2755,3 +2755,434 @@ h1 {
   height: 18px;
   accent-color: #fc0303;
 }
+
+
+/* Patch 047: white names, status system, fullscreen settings, drafts */
+
+.messageMeta .nameWithBadge,
+.messageMeta .displayNameText,
+.sidebarProfileText .nameWithBadge,
+.sidebarProfileText .displayNameText,
+.chatListPrimary,
+.chatListPrimary .displayNameText,
+.socialIdentity .nameWithBadge,
+.socialIdentity .displayNameText,
+.memberProfileBody .nameWithBadge,
+.memberProfileBody .displayNameText {
+  color: #ffffff !important;
+}
+
+.messageMeta .nameWithBadge {
+  font-size: 1.06rem !important;
+  font-weight: 750 !important;
+}
+
+.sidebarProfileText .nameWithBadge {
+  font-size: .91rem !important;
+  font-weight: 700 !important;
+}
+
+.sidebarProfileText > span {
+  color: #8e949c !important;
+  font-size: .72rem !important;
+}
+
+.chatHeaderActionsOnly {
+  justify-content: flex-end !important;
+}
+
+.messageContextMenu button {
+  display: flex !important;
+  align-items: center;
+  gap: 9px;
+}
+
+.contextActionIcon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.profileStatusBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px !important;
+  height: 16px !important;
+  padding: 0 !important;
+  border: 3px solid #101114 !important;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #101114 !important;
+  z-index: 4;
+}
+
+.statusDot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: block;
+}
+
+.statusDot.online {
+  background: #23a559;
+}
+
+.statusDot.offline {
+  background: #80848e;
+}
+
+.statusMoon {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: block;
+  background: #f0b232;
+}
+
+.statusMoon::after {
+  content: "";
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  left: 4px;
+  top: -2px;
+  border-radius: 50%;
+  background: #101114;
+}
+
+.statusDnd {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #f23f43;
+  font-size: 10px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.statusPicker {
+  position: absolute;
+  left: 8px;
+  bottom: 58px;
+  z-index: 120;
+  width: 205px;
+  padding: 7px;
+  border-radius: 9px;
+  display: grid;
+  gap: 2px;
+  background: #111216;
+  border: 1px solid rgba(255,255,255,.075);
+  box-shadow: 0 18px 48px rgba(0,0,0,.5);
+}
+
+.statusPicker button {
+  min-height: 38px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #c8ccd2;
+  background: transparent;
+  text-align: left;
+}
+
+.statusPicker button:hover,
+.statusPicker button.active {
+  color: #fff;
+  background: #25272c;
+}
+
+.statusPicker button > span:last-child {
+  font-size: .8rem;
+}
+
+.memberPronouns {
+  margin-top: 5px !important;
+  color: #aeb4bc !important;
+  font-size: .78rem !important;
+}
+
+.memberStatusLine {
+  margin-top: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #aeb4bc;
+  font-size: .8rem;
+}
+
+.memberProfileSection p {
+  margin: 0;
+  color: #b6bbc3;
+  font-size: .82rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.settingsOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: #111214;
+  animation: settingsOpen .16s ease-out;
+}
+
+@keyframes settingsOpen {
+  from {
+    opacity: 0;
+    transform: scale(.992);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.settingsModal {
+  width: 100%;
+  height: 100%;
+  display: grid;
+  grid-template-columns: minmax(220px, 34%) minmax(0, 1fr);
+}
+
+.settingsModalNav {
+  padding: 54px 18px 30px max(18px, calc((100vw - 1060px) / 2));
+  background: #0d0e10;
+  border-right: 1px solid rgba(255,255,255,.055);
+}
+
+.settingsNavUser {
+  max-width: 210px;
+  margin-bottom: 24px;
+  padding: 10px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #17181c;
+}
+
+.settingsNavUser img {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+  object-fit: cover;
+}
+
+.settingsNavUser > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.settingsNavUser strong {
+  overflow: hidden;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.settingsNavUser span {
+  color: #8e949c;
+  font-size: .72rem;
+}
+
+.settingsModalNav h2 {
+  max-width: 210px;
+  margin: 0 10px 8px;
+  color: #777d86;
+  font-size: .68rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.settingsModalNav > button {
+  width: min(210px, 100%);
+  min-height: 38px;
+  margin-bottom: 3px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  color: #aeb4bc;
+  background: transparent;
+  text-align: left;
+}
+
+.settingsModalNav > button:hover,
+.settingsModalNav > button.active {
+  color: #fff;
+  background: #25272c;
+}
+
+.settingsModalNav > button.danger {
+  color: #ff7777;
+}
+
+.settingsNavDivider {
+  width: min(210px, 100%);
+  height: 1px;
+  margin: 10px 0;
+  background: rgba(255,255,255,.065);
+}
+
+.settingsModalContent {
+  position: relative;
+  overflow: auto;
+  padding: 58px max(70px, calc((100vw - 1060px) / 2)) 70px 42px;
+  background: #151619;
+}
+
+.settingsModalContent > h1,
+.profileSettingsForm > h1 {
+  margin: 0 0 22px;
+  color: #fff;
+  font-size: 1.45rem;
+}
+
+.settingsCloseButton {
+  position: fixed;
+  right: max(24px, calc((100vw - 1120px) / 2));
+  top: 28px;
+  width: 38px;
+  height: 38px;
+  border: 2px solid #4b4f57;
+  border-radius: 50%;
+  color: #aeb4bc;
+  background: transparent;
+  font-size: 1.35rem;
+}
+
+.settingsCloseButton:hover {
+  color: #fff;
+  border-color: #777d86;
+}
+
+.settingsAccountHero {
+  max-width: 680px;
+  overflow: hidden;
+  border-radius: 10px;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.settingsAccountBanner {
+  height: 105px;
+  background: linear-gradient(135deg, #351113, #731116);
+}
+
+.settingsAccountBody {
+  position: relative;
+  min-height: 104px;
+  padding: 58px 18px 18px;
+}
+
+.settingsAccountBody > img {
+  position: absolute;
+  left: 18px;
+  top: -48px;
+  width: 92px;
+  height: 92px;
+  border: 7px solid #1b1c20;
+  border-radius: 20px;
+  object-fit: cover;
+}
+
+.settingsAccountBody > div {
+  display: grid;
+  gap: 3px;
+}
+
+.settingsAccountBody > div > span,
+.settingsAccountBody small {
+  color: #8e949c;
+}
+
+.profileSettingsForm {
+  max-width: 680px;
+}
+
+.profileSettingsForm label {
+  margin-bottom: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.profileSettingsForm label > span {
+  color: #c8ccd2;
+  font-size: .76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.profileSettingsForm input,
+.profileSettingsForm textarea {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 7px;
+  outline: 0;
+  color: #fff;
+  background: #101114;
+}
+
+.profileSettingsForm input {
+  height: 42px;
+  padding: 0 12px;
+}
+
+.profileSettingsForm textarea {
+  padding: 11px 12px;
+  resize: vertical;
+  min-height: 130px;
+}
+
+.profileSettingsForm input:focus,
+.profileSettingsForm textarea:focus {
+  border-color: rgba(252,3,3,.5);
+}
+
+.profileSettingsForm label small {
+  justify-self: end;
+  color: #6f747c;
+}
+
+.profileSettingsForm > button {
+  min-height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #248046;
+  font-weight: 800;
+}
+
+@media (max-width: 760px) {
+  .settingsModal {
+    grid-template-columns: 150px minmax(0, 1fr);
+  }
+
+  .settingsModalNav {
+    padding: 30px 8px;
+  }
+
+  .settingsNavUser {
+    display: none;
+  }
+
+  .settingsModalContent {
+    padding: 48px 18px;
+  }
+}

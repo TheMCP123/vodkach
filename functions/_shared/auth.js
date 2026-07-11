@@ -138,6 +138,17 @@ export async function getCurrentUser(request, env) {
       users.display_name,
       users.avatar_url,
       users.verified,
+      users.pronouns,
+      users.bio,
+      users.status_preference,
+      users.last_seen_at,
+      CASE
+        WHEN users.status_preference = 'offline' THEN 'offline'
+        WHEN users.last_seen_at IS NOT NULL
+          AND datetime(users.last_seen_at) >= datetime('now', '-70 seconds')
+          THEN users.status_preference
+        ELSE 'offline'
+      END AS effective_status,
       users.access_status,
       users.requested_at,
       users.approved_at,

@@ -12,12 +12,24 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  UserRound
+  UserRound,
+  UserPlus,
+  Shield,
+  Ban,
+  Check,
+  X,
+  Clock,
+  LogOut
 } from "lucide-react";
 import "./styles.css";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
+
+const isAdminPage =
+  typeof window !== "undefined" &&
+  !window.location.hostname.startsWith("web.") &&
+  window.location.pathname.startsWith("/admin");
 
 const DEVICE_ID_KEY = "vodkach_device_id";
 const PRIVATE_KEY_DB = "vodkach_crypto";
@@ -276,6 +288,7 @@ function Landing() {
 
 
 
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -285,6 +298,7 @@ function WebApp() {
   const [deviceState, setDeviceState] = useState({ loading: false, ready: false, error: "" });
 
   const [view, setView] = useState("friends");
+  const [friendsTab, setFriendsTab] = useState("all");
   const [friends, setFriends] = useState([]);
   const [incoming, setIncoming] = useState([]);
   const [outgoing, setOutgoing] = useState([]);
@@ -345,11 +359,6 @@ function WebApp() {
     setIncoming(requestsData.incoming || []);
     setOutgoing(requestsData.outgoing || []);
     setChats(chatsData.chats || []);
-
-    setActiveChat((current) => {
-      if (!current) return null;
-      return (chatsData.chats || []).find((chat) => chat.id === current.id) || current;
-    });
   }
 
   async function loadMessages(chat) {
@@ -410,14 +419,13 @@ function WebApp() {
       setMessages([]);
       return;
     }
-
     loadMessages(activeChat).catch((error) => setUiError(error.message));
   }, [activeChat?.id]);
 
   useEffect(() => {
     const query = searchQuery.trim().replace(/^@+/, "");
 
-    if (!query) {
+    if (!query || friendsTab !== "add") {
       setSearchResults([]);
       setLoadingSearch(false);
       return;
@@ -432,7 +440,7 @@ function WebApp() {
     }, 250);
 
     return () => window.clearTimeout(timer);
-  }, [searchQuery]);
+  }, [searchQuery, friendsTab]);
 
   async function saveProfile(event) {
     event.preventDefault();
@@ -440,15 +448,13 @@ function WebApp() {
     setSavingProfile(true);
 
     try {
-      const data = await api("/api/user/username", {
+      await api("/api/user/username", {
         method: "POST",
         body: JSON.stringify({
           username,
           display_name: displayName
         })
       });
-
-      if (!data.ok) throw new Error(data.error || "Failed to save profile");
       await loadMe();
     } catch (error) {
       setFormError(error.message);
@@ -468,7 +474,6 @@ function WebApp() {
   async function sendFriendRequest(user) {
     setUiError("");
     setBusy(true);
-
     try {
       await api("/api/friends/requests", {
         method: "POST",
@@ -485,14 +490,10 @@ function WebApp() {
   async function respondToRequest(requestId, action) {
     setUiError("");
     setBusy(true);
-
     try {
       const data = await api("/api/friends/requests/respond", {
         method: "POST",
-        body: JSON.stringify({
-          request_id: requestId,
-          action
-        })
+        body: JSON.stringify({ request_id: requestId, action })
       });
 
       await loadSocial();
@@ -516,7 +517,6 @@ function WebApp() {
   async function openFriendChat(friend) {
     setUiError("");
     setBusy(true);
-
     try {
       const data = await api("/api/chats/direct", {
         method: "POST",
@@ -525,7 +525,6 @@ function WebApp() {
 
       const chatsData = await api("/api/chats");
       setChats(chatsData.chats || []);
-
       const chat =
         (chatsData.chats || []).find((item) => item.id === data.chat.id) || data.chat;
 
@@ -541,7 +540,6 @@ function WebApp() {
   async function sendMessage(event) {
     event.preventDefault();
     const text = chatText.trim();
-
     if (!text || !activeChat?.id || busy) return;
 
     setBusy(true);
@@ -570,11 +568,13 @@ function WebApp() {
 
   if (auth.loading) {
     return (
-      <main className="authScreen">
-        <div className="authCard">
-          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard compact">
+          <div className="discordAuthLogo">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+          </div>
           <h1>Loading Vodkach</h1>
-          <p>Checking your session.</p>
+          <p>Checking your secure session.</p>
         </div>
       </main>
     );
@@ -582,14 +582,16 @@ function WebApp() {
 
   if (!auth.authenticated) {
     return (
-      <main className="authScreen">
-        <div className="authCard">
-          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
-          <h1>Open Vodkach</h1>
-          <p>Sign in with Google to request access to the private messenger.</p>
-          <a className="primaryButton authButton" href="/api/auth/google/start">
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <h1>Welcome back</h1>
+          <p>Sign in with Google to access the private messenger.</p>
+          <a className="discordPrimaryButton" href="/api/auth/google/start">
             Continue with Google
-            <ArrowRight size={17} />
           </a>
         </div>
       </main>
@@ -600,17 +602,23 @@ function WebApp() {
 
   if (accessStatus === "pending") {
     return (
-      <main className="authScreen">
-        <div className="authCard accessCard">
-          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
-          <div className="accessStatusIcon pendingStatus">…</div>
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <div className="discordStatusIcon pending">
+            <Clock size={24} />
+          </div>
           <h1>Pending approval</h1>
-          <p>
-            Your Google account was received. Access must be approved before you can
-            create a Vodkach account.
-          </p>
-          <div className="accountEmail">{auth.user?.email}</div>
-          <button className="secondaryButton authButton" type="button" onClick={logout}>
+          <p>Your request was sent. Access must be approved before account creation.</p>
+          <div className="discordAccountBox">
+            <span>Signed in as</span>
+            <strong>{auth.user?.email}</strong>
+          </div>
+          <button className="discordSecondaryButton" type="button" onClick={logout}>
+            <LogOut size={16} />
             Sign out
           </button>
         </div>
@@ -620,19 +628,41 @@ function WebApp() {
 
   if (accessStatus === "rejected") {
     return (
-      <main className="authScreen">
-        <div className="authCard accessCard">
-          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
-          <div className="accessStatusIcon deniedStatus">×</div>
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <div className="discordStatusIcon denied">
+            <X size={26} />
+          </div>
           <h1>Access denied</h1>
-          <p>
-            This access request was declined. You can choose a Google account and send
-            another request.
-          </p>
-          <a className="primaryButton authButton" href="/api/access/retry">
+          <p>This request was declined. You can choose a Google account and apply again.</p>
+          <a className="discordPrimaryButton" href="/api/access/retry">
             Try again
-            <ArrowRight size={17} />
           </a>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessStatus === "blocked") {
+    return (
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <div className="discordStatusIcon denied">
+            <Ban size={25} />
+          </div>
+          <h1>Access blocked</h1>
+          <p>This email is permanently blocked from Vodkach.</p>
+          <button className="discordSecondaryButton" type="button" onClick={logout}>
+            Sign out
+          </button>
         </div>
       </main>
     );
@@ -640,13 +670,39 @@ function WebApp() {
 
   if (accessStatus === "disabled") {
     return (
-      <main className="authScreen">
-        <div className="authCard accessCard">
-          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
-          <div className="accessStatusIcon deniedStatus">×</div>
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <div className="discordStatusIcon denied">
+            <Ban size={25} />
+          </div>
           <h1>Account disabled</h1>
-          <p>This Vodkach account is currently unavailable.</p>
-          <button className="secondaryButton authButton" type="button" onClick={logout}>
+          <p>This account is currently unavailable.</p>
+          <button className="discordSecondaryButton" type="button" onClick={logout}>
+            Sign out
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (auth.user?.banned_until && new Date(auth.user.banned_until) > new Date()) {
+    return (
+      <main className="authScreen discordAuthScreen">
+        <div className="discordAuthCard">
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <div className="discordStatusIcon denied">
+            <Clock size={25} />
+          </div>
+          <h1>Temporarily banned</h1>
+          <p>Access is suspended until {new Date(auth.user.banned_until).toLocaleString()}.</p>
+          <button className="discordSecondaryButton" type="button" onClick={logout}>
             Sign out
           </button>
         </div>
@@ -656,43 +712,45 @@ function WebApp() {
 
   if (!auth.user?.username) {
     return (
-      <main className="authScreen">
-        <form className="authCard usernameCard" onSubmit={saveProfile}>
-          <DefaultAvatar className="setupAvatar" alt="Default profile avatar" />
-          <h1>Create account</h1>
-          <p>Your access was approved. Choose your Vodkach username and display name.</p>
+      <main className="authScreen discordAuthScreen">
+        <form className="discordAuthCard accountCreateCard" onSubmit={saveProfile}>
+          <div className="discordAuthBrand">
+            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
+            <span>Vodkach</span>
+          </div>
+          <DefaultAvatar className="setupAvatar discordSetupAvatar" alt="Default profile avatar" />
+          <h1>Create your account</h1>
+          <p>Your access was approved. Choose your public identity.</p>
 
-          <label className="fieldLabel">Username</label>
-          <label className="usernameInput">
+          <label className="discordFieldLabel">Username</label>
+          <label className="discordInput">
             <span>@</span>
             <input
               value={username}
               onChange={(event) => setUsername(event.target.value)}
-              placeholder="USERNAME"
+              placeholder="username"
               minLength={1}
               maxLength={16}
               autoFocus
             />
           </label>
-          <div className="fieldHint">A-Z, 0-9, underscore, dot. 1–16 characters.</div>
+          <div className="discordFieldHint">A–Z, 0–9, underscore, dot. 1–16 characters.</div>
 
-          <label className="fieldLabel">Display Name</label>
-          <label className="usernameInput">
+          <label className="discordFieldLabel">Display Name</label>
+          <label className="discordInput">
             <input
               value={displayName}
               onChange={(event) => setDisplayName(event.target.value)}
-              placeholder="Max"
+              placeholder="Display name"
               minLength={1}
               maxLength={16}
             />
           </label>
-          <div className="fieldHint">Up to 16 visible characters.</div>
 
           {formError && <div className="formError">{formError}</div>}
 
-          <button className="primaryButton authButton" type="submit" disabled={savingProfile}>
+          <button className="discordPrimaryButton" type="submit" disabled={savingProfile}>
             {savingProfile ? "Creating..." : "Create account"}
-            <ArrowRight size={17} />
           </button>
         </form>
       </main>
@@ -711,13 +769,10 @@ function WebApp() {
         <button className="serverButton homeButton" title="Home">
           <Home size={18} />
         </button>
-
         <div className="serverDivider" />
-
         <button className="serverButton" title="Add server">
           <Plus size={19} />
         </button>
-
         <button className="serverButton" title="Search servers">
           <Search size={18} />
         </button>
@@ -725,15 +780,6 @@ function WebApp() {
 
       <aside className="appSidebar">
         <div className="sidebarNav">
-          <button
-            className={view === "search" ? "sidebarNavButton active" : "sidebarNavButton"}
-            type="button"
-            onClick={() => setView("search")}
-          >
-            <Search size={16} />
-            Search
-          </button>
-
           <button
             className={view === "friends" ? "sidebarNavButton active" : "sidebarNavButton"}
             type="button"
@@ -796,74 +842,100 @@ function WebApp() {
       </aside>
 
       <section className="appChat">
-        {view === "search" && (
-          <>
-            <header className="appChatHeader">
-              <strong>Add friends</strong>
-            </header>
-
-            <div className="socialPage">
-              <label className="socialSearch">
-                <Search size={17} />
-                <input
-                  value={searchQuery}
-                  onChange={(event) => setSearchQuery(event.target.value)}
-                  placeholder="Search by @username"
-                  autoFocus
-                />
-              </label>
-
-              <div className="socialList">
-                {loadingSearch && <div className="socialEmpty">Searching...</div>}
-                {!loadingSearch && searchQuery && searchResults.length === 0 && (
-                  <div className="socialEmpty">No users found</div>
-                )}
-
-                {searchResults.map((user) => {
-                  const friend = friends.some((item) => item.id === user.id);
-                  const pending = outgoing.some((item) => item.user_id === user.id);
-
-                  return (
-                    <div className="socialRow" key={user.id}>
-                      <DefaultAvatar className="socialAvatar" alt="User avatar" />
-                      <div className="socialIdentity">
-                        <strong>{user.display_name || user.username}</strong>
-                        <span>@{user.username}</span>
-                      </div>
-
-                      {friend ? (
-                        <button type="button" onClick={() => openFriendChat(user)}>
-                          Message
-                        </button>
-                      ) : pending ? (
-                        <span className="requestState">Pending</span>
-                      ) : (
-                        <button
-                          type="button"
-                          disabled={busy}
-                          onClick={() => sendFriendRequest(user)}
-                        >
-                          Add friend
-                        </button>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </>
-        )}
-
         {view === "friends" && (
           <>
-            <header className="appChatHeader">
-              <strong>Friends</strong>
+            <header className="friendsHeader">
+              <div className="friendsHeaderTitle">
+                <UserRound size={18} />
+                <strong>Friends</strong>
+              </div>
+
+              <nav className="friendsTabs">
+                <button
+                  type="button"
+                  className={friendsTab === "all" ? "active" : ""}
+                  onClick={() => setFriendsTab("all")}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  className={friendsTab === "pending" ? "active" : ""}
+                  onClick={() => setFriendsTab("pending")}
+                >
+                  Pending
+                  {incoming.length > 0 && <span>{incoming.length}</span>}
+                </button>
+                <button
+                  type="button"
+                  className={friendsTab === "add" ? "addFriendTab active" : "addFriendTab"}
+                  onClick={() => setFriendsTab("add")}
+                >
+                  Add Friend
+                </button>
+              </nav>
             </header>
 
             <div className="socialPage">
-              {incoming.length > 0 && (
+              {friendsTab === "add" && (
+                <section className="addFriendPanel">
+                  <h2>Add Friend</h2>
+                  <p>You can add friends using their Vodkach username.</p>
+                  <label className="socialSearch">
+                    <input
+                      value={searchQuery}
+                      onChange={(event) => setSearchQuery(event.target.value)}
+                      placeholder="Search by @username"
+                      autoFocus
+                    />
+                    <button type="button" disabled={!searchQuery.trim()}>
+                      Send Friend Request
+                    </button>
+                  </label>
+
+                  <div className="socialList">
+                    {loadingSearch && <div className="socialEmpty">Searching...</div>}
+                    {!loadingSearch && searchQuery && searchResults.length === 0 && (
+                      <div className="socialEmpty">No users found</div>
+                    )}
+
+                    {searchResults.map((user) => {
+                      const friend = friends.some((item) => item.id === user.id);
+                      const pending = outgoing.some((item) => item.user_id === user.id);
+
+                      return (
+                        <div className="socialRow" key={user.id}>
+                          <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                          <div className="socialIdentity">
+                            <strong>{user.display_name || user.username}</strong>
+                            <span>@{user.username}</span>
+                          </div>
+
+                          {friend ? (
+                            <button type="button" onClick={() => openFriendChat(user)}>
+                              Message
+                            </button>
+                          ) : pending ? (
+                            <span className="requestState">Request sent</span>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => sendFriendRequest(user)}
+                            >
+                              Add Friend
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </section>
+              )}
+
+              {friendsTab === "pending" && (
                 <section className="socialSection">
-                  <h2>Incoming requests</h2>
+                  <h2>Pending — {incoming.length + outgoing.length}</h2>
                   <div className="socialList">
                     {incoming.map((request) => (
                       <div className="socialRow" key={request.id}>
@@ -886,35 +958,52 @@ function WebApp() {
                             disabled={busy}
                             onClick={() => respondToRequest(request.id, "reject")}
                           >
-                            Reject
+                            Ignore
                           </button>
                         </div>
+                      </div>
+                    ))}
+
+                    {outgoing.map((request) => (
+                      <div className="socialRow" key={request.id}>
+                        <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                        <div className="socialIdentity">
+                          <strong>{request.display_name || request.username}</strong>
+                          <span>@{request.username}</span>
+                        </div>
+                        <span className="requestState">Outgoing</span>
+                      </div>
+                    ))}
+
+                    {incoming.length + outgoing.length === 0 && (
+                      <div className="socialEmpty">No pending requests.</div>
+                    )}
+                  </div>
+                </section>
+              )}
+
+              {friendsTab === "all" && (
+                <section className="socialSection">
+                  <h2>All Friends — {friends.length}</h2>
+                  <div className="socialList">
+                    {friends.length === 0 && (
+                      <div className="socialEmpty">No friends yet.</div>
+                    )}
+                    {friends.map((friend) => (
+                      <div className="socialRow" key={friend.id}>
+                        <DefaultAvatar className="socialAvatar" alt="Friend avatar" />
+                        <div className="socialIdentity">
+                          <strong>{friend.display_name || friend.username}</strong>
+                          <span>@{friend.username}</span>
+                        </div>
+                        <button type="button" onClick={() => openFriendChat(friend)}>
+                          Message
+                        </button>
                       </div>
                     ))}
                   </div>
                 </section>
               )}
-
-              <section className="socialSection">
-                <h2>All friends — {friends.length}</h2>
-                <div className="socialList">
-                  {friends.length === 0 && (
-                    <div className="socialEmpty">You have no friends yet.</div>
-                  )}
-                  {friends.map((friend) => (
-                    <div className="socialRow" key={friend.id}>
-                      <DefaultAvatar className="socialAvatar" alt="Friend avatar" />
-                      <div className="socialIdentity">
-                        <strong>{friend.display_name || friend.username}</strong>
-                        <span>@{friend.username}</span>
-                      </div>
-                      <button type="button" onClick={() => openFriendChat(friend)}>
-                        Message
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </section>
             </div>
           </>
         )}
@@ -922,10 +1011,7 @@ function WebApp() {
         {view === "chat" && activeChat && (
           <>
             <header className="appChatHeader">
-              <div>
-                <strong>{activeTitle}</strong>
-              </div>
-
+              <div><strong>{activeTitle}</strong></div>
               <div className="chatHeaderActions">
                 <Phone size={18} />
                 <MoreVertical size={19} />
@@ -975,18 +1061,237 @@ function WebApp() {
           </>
         )}
 
-        {view === "chat" && !activeChat && (
-          <div className="emptyChatState">
-            <MessageCircle size={34} />
-            <strong>Select a chat</strong>
-            <span>Choose a friend or open Search to add one.</span>
-          </div>
-        )}
-
         {uiError && (
           <button className="uiErrorToast" type="button" onClick={() => setUiError("")}>
             {uiError}
           </button>
+        )}
+      </section>
+    </main>
+  );
+}
+
+function AdminApp() {
+  const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null, admin: false });
+  const [requests, setRequests] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [bannedEmails, setBannedEmails] = useState([]);
+  const [tab, setTab] = useState("requests");
+  const [query, setQuery] = useState("");
+  const [banEmail, setBanEmail] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  async function api(path, options = {}) {
+    const response = await fetch(path, {
+      credentials: "include",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {})
+      }
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok || data.ok === false) {
+      throw new Error(data.error || `Request failed (${response.status})`);
+    }
+    return data;
+  }
+
+  async function loadMe() {
+    const response = await fetch("/api/admin/me", { credentials: "include" });
+    const data = await response.json().catch(() => ({}));
+    setAuth({
+      loading: false,
+      authenticated: Boolean(data.authenticated),
+      user: data.user || null,
+      admin: Boolean(data.admin)
+    });
+  }
+
+  async function loadAdminData() {
+    const [requestsData, usersData, bannedData] = await Promise.all([
+      api("/api/admin/requests?status=pending"),
+      api(`/api/admin/users?q=${encodeURIComponent(query)}`),
+      api("/api/admin/banned-emails")
+    ]);
+    setRequests(requestsData.requests || []);
+    setUsers(usersData.users || []);
+    setBannedEmails(bannedData.banned_emails || []);
+  }
+
+  useEffect(() => {
+    loadMe().catch(() => setAuth({ loading: false, authenticated: false, user: null, admin: false }));
+  }, []);
+
+  useEffect(() => {
+    if (auth.admin) {
+      loadAdminData().catch((e) => setError(e.message));
+    }
+  }, [auth.admin]);
+
+  useEffect(() => {
+    if (!auth.admin || tab !== "users") return;
+    const timer = setTimeout(() => {
+      api(`/api/admin/users?q=${encodeURIComponent(query)}`)
+        .then((data) => setUsers(data.users || []))
+        .catch((e) => setError(e.message));
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [query, tab, auth.admin]);
+
+  async function action(path, payload) {
+    setBusy(true);
+    setError("");
+    try {
+      await api(path, { method: "POST", body: JSON.stringify(payload) });
+      await loadAdminData();
+    } catch (e) {
+      setError(e.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  if (auth.loading) {
+    return <main className="adminLoginScreen"><div className="adminLoginCard">Loading admin...</div></main>;
+  }
+
+  if (!auth.authenticated) {
+    return (
+      <main className="adminLoginScreen">
+        <div className="adminLoginCard">
+          <img src="/vodkach.png" alt="Vodkach" />
+          <h1>Vodkach Admin</h1>
+          <p>Sign in with an administrator Google account.</p>
+          <a href="/api/auth/google/start?return_to=/admin">Continue with Google</a>
+        </div>
+      </main>
+    );
+  }
+
+  if (!auth.admin) {
+    window.location.replace("/");
+    return null;
+  }
+
+  return (
+    <main className="adminShell">
+      <aside className="adminSidebar">
+        <div className="adminBrand">
+          <img src="/vodkach.png" alt="Vodkach" />
+          <div><strong>Vodkach</strong><span>Admin Panel</span></div>
+        </div>
+
+        <button className={tab === "requests" ? "active" : ""} onClick={() => setTab("requests")}>
+          <Clock size={16} /> Requests
+        </button>
+        <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}>
+          <UserRound size={16} /> Users
+        </button>
+        <button className={tab === "bans" ? "active" : ""} onClick={() => setTab("bans")}>
+          <Ban size={16} /> Bans
+        </button>
+      </aside>
+
+      <section className="adminContent">
+        <header className="adminTopbar">
+          <div>
+            <h1>{tab === "requests" ? "Access Requests" : tab === "users" ? "Users" : "Banned Emails"}</h1>
+            <p>{auth.user?.email}</p>
+          </div>
+        </header>
+
+        {error && <div className="adminError">{error}</div>}
+
+        {tab === "requests" && (
+          <div className="adminList">
+            {requests.length === 0 && <div className="adminEmpty">No pending requests.</div>}
+            {requests.map((request) => (
+              <div className="adminRow" key={request.id}>
+                <DefaultAvatar className="adminAvatar" alt="User avatar" />
+                <div className="adminIdentity">
+                  <strong>{request.display_name || request.email}</strong>
+                  <span>{request.email}</span>
+                </div>
+                <div className="adminActions">
+                  <button disabled={busy} onClick={() => action("/api/admin/requests/approve", { user_id: request.id })}>
+                    <Check size={15} /> Accept
+                  </button>
+                  <button disabled={busy} className="secondary" onClick={() => action("/api/admin/requests/reject", { user_id: request.id })}>
+                    <X size={15} /> Deny
+                  </button>
+                  <button disabled={busy} className="danger" onClick={() => action("/api/admin/users/block", { user_id: request.id })}>
+                    <Ban size={15} /> Block
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {tab === "users" && (
+          <>
+            <label className="adminSearch">
+              <Search size={16} />
+              <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search users or emails" />
+            </label>
+            <div className="adminList">
+              {users.map((user) => (
+                <div className="adminRow" key={user.id}>
+                  <DefaultAvatar className="adminAvatar" alt="User avatar" />
+                  <div className="adminIdentity">
+                    <strong>{user.display_name || user.username || user.email}</strong>
+                    <span>{user.email} {user.username ? `• @${user.username}` : ""}</span>
+                  </div>
+                  <div className="adminMeta">{user.access_status}</div>
+                  <div className="adminActions">
+                    <button disabled={busy} className="secondary" onClick={() => {
+                      const hours = prompt("Ban duration in hours:", "24");
+                      if (!hours) return;
+                      action("/api/admin/users/temp-ban", { user_id: user.id, hours: Number(hours) });
+                    }}>
+                      <Clock size={15} /> Temp ban
+                    </button>
+                    <button disabled={busy} className="danger" onClick={() => action("/api/admin/users/block", { user_id: user.id })}>
+                      <Ban size={15} /> Block
+                    </button>
+                    <button disabled={busy} onClick={() => action("/api/admin/users/unban", { user_id: user.id })}>
+                      Unban
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
+
+        {tab === "bans" && (
+          <>
+            <form className="adminBanForm" onSubmit={(e) => {
+              e.preventDefault();
+              if (!banEmail.trim()) return;
+              action("/api/admin/banned-emails", { email: banEmail.trim() });
+              setBanEmail("");
+            }}>
+              <input value={banEmail} onChange={(e) => setBanEmail(e.target.value)} placeholder="email@example.com" />
+              <button type="submit">Ban email permanently</button>
+            </form>
+
+            <div className="adminList">
+              {bannedEmails.map((item) => (
+                <div className="adminRow" key={item.email}>
+                  <div className="adminIdentity">
+                    <strong>{item.email}</strong>
+                    <span>{item.reason || "Permanent block"}</span>
+                  </div>
+                  <button className="secondary" onClick={() => action("/api/admin/banned-emails/unban", { email: item.email })}>
+                    Unban
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
         )}
       </section>
     </main>
@@ -1030,5 +1335,5 @@ function AppMessage({ avatar, name, time, text, accent }) {
 }
 
 createRoot(document.getElementById("root")).render(
-  isWebApp ? <WebApp /> : <Landing />
+  isAdminPage ? <AdminApp /> : isWebApp ? <WebApp /> : <Landing />
 );

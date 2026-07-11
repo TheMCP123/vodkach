@@ -83,8 +83,22 @@ export async function onRequestGet(context) {
     return json({ ok: false, error: "Google profile is missing required fields" }, { status: 400 });
   }
 
+  const bannedEmail = await env.DB.prepare(
+    `SELECT email, expires_at
+     FROM banned_emails
+     WHERE lower(email) = lower(?)
+       AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))
+     LIMIT 1`
+  )
+    .bind(profile.email)
+    .first();
+
+  if (bannedEmail) {
+    return json({ ok: false, error: "This email is blocked from Vodkach" }, { status: 403 });
+  }
+
   const existingUser = await env.DB.prepare(
-    `SELECT id, access_status
+    `SELECT id, access_status, banned_until
      FROM users
      WHERE google_sub = ? OR email = ?
      LIMIT 1`
@@ -99,11 +113,19 @@ export async function onRequestGet(context) {
 
   if (existingUser) {
     const adminCandidate = { email: profile.email };
+    const temporaryBanActive =
+      existingUser.banned_until &&
+      new Date(existingUser.banned_until).getTime() > Date.now();
+
     const nextAccessStatus = isAdminUser(adminCandidate, env)
       ? "approved"
-      : existingUser.access_status === "rejected"
-        ? "pending"
-        : existingUser.access_status || "pending";
+      : existingUser.access_status === "blocked"
+        ? "blocked"
+        : temporaryBanActive
+          ? existingUser.access_status || "approved"
+          : existingUser.access_status === "rejected"
+            ? "pending"
+            : existingUser.access_status || "pending";
 
     await env.DB.prepare(
       `UPDATE users

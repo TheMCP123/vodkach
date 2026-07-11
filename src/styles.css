@@ -964,3 +964,493 @@ h1 {
   text-align: left;
   z-index: 30;
 }
+
+
+/* Patch 033: profile alignment, Discord auth, Friends tabs, admin panel */
+
+.bottomProfileBar {
+  left: -64px !important;
+  width: calc(100% + 64px) !important;
+  grid-template-columns: minmax(0, 1fr) 30px !important;
+  padding: 0 8px 0 10px !important;
+}
+
+.profileIdentityButton {
+  grid-column: 1 !important;
+  padding-left: 4px !important;
+}
+
+.profileSettingsButton {
+  grid-column: 2 !important;
+}
+
+.discordAuthScreen {
+  background:
+    radial-gradient(circle at 20% 0%, rgba(252, 3, 3, 0.08), transparent 28%),
+    #0b0c0f;
+}
+
+.discordAuthCard {
+  width: min(460px, calc(100vw - 32px));
+  padding: 28px;
+  border-radius: 10px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.07);
+  box-shadow: 0 18px 60px rgba(0,0,0,.35);
+}
+
+.discordAuthCard.compact {
+  text-align: center;
+}
+
+.discordAuthBrand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 24px;
+  font-weight: 850;
+}
+
+.discordAuthBrand img,
+.discordAuthLogo img {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+}
+
+.discordAuthCard h1 {
+  margin: 0 0 10px;
+  font-size: 1.72rem;
+  letter-spacing: -.035em;
+}
+
+.discordAuthCard p {
+  margin: 0 0 20px;
+  color: #aeb4bc;
+  line-height: 1.5;
+}
+
+.discordStatusIcon {
+  width: 52px;
+  height: 52px;
+  margin: 0 0 18px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+}
+
+.discordStatusIcon.pending {
+  color: #ffcc66;
+  background: rgba(255, 204, 102, .1);
+  border: 1px solid rgba(255, 204, 102, .2);
+}
+
+.discordStatusIcon.denied {
+  color: #ff6b6b;
+  background: rgba(255, 75, 75, .1);
+  border: 1px solid rgba(255, 75, 75, .2);
+}
+
+.discordAccountBox {
+  display: grid;
+  gap: 3px;
+  padding: 12px;
+  margin-bottom: 14px;
+  border-radius: 7px;
+  background: #101114;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.discordAccountBox span {
+  color: #7f858f;
+  font-size: .72rem;
+  text-transform: uppercase;
+  font-weight: 800;
+}
+
+.discordAccountBox strong {
+  overflow-wrap: anywhere;
+}
+
+.discordPrimaryButton,
+.discordSecondaryButton {
+  min-height: 42px;
+  width: 100%;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+.discordPrimaryButton {
+  color: #fff;
+  background: #fc0303;
+}
+
+.discordSecondaryButton {
+  color: #f4f5f7;
+  background: #25272c;
+}
+
+.discordFieldLabel {
+  display: block;
+  margin: 14px 0 7px;
+  color: #c7cbd1;
+  font-size: .78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.discordInput {
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #101114;
+  border: 1px solid rgba(255,255,255,.07);
+}
+
+.discordInput:focus-within {
+  border-color: rgba(252,3,3,.5);
+}
+
+.discordInput input {
+  width: 100%;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  background: transparent;
+}
+
+.discordFieldHint {
+  margin-top: 6px;
+  color: #777d86;
+  font-size: .76rem;
+}
+
+.discordSetupAvatar {
+  margin-bottom: 14px;
+}
+
+.friendsHeader {
+  min-height: 54px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 0 16px;
+  background: #151619;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.friendsHeaderTitle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-right: 18px;
+  border-right: 1px solid rgba(255,255,255,.08);
+}
+
+.friendsTabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.friendsTabs button {
+  height: 30px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #b5bac1;
+  background: transparent;
+  font-size: .82rem;
+  font-weight: 760;
+}
+
+.friendsTabs button:hover,
+.friendsTabs button.active {
+  color: #fff;
+  background: #25272c;
+}
+
+.friendsTabs .addFriendTab {
+  color: #fff;
+  background: #248046;
+}
+
+.friendsTabs .addFriendTab.active {
+  background: #1f6d3c;
+}
+
+.friendsTabs button span {
+  margin-left: 5px;
+  color: #fff;
+  background: #fc0303;
+  border-radius: 9px;
+  padding: 1px 5px;
+  font-size: .66rem;
+}
+
+.addFriendPanel h2 {
+  margin: 0 0 6px;
+  font-size: 1rem;
+}
+
+.addFriendPanel > p {
+  margin: 0 0 16px;
+  color: #8e949c;
+  font-size: .84rem;
+}
+
+.addFriendPanel .socialSearch {
+  max-width: 760px;
+}
+
+.addFriendPanel .socialSearch button {
+  height: 30px;
+  white-space: nowrap;
+  border: 0;
+  border-radius: 5px;
+  padding: 0 10px;
+  color: #fff;
+  background: #fc0303;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.adminLoginScreen {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  background: #0b0c0f;
+  color: #f4f5f7;
+}
+
+.adminLoginCard {
+  width: min(420px, calc(100vw - 32px));
+  padding: 28px;
+  border-radius: 10px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.07);
+}
+
+.adminLoginCard img {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+}
+
+.adminLoginCard a {
+  min-height: 42px;
+  margin-top: 18px;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  background: #fc0303;
+  color: #fff;
+  font-weight: 800;
+}
+
+.adminShell {
+  min-height: 100vh;
+  display: grid;
+  grid-template-columns: 230px minmax(0, 1fr);
+  background: #101114;
+  color: #f4f5f7;
+}
+
+.adminSidebar {
+  padding: 16px 12px;
+  background: #0b0c0f;
+  border-right: 1px solid rgba(255,255,255,.06);
+}
+
+.adminBrand {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 22px;
+}
+
+.adminBrand img {
+  width: 38px;
+  height: 38px;
+  border-radius: 9px;
+}
+
+.adminBrand div {
+  display: grid;
+}
+
+.adminBrand span {
+  color: #7f858f;
+  font-size: .72rem;
+}
+
+.adminSidebar > button {
+  width: 100%;
+  min-height: 38px;
+  margin-bottom: 4px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #aeb4bc;
+  background: transparent;
+  text-align: left;
+}
+
+.adminSidebar > button.active,
+.adminSidebar > button:hover {
+  color: #fff;
+  background: #1d1f23;
+}
+
+.adminContent {
+  min-width: 0;
+  padding: 24px;
+}
+
+.adminTopbar {
+  margin-bottom: 20px;
+}
+
+.adminTopbar h1 {
+  margin: 0;
+  font-size: 1.5rem;
+}
+
+.adminTopbar p {
+  margin: 4px 0 0;
+  color: #777d86;
+}
+
+.adminList {
+  display: grid;
+  gap: 8px;
+}
+
+.adminRow {
+  min-height: 66px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.adminAvatar {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+}
+
+.adminIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  flex: 1;
+}
+
+.adminIdentity span {
+  color: #7f858f;
+  font-size: .78rem;
+}
+
+.adminMeta {
+  color: #9da3ac;
+  font-size: .76rem;
+}
+
+.adminActions {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.adminActions button,
+.adminRow > button,
+.adminBanForm button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #fff;
+  background: #248046;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.adminActions .secondary,
+.adminRow > .secondary {
+  background: #2b2d31;
+}
+
+.adminActions .danger {
+  background: #b3261e;
+}
+
+.adminSearch,
+.adminBanForm {
+  max-width: 720px;
+  min-height: 42px;
+  margin-bottom: 16px;
+  padding: 0 12px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+.adminSearch input,
+.adminBanForm input {
+  flex: 1;
+  border: 0;
+  outline: 0;
+  color: #fff;
+  background: transparent;
+}
+
+.adminError {
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  color: #ffb3b3;
+  background: rgba(127,29,29,.25);
+}
+
+.adminEmpty {
+  padding: 20px;
+  color: #777d86;
+}
+
+@media (max-width: 1080px) {
+  .bottomProfileBar {
+    left: -56px !important;
+    width: calc(100% + 56px) !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .adminShell {
+    grid-template-columns: 1fr;
+  }
+
+  .adminSidebar {
+    display: none;
+  }
+}

@@ -4396,3 +4396,495 @@ h1 {
     grid-template-columns: 1fr;
   }
 }
+
+
+/* Patch 053: forced stylesheet cache-bust + empty-chat verified badge */
+
+.chatStartName {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center;
+  gap: 6px !important;
+  max-width: 100%;
+}
+
+.chatStartName .verifiedBadgeWrap {
+  width: 19px;
+  height: 19px;
+}
+
+/* Isolated landing page stylesheet. Messenger CSS must not affect this page. */
+html.vodkachMainHost,
+html.vodkachMainHost body,
+html.vodkachMainHost #root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  height: auto;
+  margin: 0;
+  overflow-x: hidden;
+  overflow-y: auto !important;
+  background: #08090b;
+  color: #f4f5f7;
+}
+
+html.vodkachMainHost body {
+  display: block !important;
+}
+
+html.vodkachMainHost .landingPage {
+  position: relative;
+  z-index: 1;
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: min(1180px, calc(100% - 40px));
+  min-height: 100vh;
+  margin: 0 auto;
+  color: #f4f5f7;
+  background:
+    radial-gradient(circle at 16% 8%, rgba(252, 3, 3, 0.08), transparent 30%),
+    #08090b;
+}
+
+html.vodkachMainHost .landingPage * {
+  visibility: visible;
+}
+
+html.vodkachMainHost .landingHeader {
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  height: 74px;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+}
+
+html.vodkachMainHost .brand {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+html.vodkachMainHost .brandIcon {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #fc0303;
+  box-shadow: 0 8px 28px rgba(252,3,3,.22);
+}
+
+html.vodkachMainHost .landingNav {
+  display: flex !important;
+  gap: 24px;
+  color: #aeb4bc;
+  font-size: .86rem;
+}
+
+html.vodkachMainHost .landingNav a:hover {
+  color: #fff;
+}
+
+html.vodkachMainHost .landingHero {
+  display: grid !important;
+  grid-template-columns: minmax(0, .92fr) minmax(440px, 1.08fr);
+  gap: 58px;
+  align-items: center;
+  min-height: calc(100vh - 74px);
+  padding: 54px 0 66px;
+}
+
+html.vodkachMainHost .landingCopy {
+  display: block !important;
+  position: relative;
+  z-index: 2;
+}
+
+html.vodkachMainHost .pill {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 7px 10px;
+  border: 1px solid rgba(252,3,3,.2);
+  border-radius: 7px;
+  color: #ffb3b3;
+  background: rgba(252,3,3,.08);
+  font-size: .76rem;
+  font-weight: 760;
+}
+
+html.vodkachMainHost .landingCopy h1 {
+  display: block !important;
+  max-width: 620px;
+  margin: 24px 0 0;
+  color: #f7f7f8;
+  font-size: clamp(3.25rem, 6.6vw, 6rem);
+  line-height: .91;
+  letter-spacing: -.07em;
+}
+
+html.vodkachMainHost .lead {
+  display: block !important;
+  max-width: 540px;
+  margin: 24px 0 0;
+  color: #aeb4bc;
+  font-size: 1.04rem;
+  line-height: 1.65;
+}
+
+html.vodkachMainHost .buttons {
+  display: flex !important;
+  gap: 10px;
+  margin-top: 28px;
+}
+
+html.vodkachMainHost .primaryButton,
+html.vodkachMainHost .secondaryButton {
+  min-height: 44px;
+  padding: 0 17px;
+  border-radius: 7px;
+  display: inline-flex !important;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 800;
+}
+
+html.vodkachMainHost .primaryButton {
+  color: #fff;
+  background: #fc0303;
+  box-shadow: 0 12px 34px rgba(252,3,3,.2);
+}
+
+html.vodkachMainHost .secondaryButton {
+  border: 1px solid rgba(255,255,255,.08);
+  color: #f4f5f7;
+  background: #17181c;
+}
+
+html.vodkachMainHost .landingPreview {
+  display: grid !important;
+  grid-template-columns: 64px 178px minmax(0, 1fr);
+  min-height: 460px;
+  overflow: hidden;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 12px;
+  background: #101114;
+  box-shadow: 0 30px 90px rgba(0,0,0,.38);
+}
+
+html.vodkachMainHost .previewRail,
+html.vodkachMainHost .previewSidebar,
+html.vodkachMainHost .previewChat {
+  display: block !important;
+}
+
+html.vodkachMainHost .previewRail {
+  padding: 15px 12px;
+  background: #0b0c0f;
+  border-right: 1px solid rgba(255,255,255,.055);
+}
+
+html.vodkachMainHost .previewLogo,
+html.vodkachMainHost .previewDot {
+  width: 40px;
+  height: 40px;
+  margin-bottom: 10px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  background: #25272c;
+}
+
+html.vodkachMainHost .previewLogo {
+  color: #fff;
+  background: #fc0303;
+  font-weight: 900;
+}
+
+html.vodkachMainHost .previewDot {
+  height: 8px;
+  margin: 15px auto;
+  border-radius: 10px;
+  background: #383b42;
+}
+
+html.vodkachMainHost .previewDot.muted { opacity: .45; }
+
+html.vodkachMainHost .previewSidebar {
+  padding: 18px 12px;
+  background: #121316;
+  border-right: 1px solid rgba(255,255,255,.055);
+}
+
+html.vodkachMainHost .previewTitle {
+  margin: 0 8px 22px;
+  color: #fff;
+  font-weight: 800;
+}
+
+html.vodkachMainHost .previewChannel {
+  min-height: 36px;
+  margin-bottom: 4px;
+  padding: 0 10px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  color: #858b94;
+  font-size: .82rem;
+}
+
+html.vodkachMainHost .previewChannel.active {
+  color: #fff;
+  background: #25272c;
+}
+
+html.vodkachMainHost .previewChat {
+  position: relative;
+  padding: 64px 22px 70px;
+  background: #17181c;
+}
+
+html.vodkachMainHost .previewChatHeader {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255,255,255,.055);
+  color: #fff;
+  font-size: .8rem;
+}
+
+html.vodkachMainHost .previewSecure {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: #69d58a;
+}
+
+html.vodkachMainHost .previewMessage {
+  display: flex !important;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+html.vodkachMainHost .previewMessage .avatar {
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #2b2d31;
+  font-weight: 800;
+}
+
+html.vodkachMainHost .previewMessage .avatar.accent { background: #fc0303; }
+html.vodkachMainHost .previewMessage strong { color: #fff; font-size: .8rem; }
+html.vodkachMainHost .previewMessage p { margin: 3px 0 0; color: #aeb4bc; font-size: .78rem; }
+
+html.vodkachMainHost .previewComposer {
+  position: absolute;
+  left: 18px;
+  right: 18px;
+  bottom: 16px;
+  height: 40px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  color: #737983;
+  background: #101114;
+  font-size: .78rem;
+}
+
+html.vodkachMainHost .landingInfo {
+  display: grid !important;
+  grid-template-columns: .8fr 1.2fr;
+  gap: 48px;
+  padding: 86px 0;
+  border-top: 1px solid rgba(255,255,255,.055);
+}
+
+html.vodkachMainHost .infoLabel {
+  color: #fc6b6b;
+  font-size: .72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+html.vodkachMainHost .landingInfo h2 {
+  max-width: 420px;
+  margin: 12px 0 0;
+  color: #fff;
+  font-size: 2rem;
+  line-height: 1.08;
+}
+
+html.vodkachMainHost .infoGrid {
+  display: grid !important;
+  gap: 12px;
+}
+
+html.vodkachMainHost .infoGrid > * {
+  padding: 17px;
+  border: 1px solid rgba(255,255,255,.055);
+  border-radius: 9px;
+  background: #111216;
+}
+
+html.vodkachMainHost .landingFooter {
+  display: flex !important;
+  justify-content: space-between;
+  padding: 24px 0 34px;
+  border-top: 1px solid rgba(255,255,255,.055);
+  color: #777d86;
+  font-size: .76rem;
+}
+
+@media (max-width: 900px) {
+  html.vodkachMainHost .landingHero {
+    grid-template-columns: 1fr;
+    padding-top: 48px;
+  }
+
+  html.vodkachMainHost .landingPreview {
+    min-height: 400px;
+  }
+
+  html.vodkachMainHost .landingInfo {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 620px) {
+  html.vodkachMainHost .landingPage {
+    width: min(100% - 24px, 1180px);
+  }
+
+  html.vodkachMainHost .landingNav { display: none !important; }
+  html.vodkachMainHost .landingCopy h1 { font-size: 3.2rem; }
+  html.vodkachMainHost .landingPreview { grid-template-columns: 56px 1fr; }
+  html.vodkachMainHost .previewSidebar { display: none !important; }
+  html.vodkachMainHost .buttons { flex-direction: column; align-items: stretch; }
+}
+
+/* Patch 055: guaranteed auth and account-state styling */
+
+html.vodkachWebHost,
+html.vodkachWebHost body,
+html.vodkachWebHost #root {
+  width: 100%;
+  min-width: 320px;
+  min-height: 100%;
+  height: 100%;
+  margin: 0;
+  background: #08090b;
+  color: #f4f5f7;
+}
+
+html.vodkachWebHost .authScreen,
+html.vodkachWebHost .discordAuthScreen {
+  width: 100%;
+  min-height: 100vh;
+  display: grid !important;
+  place-items: center !important;
+  padding: 24px;
+  overflow-y: auto;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(252, 3, 3, .08), transparent 30%),
+    #0b0c0f !important;
+  color: #f4f5f7;
+}
+
+html.vodkachWebHost .discordAuthCard,
+html.vodkachWebHost .authCard {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  width: min(500px, calc(100vw - 32px));
+  padding: 28px;
+  border-radius: 10px;
+  color: #f4f5f7;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.075);
+  box-shadow: 0 20px 65px rgba(0,0,0,.44);
+}
+
+html.vodkachWebHost .discordAuthCard h1,
+html.vodkachWebHost .discordAuthCard strong,
+html.vodkachWebHost .discordAuthBrand {
+  color: #fff;
+}
+
+html.vodkachWebHost .discordAuthCard p {
+  color: #aeb4bc;
+}
+
+html.vodkachWebHost .discordPrimaryButton {
+  width: 100%;
+  min-height: 42px;
+  border: 0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #fc0303;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+html.vodkachWebHost .discordSecondaryButton {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: 6px;
+  color: #f4f5f7;
+  background: #2b2d31;
+  font-weight: 750;
+}
+
+html.vodkachWebHost .discordAccountBox {
+  margin: 16px 0;
+  padding: 12px;
+  border-radius: 7px;
+  display: grid;
+  gap: 3px;
+  background: #101114;
+  border: 1px solid rgba(255,255,255,.06);
+}
+
+html.vodkachWebHost .discordAccountBox span {
+  color: #777d86;
+  font-size: .72rem;
+}
+
+html.vodkachWebHost .discordAuthBrand {
+  display: flex !important;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+html.vodkachWebHost .discordAuthBrand img,
+html.vodkachWebHost .discordAuthLogo img {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+}
+
+html.vodkachWebHost .refinedCreateCard {
+  width: min(540px, calc(100vw - 32px));
+}

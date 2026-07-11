@@ -14,8 +14,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
-import "./styles-v53.css";
-import "./landing-v54.css";
+import "./styles.css";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");

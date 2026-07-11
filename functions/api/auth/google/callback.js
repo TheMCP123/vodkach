@@ -10,6 +10,7 @@ import {
   requireEnv,
   sha256Hex
 } from "../../../_shared/auth.js";
+import { isAdminUser } from "../../../_shared/account.js";
 
 export async function onRequestGet(context) {
   const { request, env } = context;
@@ -83,7 +84,10 @@ export async function onRequestGet(context) {
   }
 
   const existingUser = await env.DB.prepare(
-    "SELECT id FROM users WHERE google_sub = ? OR email = ? LIMIT 1"
+    `SELECT id, access_status
+     FROM users
+     WHERE google_sub = ? OR email = ?
+     LIMIT 1`
   )
     .bind(profile.sub, profile.email)
     .first();
@@ -94,6 +98,13 @@ export async function onRequestGet(context) {
   const emailVerified = profile.email_verified ? 1 : 0;
 
   if (existingUser) {
+    const adminCandidate = { email: profile.email };
+    const nextAccessStatus = isAdminUser(adminCandidate, env)
+      ? "approved"
+      : existingUser.access_status === "rejected"
+        ? "pending"
+        : existingUser.access_status || "pending";
+
     await env.DB.prepare(
       `UPDATE users
        SET google_sub = ?,
@@ -101,10 +112,34 @@ export async function onRequestGet(context) {
            email_verified = ?,
            display_name = ?,
            avatar_url = ?,
+           access_status = ?,
+           requested_at = CASE
+             WHEN ? = 'pending' AND access_status = 'rejected' THEN datetime('now')
+             ELSE requested_at
+           END,
+           rejected_at = CASE
+             WHEN ? = 'pending' THEN NULL
+             ELSE rejected_at
+           END,
+           approved_at = CASE
+             WHEN ? = 'approved' THEN COALESCE(approved_at, datetime('now'))
+             ELSE approved_at
+           END,
            updated_at = datetime('now')
        WHERE id = ?`
     )
-      .bind(profile.sub, profile.email, emailVerified, displayName, avatarUrl, userId)
+      .bind(
+        profile.sub,
+        profile.email,
+        emailVerified,
+        displayName,
+        avatarUrl,
+        nextAccessStatus,
+        nextAccessStatus,
+        nextAccessStatus,
+        nextAccessStatus,
+        userId
+      )
       .run();
   } else {
     await env.DB.prepare(
@@ -116,10 +151,20 @@ export async function onRequestGet(context) {
         display_name,
         avatar_url,
         access_status,
-        requested_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'pending', datetime('now'))`
+        requested_at,
+        approved_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), ?)`
     )
-      .bind(userId, profile.sub, profile.email, emailVerified, displayName, avatarUrl)
+      .bind(
+        userId,
+        profile.sub,
+        profile.email,
+        emailVerified,
+        displayName,
+        avatarUrl,
+        isAdminUser({ email: profile.email }, env) ? "approved" : "pending",
+        isAdminUser({ email: profile.email }, env) ? new Date().toISOString() : null
+      )
       .run();
   }
 

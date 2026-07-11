@@ -275,6 +275,7 @@ function Landing() {
 }
 
 
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -283,22 +284,78 @@ function WebApp() {
   const [savingProfile, setSavingProfile] = useState(false);
   const [deviceState, setDeviceState] = useState({ loading: false, ready: false, error: "" });
 
+  const [view, setView] = useState("friends");
+  const [friends, setFriends] = useState([]);
+  const [incoming, setIncoming] = useState([]);
+  const [outgoing, setOutgoing] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [activeChat, setActiveChat] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [loadingSearch, setLoadingSearch] = useState(false);
+  const [chatText, setChatText] = useState("");
+  const [busy, setBusy] = useState(false);
+  const [uiError, setUiError] = useState("");
+
+  async function api(path, options = {}) {
+    const response = await fetch(path, {
+      credentials: "include",
+      ...options,
+      headers: {
+        ...(options.body ? { "Content-Type": "application/json" } : {}),
+        ...(options.headers || {})
+      }
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || data.ok === false) {
+      const error = new Error(data.error || `Request failed (${response.status})`);
+      error.status = response.status;
+      error.data = data;
+      throw error;
+    }
+
+    return data;
+  }
+
   async function loadMe() {
     const response = await fetch("/api/auth/me", { credentials: "include" });
     const data = await response.json();
+
     setAuth({
       loading: false,
-      authenticated: data.authenticated,
-      user: data.user
+      authenticated: Boolean(data.authenticated),
+      user: data.user || null
     });
 
-    if (data.user?.username) {
-      setUsername(data.user.username);
-    }
+    if (data.user?.username) setUsername(data.user.username);
+    if (data.user?.display_name) setDisplayName(data.user.display_name);
+  }
 
-    if (data.user?.display_name) {
-      setDisplayName(data.user.display_name);
-    }
+  async function loadSocial() {
+    const [friendsData, requestsData, chatsData] = await Promise.all([
+      api("/api/friends"),
+      api("/api/friends/requests"),
+      api("/api/chats")
+    ]);
+
+    setFriends(friendsData.friends || []);
+    setIncoming(requestsData.incoming || []);
+    setOutgoing(requestsData.outgoing || []);
+    setChats(chatsData.chats || []);
+
+    setActiveChat((current) => {
+      if (!current) return null;
+      return (chatsData.chats || []).find((chat) => chat.id === current.id) || current;
+    });
+  }
+
+  async function loadMessages(chat) {
+    if (!chat?.id) return;
+    const data = await api(`/api/messages?chat_id=${encodeURIComponent(chat.id)}&limit=100`);
+    setMessages(data.messages || []);
   }
 
   useEffect(() => {
@@ -308,16 +365,21 @@ function WebApp() {
   }, []);
 
   useEffect(() => {
-    if (!auth.authenticated || !auth.user?.username || deviceState.ready || deviceState.loading) {
+    const user = auth.user;
+    if (
+      !auth.authenticated ||
+      user?.access_status !== "approved" ||
+      !user?.username ||
+      deviceState.ready ||
+      deviceState.loading
+    ) {
       return;
     }
 
     setDeviceState({ loading: true, ready: false, error: "" });
 
     registerCurrentDevice()
-      .then(() => {
-        setDeviceState({ loading: false, ready: true, error: "" });
-      })
+      .then(() => setDeviceState({ loading: false, ready: true, error: "" }))
       .catch((error) => {
         setDeviceState({
           loading: false,
@@ -325,7 +387,52 @@ function WebApp() {
           error: error.message || "Device key setup failed"
         });
       });
-  }, [auth.authenticated, auth.user?.username, deviceState.ready, deviceState.loading]);
+  }, [
+    auth.authenticated,
+    auth.user?.access_status,
+    auth.user?.username,
+    deviceState.ready,
+    deviceState.loading
+  ]);
+
+  useEffect(() => {
+    if (
+      auth.authenticated &&
+      auth.user?.access_status === "approved" &&
+      auth.user?.username
+    ) {
+      loadSocial().catch((error) => setUiError(error.message));
+    }
+  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
+
+  useEffect(() => {
+    if (!activeChat?.id) {
+      setMessages([]);
+      return;
+    }
+
+    loadMessages(activeChat).catch((error) => setUiError(error.message));
+  }, [activeChat?.id]);
+
+  useEffect(() => {
+    const query = searchQuery.trim().replace(/^@+/, "");
+
+    if (!query) {
+      setSearchResults([]);
+      setLoadingSearch(false);
+      return;
+    }
+
+    const timer = window.setTimeout(() => {
+      setLoadingSearch(true);
+      api(`/api/users/search?q=${encodeURIComponent(query)}`)
+        .then((data) => setSearchResults(data.users || []))
+        .catch((error) => setUiError(error.message))
+        .finally(() => setLoadingSearch(false));
+    }, 250);
+
+    return () => window.clearTimeout(timer);
+  }, [searchQuery]);
 
   async function saveProfile(event) {
     event.preventDefault();
@@ -333,28 +440,131 @@ function WebApp() {
     setSavingProfile(true);
 
     try {
-      const response = await fetch("/api/user/username", {
+      const data = await api("/api/user/username", {
         method: "POST",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json"
-        },
         body: JSON.stringify({
           username,
           display_name: displayName
         })
       });
 
-      const data = await response.json();
-
-      if (!response.ok || !data.ok) {
-        setFormError(data.error || "Failed to save profile");
-        return;
-      }
-
+      if (!data.ok) throw new Error(data.error || "Failed to save profile");
       await loadMe();
+    } catch (error) {
+      setFormError(error.message);
     } finally {
       setSavingProfile(false);
+    }
+  }
+
+  async function logout() {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include"
+    });
+    window.location.reload();
+  }
+
+  async function sendFriendRequest(user) {
+    setUiError("");
+    setBusy(true);
+
+    try {
+      await api("/api/friends/requests", {
+        method: "POST",
+        body: JSON.stringify({ user_id: user.id })
+      });
+      await loadSocial();
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function respondToRequest(requestId, action) {
+    setUiError("");
+    setBusy(true);
+
+    try {
+      const data = await api("/api/friends/requests/respond", {
+        method: "POST",
+        body: JSON.stringify({
+          request_id: requestId,
+          action
+        })
+      });
+
+      await loadSocial();
+
+      if (data.chat_id) {
+        const chatsData = await api("/api/chats");
+        setChats(chatsData.chats || []);
+        const chat = (chatsData.chats || []).find((item) => item.id === data.chat_id);
+        if (chat) {
+          setActiveChat(chat);
+          setView("chat");
+        }
+      }
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function openFriendChat(friend) {
+    setUiError("");
+    setBusy(true);
+
+    try {
+      const data = await api("/api/chats/direct", {
+        method: "POST",
+        body: JSON.stringify({ user_id: friend.id })
+      });
+
+      const chatsData = await api("/api/chats");
+      setChats(chatsData.chats || []);
+
+      const chat =
+        (chatsData.chats || []).find((item) => item.id === data.chat.id) || data.chat;
+
+      setActiveChat(chat);
+      setView("chat");
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendMessage(event) {
+    event.preventDefault();
+    const text = chatText.trim();
+
+    if (!text || !activeChat?.id || busy) return;
+
+    setBusy(true);
+    setUiError("");
+
+    try {
+      await api("/api/messages", {
+        method: "POST",
+        body: JSON.stringify({
+          chat_id: activeChat.id,
+          body_ciphertext: text,
+          body_algorithm: "plain-v0",
+          client_message_id: crypto.randomUUID(),
+          sender_device_id: localStorage.getItem(DEVICE_ID_KEY) || null
+        })
+      });
+
+      setChatText("");
+      await Promise.all([loadMessages(activeChat), loadSocial()]);
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -364,7 +574,7 @@ function WebApp() {
         <div className="authCard">
           <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
           <h1>Loading Vodkach</h1>
-          <p>Checking secure session.</p>
+          <p>Checking your session.</p>
         </div>
       </main>
     );
@@ -376,11 +586,69 @@ function WebApp() {
         <div className="authCard">
           <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
           <h1>Open Vodkach</h1>
-          <p>Sign in with Google to continue to the private web app.</p>
+          <p>Sign in with Google to request access to the private messenger.</p>
           <a className="primaryButton authButton" href="/api/auth/google/start">
             Continue with Google
             <ArrowRight size={17} />
           </a>
+        </div>
+      </main>
+    );
+  }
+
+  const accessStatus = auth.user?.access_status || "pending";
+
+  if (accessStatus === "pending") {
+    return (
+      <main className="authScreen">
+        <div className="authCard accessCard">
+          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
+          <div className="accessStatusIcon pendingStatus">…</div>
+          <h1>Pending approval</h1>
+          <p>
+            Your Google account was received. Access must be approved before you can
+            create a Vodkach account.
+          </p>
+          <div className="accountEmail">{auth.user?.email}</div>
+          <button className="secondaryButton authButton" type="button" onClick={logout}>
+            Sign out
+          </button>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessStatus === "rejected") {
+    return (
+      <main className="authScreen">
+        <div className="authCard accessCard">
+          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
+          <div className="accessStatusIcon deniedStatus">×</div>
+          <h1>Access denied</h1>
+          <p>
+            This access request was declined. You can choose a Google account and send
+            another request.
+          </p>
+          <a className="primaryButton authButton" href="/api/access/retry">
+            Try again
+            <ArrowRight size={17} />
+          </a>
+        </div>
+      </main>
+    );
+  }
+
+  if (accessStatus === "disabled") {
+    return (
+      <main className="authScreen">
+        <div className="authCard accessCard">
+          <img className="authBrandIcon" src="/vodkach.png" alt="Vodkach" draggable="false" />
+          <div className="accessStatusIcon deniedStatus">×</div>
+          <h1>Account disabled</h1>
+          <p>This Vodkach account is currently unavailable.</p>
+          <button className="secondaryButton authButton" type="button" onClick={logout}>
+            Sign out
+          </button>
         </div>
       </main>
     );
@@ -391,8 +659,8 @@ function WebApp() {
       <main className="authScreen">
         <form className="authCard usernameCard" onSubmit={saveProfile}>
           <DefaultAvatar className="setupAvatar" alt="Default profile avatar" />
-          <h1>Create profile</h1>
-          <p>Choose your public handle and display name. Avatar editing comes later.</p>
+          <h1>Create account</h1>
+          <p>Your access was approved. Choose your Vodkach username and display name.</p>
 
           <label className="fieldLabel">Username</label>
           <label className="usernameInput">
@@ -406,7 +674,7 @@ function WebApp() {
               autoFocus
             />
           </label>
-          <div className="fieldHint">A-Z, 0-9, underscore, dot. 1-16 characters.</div>
+          <div className="fieldHint">A-Z, 0-9, underscore, dot. 1–16 characters.</div>
 
           <label className="fieldLabel">Display Name</label>
           <label className="usernameInput">
@@ -415,15 +683,15 @@ function WebApp() {
               onChange={(event) => setDisplayName(event.target.value)}
               placeholder="Max"
               minLength={1}
-              maxLength={32}
+              maxLength={16}
             />
           </label>
-          <div className="fieldHint">Up to 16 visible characters. Control characters blocked.</div>
+          <div className="fieldHint">Up to 16 visible characters.</div>
 
           {formError && <div className="formError">{formError}</div>}
 
           <button className="primaryButton authButton" type="submit" disabled={savingProfile}>
-            {savingProfile ? "Saving..." : "Continue"}
+            {savingProfile ? "Creating..." : "Create account"}
             <ArrowRight size={17} />
           </button>
         </form>
@@ -432,6 +700,10 @@ function WebApp() {
   }
 
   const currentDisplayName = auth.user.display_name || auth.user.username;
+  const activeTitle =
+    activeChat?.other_user?.display_name ||
+    activeChat?.other_user?.username ||
+    "Select a chat";
 
   return (
     <main className="appShell">
@@ -453,14 +725,23 @@ function WebApp() {
 
       <aside className="appSidebar">
         <div className="sidebarNav">
-          <button className="sidebarNavButton active" type="button">
+          <button
+            className={view === "search" ? "sidebarNavButton active" : "sidebarNavButton"}
+            type="button"
+            onClick={() => setView("search")}
+          >
             <Search size={16} />
             Search
           </button>
 
-          <button className="sidebarNavButton" type="button">
+          <button
+            className={view === "friends" ? "sidebarNavButton active" : "sidebarNavButton"}
+            type="button"
+            onClick={() => setView("friends")}
+          >
             <UserRound size={16} />
             Friends
+            {incoming.length > 0 && <span className="navBadge">{incoming.length}</span>}
           </button>
 
           <button className="sidebarNavButton" type="button">
@@ -471,10 +752,26 @@ function WebApp() {
 
         <nav className="channelList">
           <p>Chats</p>
-          <button className="channelButton chatUser active">
-            <DefaultAvatar className="chatListAvatar" alt="Test chat avatar" />
-            test
-          </button>
+          {chats.length === 0 && <div className="emptySidebarText">No chats yet</div>}
+          {chats.map((chat) => (
+            <button
+              key={chat.id}
+              className={activeChat?.id === chat.id ? "channelButton chatUser active" : "channelButton chatUser"}
+              type="button"
+              onClick={() => {
+                setActiveChat(chat);
+                setView("chat");
+              }}
+            >
+              <DefaultAvatar className="chatListAvatar" alt="Chat avatar" />
+              <span>
+                {chat.other_user?.display_name ||
+                  chat.other_user?.username ||
+                  chat.title ||
+                  "Direct chat"}
+              </span>
+            </button>
+          ))}
         </nav>
 
         <div className="bottomProfileBar">
@@ -499,38 +796,199 @@ function WebApp() {
       </aside>
 
       <section className="appChat">
-        <header className="appChatHeader">
-          <div>
-            <strong>test</strong>
-          </div>
+        {view === "search" && (
+          <>
+            <header className="appChatHeader">
+              <strong>Add friends</strong>
+            </header>
 
-          <div className="chatHeaderActions">
-            <Phone size={18} />
-            <MoreVertical size={19} />
-          </div>
-        </header>
+            <div className="socialPage">
+              <label className="socialSearch">
+                <Search size={17} />
+                <input
+                  value={searchQuery}
+                  onChange={(event) => setSearchQuery(event.target.value)}
+                  placeholder="Search by @username"
+                  autoFocus
+                />
+              </label>
 
-        <div className="appMessages">
-          <AppMessage
-            avatar="__default_avatar__"
-            name={currentDisplayName}
-            time="now"
-            text="Welcome to Vodkach."
-          />
+              <div className="socialList">
+                {loadingSearch && <div className="socialEmpty">Searching...</div>}
+                {!loadingSearch && searchQuery && searchResults.length === 0 && (
+                  <div className="socialEmpty">No users found</div>
+                )}
 
-          {deviceState.error && (
-            <div className="deviceError">
-              Device key setup failed: {deviceState.error}
+                {searchResults.map((user) => {
+                  const friend = friends.some((item) => item.id === user.id);
+                  const pending = outgoing.some((item) => item.user_id === user.id);
+
+                  return (
+                    <div className="socialRow" key={user.id}>
+                      <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                      <div className="socialIdentity">
+                        <strong>{user.display_name || user.username}</strong>
+                        <span>@{user.username}</span>
+                      </div>
+
+                      {friend ? (
+                        <button type="button" onClick={() => openFriendChat(user)}>
+                          Message
+                        </button>
+                      ) : pending ? (
+                        <span className="requestState">Pending</span>
+                      ) : (
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => sendFriendRequest(user)}
+                        >
+                          Add friend
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          )}
-        </div>
+          </>
+        )}
 
-        <div className="messageComposer">
-          <span>Message test</span>
-        </div>
+        {view === "friends" && (
+          <>
+            <header className="appChatHeader">
+              <strong>Friends</strong>
+            </header>
+
+            <div className="socialPage">
+              {incoming.length > 0 && (
+                <section className="socialSection">
+                  <h2>Incoming requests</h2>
+                  <div className="socialList">
+                    {incoming.map((request) => (
+                      <div className="socialRow" key={request.id}>
+                        <DefaultAvatar className="socialAvatar" alt="User avatar" />
+                        <div className="socialIdentity">
+                          <strong>{request.display_name || request.username}</strong>
+                          <span>@{request.username}</span>
+                        </div>
+                        <div className="rowActions">
+                          <button
+                            type="button"
+                            disabled={busy}
+                            onClick={() => respondToRequest(request.id, "accept")}
+                          >
+                            Accept
+                          </button>
+                          <button
+                            className="quietAction"
+                            type="button"
+                            disabled={busy}
+                            onClick={() => respondToRequest(request.id, "reject")}
+                          >
+                            Reject
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              <section className="socialSection">
+                <h2>All friends — {friends.length}</h2>
+                <div className="socialList">
+                  {friends.length === 0 && (
+                    <div className="socialEmpty">You have no friends yet.</div>
+                  )}
+                  {friends.map((friend) => (
+                    <div className="socialRow" key={friend.id}>
+                      <DefaultAvatar className="socialAvatar" alt="Friend avatar" />
+                      <div className="socialIdentity">
+                        <strong>{friend.display_name || friend.username}</strong>
+                        <span>@{friend.username}</span>
+                      </div>
+                      <button type="button" onClick={() => openFriendChat(friend)}>
+                        Message
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </section>
+            </div>
+          </>
+        )}
+
+        {view === "chat" && activeChat && (
+          <>
+            <header className="appChatHeader">
+              <div>
+                <strong>{activeTitle}</strong>
+              </div>
+
+              <div className="chatHeaderActions">
+                <Phone size={18} />
+                <MoreVertical size={19} />
+              </div>
+            </header>
+
+            <div className="appMessages">
+              {messages.length === 0 && (
+                <div className="chatStart">
+                  <DefaultAvatar className="chatStartAvatar" alt="Chat avatar" />
+                  <h2>{activeTitle}</h2>
+                  <p>This is the beginning of your direct chat.</p>
+                </div>
+              )}
+
+              {messages.map((message) => (
+                <AppMessage
+                  key={message.id}
+                  avatar="__default_avatar__"
+                  name={message.sender?.display_name || message.sender?.username || "User"}
+                  time={new Date(message.created_at).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit"
+                  })}
+                  text={message.deleted_at ? "Message deleted" : message.body_ciphertext}
+                />
+              ))}
+
+              {deviceState.error && (
+                <div className="deviceError">
+                  Device key setup failed: {deviceState.error}
+                </div>
+              )}
+            </div>
+
+            <form className="messageComposer composerForm" onSubmit={sendMessage}>
+              <input
+                value={chatText}
+                onChange={(event) => setChatText(event.target.value)}
+                placeholder={`Message ${activeTitle}`}
+                maxLength={4000}
+              />
+              <button type="submit" disabled={!chatText.trim() || busy}>
+                Send
+              </button>
+            </form>
+          </>
+        )}
+
+        {view === "chat" && !activeChat && (
+          <div className="emptyChatState">
+            <MessageCircle size={34} />
+            <strong>Select a chat</strong>
+            <span>Choose a friend or open Search to add one.</span>
+          </div>
+        )}
+
+        {uiError && (
+          <button className="uiErrorToast" type="button" onClick={() => setUiError("")}>
+            {uiError}
+          </button>
+        )}
       </section>
-
-
     </main>
   );
 }

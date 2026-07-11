@@ -14,7 +14,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
-import "./styles.css";
+import "./styles-v53.css";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
@@ -2713,7 +2713,12 @@ function WebApp() {
                       alt="Chat avatar"
                     />
                   </div>
-                  <h2>{activeTitle}</h2>
+                  <h2 className="nameWithBadge chatStartName">
+                    <span className="displayNameText">{activeTitle}</span>
+                    {activeChat.other_user?.verified ? (
+                      <VerifiedBadge />
+                    ) : null}
+                  </h2>
                   <span>@{activeChat.other_user?.username}</span>
                   <p>
                     This is the beginning of your conversation. Say hello and

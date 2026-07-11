@@ -512,6 +512,10 @@ function WebApp() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [linkWarning, setLinkWarning] = useState(null);
   const [socialToast, setSocialToast] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [userMenu, setUserMenu] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [chatActionsOpen, setChatActionsOpen] = useState(false);
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [uiError, setUiError] = useState("");
@@ -532,6 +536,9 @@ function WebApp() {
   const previousIncomingIdsRef = useRef(new Set());
   const previousFriendIdsRef = useRef(new Set());
   const socialReadyRef = useRef(false);
+  const messagesViewportRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const lastOwnMessageIdRef = useRef(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -795,6 +802,102 @@ function WebApp() {
     }
   }
 
+  function openProfile(user) {
+    if (!user) return;
+    setUserProfile(user);
+    setUserMenu(null);
+  }
+
+  function isFriend(userId) {
+    return friends.some((friend) => friend.id === userId);
+  }
+
+  function scrollMessagesToBottom(behavior = "smooth") {
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior,
+        block: "end"
+      });
+    });
+  }
+
+  function jumpToMessage(messageId) {
+    const element = document.getElementById(`message_${messageId}`);
+
+    if (!element) {
+      setUiError("The original message is not loaded.");
+      return;
+    }
+
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    element.classList.remove("messageJumpHighlight");
+    void element.offsetWidth;
+    element.classList.add("messageJumpHighlight");
+
+    window.setTimeout(() => {
+      element.classList.remove("messageJumpHighlight");
+    }, 1400);
+  }
+
+  async function blockUser(user) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+
+    try {
+      await api("/api/users/block", {
+        method: "POST",
+        body: JSON.stringify({ user_id: user.id })
+      });
+
+      setChats((current) =>
+        current.filter((chat) => chat.other_user?.id !== user.id)
+      );
+      setFriends((current) =>
+        current.filter((friend) => friend.id !== user.id)
+      );
+
+      if (activeChat?.other_user?.id === user.id) {
+        setActiveChat(null);
+        setView("friends");
+      }
+
+      setUserProfile(null);
+      setSocialToast({
+        title: "User Blocked",
+        text: `${user.display_name || user.username} has been blocked.`
+      });
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function deleteChat(chat) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+    setChatActionsOpen(false);
+
+    try {
+      await api("/api/chats/delete", {
+        method: "POST",
+        body: JSON.stringify({ chat_id: chat.id })
+      });
+
+      setChats((current) => current.filter((item) => item.id !== chat.id));
+
+      if (activeChat?.id === chat.id) {
+        setActiveChat(null);
+        setMessages([]);
+        setView("friends");
+      }
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
   async function loadMe() {
     const response = await fetch("/api/auth/me", { credentials: "include" });
     const data = await response.json();
@@ -896,6 +999,18 @@ function WebApp() {
     setIncoming(nextIncoming);
     setOutgoing(requestsData.outgoing || []);
     setChats(nextChats);
+    setActiveChat((current) => {
+      if (!current) return null;
+      return nextChats.find((chat) => chat.id === current.id) || current;
+    });
+    setUserProfile((current) => {
+      if (!current) return null;
+      const fromChat = nextChats.find(
+        (chat) => chat.other_user?.id === current.id
+      )?.other_user;
+      const fromFriend = nextFriends.find((friend) => friend.id === current.id);
+      return fromChat || fromFriend || current;
+    });
   }
 
   async function loadMessages(chat) {
@@ -950,6 +1065,8 @@ function WebApp() {
   useEffect(() => {
     function closeMenu() {
       setMessageMenu(null);
+      setUserMenu(null);
+      setChatActionsOpen(false);
     }
 
     window.addEventListener("click", closeMenu);
@@ -978,7 +1095,7 @@ function WebApp() {
 
     const timer = window.setInterval(() => {
       loadMe().catch(() => {});
-    }, 1000);
+    }, 650);
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated]);
@@ -1522,15 +1639,7 @@ function WebApp() {
       });
 
       setMessages((current) =>
-        current.map((item) =>
-          item.id === message.id
-            ? {
-                ...item,
-                body_ciphertext: "",
-                deleted_at: new Date().toISOString()
-              }
-            : item
-        )
+        current.filter((item) => item.id !== message.id)
       );
     } catch (error) {
       setUiError(error.message);
@@ -1640,9 +1749,11 @@ function WebApp() {
       optimistic: true
     };
 
+    lastOwnMessageIdRef.current = optimisticId;
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
     setReplyingTo(null);
+    scrollMessagesToBottom("smooth");
 
     try {
       const data = await api("/api/messages", {
@@ -1674,6 +1785,7 @@ function WebApp() {
         );
       }
 
+      scrollMessagesToBottom("smooth");
       loadMessages({ id: chatId }).catch(() => {});
       loadSocial().catch(() => {});
     } catch (error) {
@@ -2102,13 +2214,37 @@ function WebApp() {
                 setActiveChat(chat);
                 setView("chat");
               }}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                setUserMenu({
+                  user: chat.other_user,
+                  chat,
+                  x: Math.min(event.clientX, window.innerWidth - 220),
+                  y: Math.min(event.clientY, window.innerHeight - 160)
+                });
+              }}
             >
-              <AvatarWithStatus
-                user={chat.other_user}
-                className="chatListAvatarWrap"
-                alt="Chat avatar"
-              />
-              <span className="chatListIdentity">
+              <span
+                className="profileClickTarget"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openProfile(chat.other_user);
+                }}
+              >
+                <AvatarWithStatus
+                  user={chat.other_user}
+                  className="chatListAvatarWrap"
+                  alt="Chat avatar"
+                />
+              </span>
+              <span
+                className="chatListIdentity profileClickTarget"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  openProfile(chat.other_user);
+                }}
+              >
                 <span className="chatListPrimary">
                   <span>
                     {chat.other_user?.display_name ||
@@ -2132,7 +2268,12 @@ function WebApp() {
         </nav>
 
         <div className="bottomProfileBar">
-          <button className="profileIdentityButton" type="button" title="Profile">
+          <button
+            className="profileIdentityButton"
+            type="button"
+            title="Profile"
+            onClick={() => openProfile(auth.user)}
+          >
             <AvatarWithStatus
               user={auth.user}
               className="sidebarProfileAvatarWrap"
@@ -2269,7 +2410,10 @@ function WebApp() {
                           className="socialAvatarWrap"
                           alt="User avatar"
                         />
-                          <div className="socialIdentity">
+                          <div
+                            className="socialIdentity profileClickTarget"
+                            onClick={() => openProfile(user)}
+                          >
                             <strong className="nameWithBadge">
                               {user.display_name || user.username}
                               {user.verified ? <VerifiedBadge /> : null}
@@ -2310,7 +2454,10 @@ function WebApp() {
                           className="socialAvatarWrap"
                           alt="User avatar"
                         />
-                        <div className="socialIdentity">
+                        <div
+                          className="socialIdentity profileClickTarget"
+                          onClick={() => openProfile(request)}
+                        >
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
                               {request.display_name || request.username}
@@ -2346,7 +2493,10 @@ function WebApp() {
                           className="socialAvatarWrap"
                           alt="User avatar"
                         />
-                        <div className="socialIdentity">
+                        <div
+                          className="socialIdentity profileClickTarget"
+                          onClick={() => openProfile(request)}
+                        >
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
                               {request.display_name || request.username}
@@ -2380,7 +2530,10 @@ function WebApp() {
                           className="socialAvatarWrap"
                           alt="User avatar"
                         />
-                        <div className="socialIdentity">
+                        <div
+                          className="socialIdentity profileClickTarget"
+                          onClick={() => openProfile(friend)}
+                        >
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
                               {friend.display_name || friend.username}
@@ -2405,12 +2558,68 @@ function WebApp() {
           <>
             <header className="appChatHeader chatHeaderActionsOnly">
               <div className="chatHeaderActions">
-                <Phone size={18} />
-                <MoreVertical size={19} />
+                <button type="button" aria-label="Start call">
+                  <Phone size={18} />
+                </button>
+                <button
+                  type="button"
+                  aria-label="Chat actions"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    setChatActionsOpen((open) => !open);
+                  }}
+                >
+                  <MoreVertical size={19} />
+                </button>
+
+                {chatActionsOpen && (
+                  <div
+                    className="chatActionsMenu"
+                    onClick={(event) => event.stopPropagation()}
+                  >
+                    <button
+                      type="button"
+                      onClick={() => openProfile(activeChat.other_user)}
+                    >
+                      View Profile
+                    </button>
+                    <button
+                      className="danger"
+                      type="button"
+                      onClick={() =>
+                        setConfirmDialog({
+                          title: "Block User?",
+                          text: `Block ${
+                            activeChat.other_user.display_name ||
+                            activeChat.other_user.username
+                          }? They will be removed from your friends and chats.`,
+                          confirmText: "Block",
+                          action: () => blockUser(activeChat.other_user)
+                        })
+                      }
+                    >
+                      Block
+                    </button>
+                    <button
+                      className="danger"
+                      type="button"
+                      onClick={() =>
+                        setConfirmDialog({
+                          title: "Delete Chat?",
+                          text: "This permanently deletes the chat and all messages for both participants.",
+                          confirmText: "Delete Chat",
+                          action: () => deleteChat(activeChat)
+                        })
+                      }
+                    >
+                      Delete Chat
+                    </button>
+                  </div>
+                )}
               </div>
             </header>
 
-            <div className="appMessages">
+            <div className="appMessages" ref={messagesViewportRef}>
               {messages.length === 0 && (
                 <div className="chatStart">
                   <AvatarWithStatus
@@ -2423,16 +2632,25 @@ function WebApp() {
                 </div>
               )}
 
-              {messages.map((message, index) => (
+              {messages
+                .filter((message) => !message.deleted_at)
+                .map((message, index, visibleMessages) => (
                 <AppMessage
                   key={message.id}
                   message={message}
-                  grouped={shouldGroupMessage(messages[index - 1], message)}
+                  grouped={shouldGroupMessage(visibleMessages[index - 1], message)}
                   avatarUrl={getAvatar(message.sender)}
                   name={message.sender?.display_name || message.sender?.username || "User"}
                   verified={Boolean(message.sender?.verified)}
                   time={formatLocalTime(message.created_at)}
-                  text={message.deleted_at ? "Message deleted" : message.body_ciphertext}
+                  text={message.body_ciphertext}
+                  onOpenLink={(link) => setLinkWarning(link)}
+                  onOpenProfile={() => openProfile(message.sender)}
+                  onJumpToReply={() =>
+                    message.reply_to_message_id
+                      ? jumpToMessage(message.reply_to_message_id)
+                      : null
+                  }
                   onContextMenu={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -2445,6 +2663,8 @@ function WebApp() {
                   }}
                 />
               ))}
+
+              <div ref={messagesEndRef} className="messagesEndAnchor" />
 
               {deviceState.error && (
                 <div className="deviceError">
@@ -2535,6 +2755,179 @@ function WebApp() {
               <DeleteActionIcon />
               <span>Delete For Everyone</span>
             </button>
+          </div>
+        )}
+
+        {userMenu && (
+          <div
+            className="userContextMenu"
+            style={{
+              left: userMenu.x,
+              top: userMenu.y
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" onClick={() => openProfile(userMenu.user)}>
+              View Profile
+            </button>
+            <button
+              className="danger"
+              type="button"
+              onClick={() =>
+                setConfirmDialog({
+                  title: "Block User?",
+                  text: `Block ${
+                    userMenu.user.display_name || userMenu.user.username
+                  }? They will be removed from your friends and chats.`,
+                  confirmText: "Block",
+                  action: () => blockUser(userMenu.user)
+                })
+              }
+            >
+              Block
+            </button>
+            {userMenu.chat && (
+              <button
+                className="danger"
+                type="button"
+                onClick={() =>
+                  setConfirmDialog({
+                    title: "Delete Chat?",
+                    text: "This permanently deletes the chat and all messages for both participants.",
+                    confirmText: "Delete Chat",
+                    action: () => deleteChat(userMenu.chat)
+                  })
+                }
+              >
+                Delete Chat
+              </button>
+            )}
+          </div>
+        )}
+
+        {userProfile && (
+          <div className="profileModalOverlay" role="dialog" aria-modal="true">
+            <div className="profileModal">
+              <button
+                className="profileModalClose"
+                type="button"
+                onClick={() => setUserProfile(null)}
+              >
+                ×
+              </button>
+              <div className="profileModalBanner" />
+              <div className="profileModalBody">
+                <AvatarWithStatus
+                  user={userProfile}
+                  className="profileModalAvatar"
+                  alt="Profile avatar"
+                />
+                <h2 className="nameWithBadge">
+                  <span className="displayNameText">
+                    {userProfile.display_name || userProfile.username}
+                  </span>
+                  {userProfile.verified ? <VerifiedBadge /> : null}
+                </h2>
+                <div className="memberHandleLine">
+                  <span>@{userProfile.username}</span>
+                  {userProfile.pronouns ? (
+                    <span>{userProfile.pronouns}</span>
+                  ) : null}
+                </div>
+
+                {userProfile.bio ? (
+                  <div className="profileModalSection">
+                    <strong>About Me</strong>
+                    <p>
+                      {splitTextWithLinks(userProfile.bio).map((part, index) =>
+                        part.type === "link" ? (
+                          <button
+                            key={`${part.value}_${index}`}
+                            className="profileBioLink"
+                            type="button"
+                            onClick={() =>
+                              setLinkWarning({
+                                href: part.href,
+                                label: part.value
+                              })
+                            }
+                          >
+                            {part.value}
+                          </button>
+                        ) : (
+                          <span key={`${part.value}_${index}`}>
+                            {part.value}
+                          </span>
+                        )
+                      )}
+                    </p>
+                  </div>
+                ) : null}
+
+                {userProfile.id !== auth.user.id && (
+                  <div className="profileModalActions">
+                    {isFriend(userProfile.id) ? (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          openFriendChat(userProfile);
+                          setUserProfile(null);
+                        }}
+                      >
+                        Message
+                      </button>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => sendFriendRequest(userProfile)}
+                        >
+                          Add Friend
+                        </button>
+                        <button
+                          className="secondary"
+                          type="button"
+                          onClick={() => {
+                            const existing = chats.find(
+                              (chat) =>
+                                chat.other_user?.id === userProfile.id
+                            );
+                            if (existing) {
+                              setActiveChat(existing);
+                              setView("chat");
+                              setUserProfile(null);
+                            }
+                          }}
+                        >
+                          Message
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {confirmDialog && (
+          <div className="confirmOverlay" role="dialog" aria-modal="true">
+            <div className="confirmModal">
+              <h2>{confirmDialog.title}</h2>
+              <p>{confirmDialog.text}</p>
+              <div>
+                <button type="button" onClick={() => setConfirmDialog(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="danger"
+                  type="button"
+                  onClick={confirmDialog.action}
+                >
+                  {confirmDialog.confirmText}
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2895,7 +3288,30 @@ function WebApp() {
 {activeChat.other_user.bio ? (
                 <div className="memberProfileSection">
                   <strong>About Me</strong>
-                  <p>{activeChat.other_user.bio}</p>
+                  <p>
+                    {splitTextWithLinks(activeChat.other_user.bio).map(
+                      (part, index) =>
+                        part.type === "link" ? (
+                          <button
+                            key={`${part.value}_${index}`}
+                            className="profileBioLink"
+                            type="button"
+                            onClick={() =>
+                              setLinkWarning({
+                                href: part.href,
+                                label: part.value
+                              })
+                            }
+                          >
+                            {part.value}
+                          </button>
+                        ) : (
+                          <span key={`${part.value}_${index}`}>
+                            {part.value}
+                          </span>
+                        )
+                    )}
+                  </p>
                 </div>
               ) : null}
 
@@ -2946,6 +3362,10 @@ function AdminApp() {
   const [loadingSessions, setLoadingSessions] = useState(false);
   const [linkWarning, setLinkWarning] = useState(null);
   const [socialToast, setSocialToast] = useState(null);
+  const [userProfile, setUserProfile] = useState(null);
+  const [userMenu, setUserMenu] = useState(null);
+  const [confirmDialog, setConfirmDialog] = useState(null);
+  const [chatActionsOpen, setChatActionsOpen] = useState(false);
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -3028,6 +3448,102 @@ function AdminApp() {
       setTurnstileSiteKey(data.turnstile_site_key || "");
     } catch {
       setTurnstileSiteKey("");
+    }
+  }
+
+  function openProfile(user) {
+    if (!user) return;
+    setUserProfile(user);
+    setUserMenu(null);
+  }
+
+  function isFriend(userId) {
+    return friends.some((friend) => friend.id === userId);
+  }
+
+  function scrollMessagesToBottom(behavior = "smooth") {
+    requestAnimationFrame(() => {
+      messagesEndRef.current?.scrollIntoView({
+        behavior,
+        block: "end"
+      });
+    });
+  }
+
+  function jumpToMessage(messageId) {
+    const element = document.getElementById(`message_${messageId}`);
+
+    if (!element) {
+      setUiError("The original message is not loaded.");
+      return;
+    }
+
+    element.scrollIntoView({
+      behavior: "smooth",
+      block: "center"
+    });
+
+    element.classList.remove("messageJumpHighlight");
+    void element.offsetWidth;
+    element.classList.add("messageJumpHighlight");
+
+    window.setTimeout(() => {
+      element.classList.remove("messageJumpHighlight");
+    }, 1400);
+  }
+
+  async function blockUser(user) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+
+    try {
+      await api("/api/users/block", {
+        method: "POST",
+        body: JSON.stringify({ user_id: user.id })
+      });
+
+      setChats((current) =>
+        current.filter((chat) => chat.other_user?.id !== user.id)
+      );
+      setFriends((current) =>
+        current.filter((friend) => friend.id !== user.id)
+      );
+
+      if (activeChat?.other_user?.id === user.id) {
+        setActiveChat(null);
+        setView("friends");
+      }
+
+      setUserProfile(null);
+      setSocialToast({
+        title: "User Blocked",
+        text: `${user.display_name || user.username} has been blocked.`
+      });
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function deleteChat(chat) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+    setChatActionsOpen(false);
+
+    try {
+      await api("/api/chats/delete", {
+        method: "POST",
+        body: JSON.stringify({ chat_id: chat.id })
+      });
+
+      setChats((current) => current.filter((item) => item.id !== chat.id));
+
+      if (activeChat?.id === chat.id) {
+        setActiveChat(null);
+        setMessages([]);
+        setView("friends");
+      }
+    } catch (error) {
+      setUiError(error.message);
     }
   }
 
@@ -3283,45 +3799,65 @@ function AppMessage({
   time,
   text,
   grouped = false,
-  onContextMenu
+  onContextMenu,
+  onOpenLink,
+  onOpenProfile,
+  onJumpToReply
 }) {
   return (
     <div
-      className={grouped ? "appMessage grouped" : "appMessage"}
+      id={`message_${message.id}`}
+      className={[
+        grouped ? "appMessage grouped" : "appMessage",
+        message.optimistic ? "optimisticMessage" : ""
+      ].join(" ")}
       onContextMenu={onContextMenu}
     >
       {!grouped && (
-        <img
-          className="messageAvatarImage"
-          src={avatarUrl || "/default-avatar.png"}
-          alt="User avatar"
-          draggable="false"
-        />
+        <button
+          className="messageAvatarButton"
+          type="button"
+          onClick={onOpenProfile}
+        >
+          <img
+            className="messageAvatarImage"
+            src={avatarUrl || "/default-avatar.png"}
+            alt="User avatar"
+            draggable="false"
+          />
+        </button>
       )}
 
       <div className="messageContent">
         {!grouped && (
           <div className="messageMeta">
-            <strong className="nameWithBadge">
+            <button
+              className="messageNameButton nameWithBadge"
+              type="button"
+              onClick={onOpenProfile}
+            >
               <span className="displayNameText">{name}</span>
               {verified ? <VerifiedBadge /> : null}
-            </strong>
+            </button>
             <span>{time}</span>
           </div>
         )}
 
-        {message.reply_to && !message.deleted_at && (
-          <div className="messageReplyPreview">
+        {message.reply_to && (
+          <button
+            className="messageReplyPreview"
+            type="button"
+            onClick={onJumpToReply}
+          >
             <strong>{message.reply_to.sender_name}</strong>
             <span>{message.reply_to.text}</span>
-          </div>
+          </button>
         )}
 
         <p
-          className={[
-            message.deleted_at ? "deletedMessageText" : "",
+          className={
             message.optimistic ? "pendingMessageText" : "sentMessageText"
-          ].join(" ")}
+          }
         >
           {splitTextWithLinks(text).map((part, index) =>
             part.type === "link" ? (
@@ -3329,12 +3865,13 @@ function AppMessage({
                 key={`${part.value}_${index}`}
                 className="messageLink"
                 type="button"
-                onClick={() =>
-                  setLinkWarning({
+                onClick={(event) => {
+                  event.stopPropagation();
+                  onOpenLink({
                     href: part.href,
                     label: part.value
-                  })
-                }
+                  });
+                }}
               >
                 {part.value}
               </button>
@@ -3342,7 +3879,7 @@ function AppMessage({
               <span key={`${part.value}_${index}`}>{part.value}</span>
             )
           )}
-          {message.edited_at && !message.deleted_at && (
+          {message.edited_at && (
             <span className="editedLabel">Edited</span>
           )}
         </p>

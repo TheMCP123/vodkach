@@ -40,9 +40,7 @@ export async function onRequestPost(context) {
   }
 
   await context.env.DB.prepare(
-    `UPDATE messages
-     SET body_ciphertext = '',
-         deleted_at = datetime('now')
+    `DELETE FROM messages
      WHERE id = ?`
   )
     .bind(messageId)

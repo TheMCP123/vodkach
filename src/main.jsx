@@ -15,6 +15,7 @@ import {
   UserRound
 } from "lucide-react";
 import "./styles-v53.css";
+import "./landing-v54.css";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
@@ -23,6 +24,17 @@ const isAdminPage =
   typeof window !== "undefined" &&
   !window.location.hostname.startsWith("web.") &&
   window.location.pathname.startsWith("/admin");
+
+if (typeof document !== "undefined") {
+  document.documentElement.classList.toggle(
+    "vodkachWebHost",
+    isWebApp
+  );
+  document.documentElement.classList.toggle(
+    "vodkachMainHost",
+    !isWebApp && !isAdminPage
+  );
+}
 
 const DEVICE_ID_KEY = "vodkach_device_id";
 const PRIVATE_KEY_DB = "vodkach_crypto";

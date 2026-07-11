@@ -97,6 +97,7 @@ export async function onRequestGet(context) {
         users.verified AS sender_verified,
         users.pronouns AS sender_pronouns,
         users.bio AS sender_bio,
+        users.banner_color AS sender_banner_color,
         users.status_preference AS sender_status_preference,
         users.last_seen_at AS sender_last_seen_at,
         CASE
@@ -139,6 +140,7 @@ export async function onRequestGet(context) {
         users.verified AS sender_verified,
         users.pronouns AS sender_pronouns,
         users.bio AS sender_bio,
+        users.banner_color AS sender_banner_color,
         users.status_preference AS sender_status_preference,
         users.last_seen_at AS sender_last_seen_at,
         CASE
@@ -198,6 +200,7 @@ export async function onRequestGet(context) {
       verified: Boolean(row.sender_verified),
       pronouns: row.sender_pronouns,
       bio: row.sender_bio,
+      banner_color: row.sender_banner_color,
       status_preference: row.sender_status_preference,
       last_seen_at: row.sender_last_seen_at,
       effective_status: row.sender_effective_status || "offline"

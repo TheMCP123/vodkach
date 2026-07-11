@@ -34,6 +34,7 @@ export async function onRequestPost(context) {
   const pronouns = String(body.pronouns || "").trim();
   const bio = String(body.bio || "").trim();
   const avatarUrl = body.avatar_url ? String(body.avatar_url).trim() : null;
+  const bannerColor = String(body.banner_color || "#5b1115").trim().toLowerCase();
 
   if (!USERNAME_REGEX.test(username)) {
     return json(
@@ -64,6 +65,10 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: "Bio must be 190 characters or less" }, { status: 400 });
   }
 
+  if (!/^#[0-9a-f]{6}$/i.test(bannerColor)) {
+    return json({ ok: false, error: "Banner color is invalid" }, { status: 400 });
+  }
+
   if (avatarUrl && avatarUrl.length > 1000000) {
     return json({ ok: false, error: "Avatar is too large" }, { status: 400 });
   }
@@ -89,6 +94,7 @@ export async function onRequestPost(context) {
          avatar_url = ?,
          pronouns = ?,
          bio = ?,
+         banner_color = ?,
          updated_at = datetime('now')
      WHERE id = ?`
   )
@@ -98,6 +104,7 @@ export async function onRequestPost(context) {
       avatarUrl,
       pronouns || null,
       bio || null,
+      bannerColor,
       user.id
     )
     .run();
@@ -108,6 +115,7 @@ export async function onRequestPost(context) {
     display_name: displayName,
     avatar_url: avatarUrl,
     pronouns,
-    bio
+    bio,
+    banner_color: bannerColor
   });
 }

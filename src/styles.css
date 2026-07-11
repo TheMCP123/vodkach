@@ -4094,3 +4094,305 @@ h1 {
 .confirmModal button.danger {
   background: #b3261e;
 }
+
+
+/* Patch 052: professional polish, proportional statuses, unified account settings */
+
+:root {
+  --status-ring: #151619;
+}
+
+.avatarWithStatus {
+  --avatar-size: 40px;
+  --status-size: calc(var(--avatar-size) * .34);
+  --status-ring-size: calc(var(--status-size) * .22);
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+  border-radius: calc(var(--avatar-size) * .27);
+}
+
+.statusTooltipWrap {
+  right: calc(var(--status-size) * -.18) !important;
+  bottom: calc(var(--status-size) * -.18) !important;
+  width: var(--status-size) !important;
+  height: var(--status-size) !important;
+}
+
+.avatarStatusBadge {
+  width: var(--status-size) !important;
+  height: var(--status-size) !important;
+  border: var(--status-ring-size) solid var(--status-ring) !important;
+  background: var(--status-ring) !important;
+  border-radius: 50% !important;
+  box-sizing: border-box !important;
+}
+
+.statusDot,
+.statusMoon,
+.statusDnd {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+}
+
+.statusMoon {
+  overflow: hidden !important;
+}
+
+.statusMoon::after {
+  width: 88% !important;
+  height: 88% !important;
+  left: 42% !important;
+  top: -18% !important;
+  background: var(--status-ring) !important;
+}
+
+.statusDnd > span {
+  left: 22% !important;
+  right: 22% !important;
+  top: 43% !important;
+  height: 14% !important;
+}
+
+.sidebarProfileAvatarWrap {
+  --avatar-size: 34px;
+  --status-ring: #101114;
+}
+
+.chatListAvatarWrap {
+  --avatar-size: 30px;
+}
+
+.socialAvatarWrap {
+  --avatar-size: 44px;
+}
+
+.chatStartAvatarWrap {
+  --avatar-size: 72px;
+}
+
+.memberProfileAvatarWrap {
+  --avatar-size: 84px;
+  --status-ring: #121316;
+  width: var(--avatar-size) !important;
+  height: var(--avatar-size) !important;
+}
+
+.profileModalAvatar {
+  --avatar-size: 96px;
+  --status-ring: #17181c;
+  width: var(--avatar-size) !important;
+  height: var(--avatar-size) !important;
+}
+
+.settingsAccountAvatar {
+  --avatar-size: 92px;
+  --status-ring: #1b1c20;
+}
+
+.memberPronouns,
+.profileModal .memberHandleLine span:last-child {
+  color: #aeb4bc !important;
+}
+
+.settingsCloseButton,
+.profileModalClose,
+.avatarCropperClose {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #9ba1aa !important;
+  font-size: 1.75rem !important;
+}
+
+.settingsCloseButton:hover,
+.profileModalClose:hover,
+.avatarCropperClose:hover {
+  color: #fff !important;
+  background: transparent !important;
+}
+
+.navBadge {
+  min-width: 18px !important;
+  height: 18px !important;
+  padding: 0 5px !important;
+  margin-left: auto !important;
+  border-radius: 9px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  line-height: 1 !important;
+}
+
+.chatHeaderDisplayName {
+  min-width: 0;
+  overflow: hidden;
+  color: #fff;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .95rem;
+  font-weight: 720;
+}
+
+.appChatHeader {
+  justify-content: space-between !important;
+}
+
+.settingsAccountHero {
+  --account-banner: #5b1115;
+}
+
+.settingsAccountBanner {
+  background: var(--account-banner) !important;
+}
+
+.settingsAccountBody {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+}
+
+.settingsAccountAvatarEditor {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  flex: 0 0 auto;
+  margin-top: -50px;
+}
+
+.settingsAccountIdentity {
+  min-width: 0;
+  padding-bottom: 2px;
+  display: grid;
+  gap: 3px;
+}
+
+.settingsAccountIdentity > span,
+.settingsAccountIdentity small {
+  color: #8e949c;
+}
+
+.accountSettingsSection {
+  max-width: 680px;
+  margin-top: 20px;
+  padding: 18px;
+  border-radius: 10px;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.accountSettingsSection h2 {
+  margin: 0 0 18px;
+  color: #fff;
+  font-size: 1rem;
+}
+
+.settingsFormGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 14px;
+}
+
+.bannerColorField {
+  min-height: 42px;
+  padding: 6px 10px;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #101114;
+  border: 1px solid rgba(255,255,255,.075);
+}
+
+.bannerColorField input {
+  width: 30px !important;
+  height: 30px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+}
+
+.bannerColorField code {
+  color: #c8ccd2;
+}
+
+.chatStart.redesigned {
+  max-width: 460px;
+  margin: auto;
+  padding: 34px;
+  border-radius: 14px;
+  display: grid;
+  justify-items: center;
+  text-align: center;
+  background: rgba(255,255,255,.018);
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.chatStartVisual {
+  margin-bottom: 12px;
+}
+
+.chatStart.redesigned h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 1.55rem;
+}
+
+.chatStart.redesigned > span {
+  margin-top: 3px;
+  color: #8e949c;
+  font-size: .8rem;
+}
+
+.chatStart.redesigned p {
+  max-width: 360px;
+  margin: 14px 0 18px;
+  color: #9ba1aa;
+  line-height: 1.5;
+}
+
+.chatStart.redesigned > button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #2b2d31;
+  font-weight: 760;
+}
+
+.messageLink,
+.profileBioLink {
+  text-decoration: none !important;
+}
+
+.messageLink:hover,
+.profileBioLink:hover {
+  text-decoration: none !important;
+  color: #75b9ff !important;
+}
+
+.chatActionsMenu button.muted,
+.userContextMenu button.muted {
+  color: #8e949c;
+}
+
+.chatActionsMenu button.muted:hover,
+.userContextMenu button.muted:hover {
+  color: #fff;
+}
+
+.sessionsHeader {
+  align-items: center !important;
+}
+
+.settingsCloseButton {
+  top: 18px !important;
+  right: 20px !important;
+}
+
+@media (max-width: 760px) {
+  .settingsFormGrid {
+    grid-template-columns: 1fr;
+  }
+}

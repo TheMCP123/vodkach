@@ -46,6 +46,7 @@ export async function onRequestGet(context) {
       users.verified,
       users.pronouns,
       users.bio,
+      users.banner_color,
       users.status_preference,
       users.last_seen_at,
       CASE
@@ -76,6 +77,7 @@ export async function onRequestGet(context) {
       users.verified,
       users.pronouns,
       users.bio,
+      users.banner_color,
       users.status_preference,
       users.last_seen_at,
       CASE

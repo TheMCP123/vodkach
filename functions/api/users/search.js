@@ -39,6 +39,7 @@ export async function onRequestGet(context) {
       verified,
       pronouns,
       bio,
+      banner_color,
       status_preference,
       last_seen_at,
       CASE

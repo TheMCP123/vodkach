@@ -140,6 +140,7 @@ export async function getCurrentUser(request, env) {
       users.verified,
       users.pronouns,
       users.bio,
+      users.banner_color,
       users.status_preference,
       users.last_seen_at,
       CASE

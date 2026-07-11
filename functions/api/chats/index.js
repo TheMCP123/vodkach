@@ -33,6 +33,7 @@ export async function onRequestGet(context) {
       other_users.verified AS other_verified,
       other_users.pronouns AS other_pronouns,
       other_users.bio AS other_bio,
+      other_users.banner_color AS other_banner_color,
       other_users.status_preference AS other_status_preference,
       other_users.last_seen_at AS other_last_seen_at,
       CASE
@@ -90,6 +91,7 @@ export async function onRequestGet(context) {
           verified: Boolean(row.other_verified),
           pronouns: row.other_pronouns,
           bio: row.other_bio,
+          banner_color: row.other_banner_color,
           status_preference: row.other_status_preference,
           last_seen_at: row.other_last_seen_at,
           effective_status: row.other_effective_status || "offline",

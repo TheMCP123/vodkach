@@ -15,6 +15,7 @@ export async function onRequestGet(context) {
       other_users.verified,
       other_users.pronouns,
       other_users.bio,
+      other_users.banner_color,
       other_users.status_preference,
       other_users.last_seen_at,
       CASE

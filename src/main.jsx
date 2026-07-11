@@ -506,7 +506,8 @@ function WebApp() {
     display_name: "",
     pronouns: "",
     bio: "",
-    avatar_url: null
+    avatar_url: null,
+    banner_color: "#5b1115"
   });
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
@@ -516,6 +517,12 @@ function WebApp() {
   const [userMenu, setUserMenu] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [chatActionsOpen, setChatActionsOpen] = useState(false);
+  const [saveCooldownUntil, setSaveCooldownUntil] = useState(0);
+  const [clientLocation, setClientLocation] = useState({
+    country: "",
+    city: "",
+    region: ""
+  });
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [uiError, setUiError] = useState("");
@@ -843,36 +850,37 @@ function WebApp() {
     }, 1400);
   }
 
-  async function blockUser(user) {
+  async function removeFriend(user) {
     setConfirmDialog(null);
     setUserMenu(null);
+    setChatActionsOpen(false);
 
     try {
-      await api("/api/users/block", {
+      await api("/api/friends/remove", {
         method: "POST",
         body: JSON.stringify({ user_id: user.id })
       });
 
-      setChats((current) =>
-        current.filter((chat) => chat.other_user?.id !== user.id)
-      );
       setFriends((current) =>
         current.filter((friend) => friend.id !== user.id)
       );
 
-      if (activeChat?.other_user?.id === user.id) {
-        setActiveChat(null);
-        setView("friends");
-      }
-
-      setUserProfile(null);
       setSocialToast({
-        title: "User Blocked",
-        text: `${user.display_name || user.username} has been blocked.`
+        title: "Friend Removed",
+        text: `${user.display_name || user.username} was removed from your friends.`
       });
     } catch (error) {
       setUiError(error.message);
     }
+  }
+
+  async function blockUser(user) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+    setChatActionsOpen(false);
+    setUiError(
+      `Blocking ${user.display_name || user.username} is not available yet.`
+    );
   }
 
   async function deleteChat(chat) {
@@ -895,6 +903,56 @@ function WebApp() {
       }
     } catch (error) {
       setUiError(error.message);
+    }
+  }
+
+  function ensureSaveCooldown() {
+    const now = Date.now();
+
+    if (saveCooldownUntil > now) {
+      const seconds = Math.ceil((saveCooldownUntil - now) / 1000);
+      setUiError(`Please wait ${seconds} second${seconds === 1 ? "" : "s"} before saving again.`);
+      return false;
+    }
+
+    setSaveCooldownUntil(now + 5000);
+    return true;
+  }
+
+  async function resolveClientLocation() {
+    try {
+      const response = await fetch("https://www.cloudflare.com/cdn-cgi/trace", {
+        cache: "no-store"
+      });
+      const text = await response.text();
+      const values = Object.fromEntries(
+        text
+          .trim()
+          .split("\\n")
+          .map((line) => line.split("=", 2))
+      );
+
+      setClientLocation((current) => ({
+        ...current,
+        country: values.loc || current.country
+      }));
+    } catch {
+      // Country fallback is optional.
+    }
+
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const parts = timezone.split("/");
+      const city = parts.length > 1
+        ? parts[parts.length - 1].replaceAll("_", " ")
+        : "";
+
+      setClientLocation((current) => ({
+        ...current,
+        city: current.city || city
+      }));
+    } catch {
+      // Browser timezone fallback is optional.
     }
   }
 
@@ -1063,10 +1121,15 @@ function WebApp() {
   }, []);
 
   useEffect(() => {
+    resolveClientLocation();
+  }, []);
+
+  useEffect(() => {
     function closeMenu() {
       setMessageMenu(null);
       setUserMenu(null);
       setChatActionsOpen(false);
+      setStatusMenuOpen(false);
     }
 
     window.addEventListener("click", closeMenu);
@@ -1493,7 +1556,12 @@ function WebApp() {
     setLoadingSessions(true);
 
     try {
-      const data = await api("/api/sessions");
+      const params = new URLSearchParams({
+        country: clientLocation.country || "",
+        city: clientLocation.city || "",
+        region: clientLocation.region || ""
+      });
+      const data = await api(`/api/sessions?${params.toString()}`);
       setSessions(data.sessions || []);
     } catch (error) {
       setUiError(error.message);
@@ -1562,6 +1630,9 @@ function WebApp() {
 
   async function saveProfileSettings(event) {
     event.preventDefault();
+
+    if (!ensureSaveCooldown()) return;
+
     setSavingSettings(true);
     setUiError("");
 
@@ -1580,7 +1651,8 @@ function WebApp() {
               display_name: data.display_name,
               avatar_url: data.avatar_url,
               pronouns: data.pronouns,
-              bio: data.bio
+              bio: data.bio,
+              banner_color: data.banner_color
             }
           : current.user
       }));
@@ -1593,7 +1665,8 @@ function WebApp() {
         display_name: data.display_name,
         avatar_url: data.avatar_url,
         pronouns: data.pronouns,
-        bio: data.bio
+        bio: data.bio,
+        banner_color: data.banner_color
       }));
       loadSocial().catch(() => {});
     } catch (error) {
@@ -2225,26 +2298,12 @@ function WebApp() {
                 });
               }}
             >
-              <span
-                className="profileClickTarget"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openProfile(chat.other_user);
-                }}
-              >
-                <AvatarWithStatus
+              <AvatarWithStatus
                   user={chat.other_user}
                   className="chatListAvatarWrap"
                   alt="Chat avatar"
                 />
-              </span>
-              <span
-                className="chatListIdentity profileClickTarget"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  openProfile(chat.other_user);
-                }}
-              >
+              <span className="chatListIdentity">
                 <span className="chatListPrimary">
                   <span>
                     {chat.other_user?.display_name ||
@@ -2330,7 +2389,8 @@ function WebApp() {
                 display_name: auth.user.display_name || "",
                 pronouns: auth.user.pronouns || "",
                 bio: auth.user.bio || "",
-                avatar_url: auth.user.avatar_url || null
+                avatar_url: auth.user.avatar_url || null,
+                banner_color: auth.user.banner_color || "#5b1115"
               });
               setProfileFormInitialized(true);
               setSettingsOpen(true);
@@ -2556,7 +2616,12 @@ function WebApp() {
 
         {view === "chat" && activeChat && (
           <>
-            <header className="appChatHeader chatHeaderActionsOnly">
+            <header className="appChatHeader">
+              <div className="chatHeaderDisplayName">
+                {activeChat.other_user?.display_name ||
+                  activeChat.other_user?.username ||
+                  "Direct Chat"}
+              </div>
               <div className="chatHeaderActions">
                 <button type="button" aria-label="Start call">
                   <Phone size={18} />
@@ -2583,8 +2648,27 @@ function WebApp() {
                     >
                       View Profile
                     </button>
+                    {isFriend(activeChat.other_user.id) && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setConfirmDialog({
+                            title: "Remove Friend?",
+                            text: `Remove ${
+                              activeChat.other_user.display_name ||
+                              activeChat.other_user.username
+                            } from your friends?`,
+                            confirmText: "Remove Friend",
+                            action: () => removeFriend(activeChat.other_user)
+                          })
+                        }
+                      >
+                        Remove Friend
+                      </button>
+                    )}
+
                     <button
-                      className="danger"
+                      className="muted"
                       type="button"
                       onClick={() =>
                         setConfirmDialog({
@@ -2593,7 +2677,7 @@ function WebApp() {
                             activeChat.other_user.display_name ||
                             activeChat.other_user.username
                           }? They will be removed from your friends and chats.`,
-                          confirmText: "Block",
+                          confirmText: "Continue",
                           action: () => blockUser(activeChat.other_user)
                         })
                       }
@@ -2621,14 +2705,26 @@ function WebApp() {
 
             <div className="appMessages" ref={messagesViewportRef}>
               {messages.length === 0 && (
-                <div className="chatStart">
-                  <AvatarWithStatus
-                    user={activeChat?.other_user}
-                    className="chatStartAvatarWrap"
-                    alt="Chat avatar"
-                  />
+                <div className="chatStart redesigned">
+                  <div className="chatStartVisual">
+                    <AvatarWithStatus
+                      user={activeChat?.other_user}
+                      className="chatStartAvatarWrap"
+                      alt="Chat avatar"
+                    />
+                  </div>
                   <h2>{activeTitle}</h2>
-                  <p>This is the beginning of your direct chat.</p>
+                  <span>@{activeChat.other_user?.username}</span>
+                  <p>
+                    This is the beginning of your conversation. Say hello and
+                    start something good.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => openProfile(activeChat.other_user)}
+                  >
+                    View Profile
+                  </button>
                 </div>
               )}
 
@@ -2770,8 +2866,26 @@ function WebApp() {
             <button type="button" onClick={() => openProfile(userMenu.user)}>
               View Profile
             </button>
+            {isFriend(userMenu.user.id) && (
+              <button
+                type="button"
+                onClick={() =>
+                  setConfirmDialog({
+                    title: "Remove Friend?",
+                    text: `Remove ${
+                      userMenu.user.display_name || userMenu.user.username
+                    } from your friends?`,
+                    confirmText: "Remove Friend",
+                    action: () => removeFriend(userMenu.user)
+                  })
+                }
+              >
+                Remove Friend
+              </button>
+            )}
+
             <button
-              className="danger"
+              className="muted"
               type="button"
               onClick={() =>
                 setConfirmDialog({
@@ -2815,7 +2929,13 @@ function WebApp() {
               >
                 ×
               </button>
-              <div className="profileModalBanner" />
+              <div
+                className="profileModalBanner"
+                style={{
+                  background:
+                    userProfile.banner_color || "#5b1115"
+                }}
+              />
               <div className="profileModalBody">
                 <AvatarWithStatus
                   user={userProfile}
@@ -2867,15 +2987,34 @@ function WebApp() {
                 {userProfile.id !== auth.user.id && (
                   <div className="profileModalActions">
                     {isFriend(userProfile.id) ? (
-                      <button
-                        type="button"
-                        onClick={() => {
-                          openFriendChat(userProfile);
-                          setUserProfile(null);
-                        }}
-                      >
-                        Message
-                      </button>
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            openFriendChat(userProfile);
+                            setUserProfile(null);
+                          }}
+                        >
+                          Message
+                        </button>
+                        <button
+                          className="secondary"
+                          type="button"
+                          onClick={() =>
+                            setConfirmDialog({
+                              title: "Remove Friend?",
+                              text: `Remove ${
+                                userProfile.display_name ||
+                                userProfile.username
+                              } from your friends?`,
+                              confirmText: "Remove Friend",
+                              action: () => removeFriend(userProfile)
+                            })
+                          }
+                        >
+                          Remove Friend
+                        </button>
+                      </>
                     ) : (
                       <>
                         <button
@@ -2991,14 +3130,6 @@ function WebApp() {
                   My Account
                 </button>
                 <button
-                  className={settingsTab === "profile" ? "active" : ""}
-                  type="button"
-                  onClick={() => setSettingsTab("profile")}
-                >
-                  <SettingsNavIcon type="profile" />
-                  My Profile
-                </button>
-                <button
                   className={settingsTab === "notifications" ? "active" : ""}
                   type="button"
                   onClick={() => setSettingsTab("notifications")}
@@ -3034,133 +3165,153 @@ function WebApp() {
                 </button>
 
                 {settingsTab === "account" && (
-                  <>
+                  <form className="profileSettingsForm accountSettingsForm" onSubmit={saveProfileSettings}>
                     <h1>My Account</h1>
-                    <div className="settingsAccountHero">
+
+                    <div
+                      className="settingsAccountHero"
+                      style={{
+                        "--account-banner":
+                          profileForm.banner_color || "#5b1115"
+                      }}
+                    >
                       <div className="settingsAccountBanner" />
                       <div className="settingsAccountBody">
-                        <img src={getAvatar(auth.user)} alt="Profile avatar" />
-                        <div>
+                        <div className="settingsAccountAvatarEditor">
+                          <AvatarWithStatus
+                            user={{
+                              avatar_url:
+                                profileForm.avatar_url || "/default-avatar.png",
+                              effective_status:
+                                auth.user.effective_status || "offline"
+                            }}
+                            className="settingsAccountAvatar"
+                            alt="Profile avatar"
+                          />
+                          <label className="settingsAvatarEditButton" title="Upload avatar">
+                            <span className="customPencilIcon" aria-hidden="true" />
+                            <input
+                              type="file"
+                              accept="image/*"
+                              onChange={(event) =>
+                                handleAvatarFile(event.target.files?.[0])
+                              }
+                            />
+                          </label>
+                          <button
+                            className="settingsAvatarClearButton"
+                            type="button"
+                            onClick={() =>
+                              setProfileForm((current) => ({
+                                ...current,
+                                avatar_url: null
+                              }))
+                            }
+                          >
+                            ×
+                          </button>
+                        </div>
+
+                        <div className="settingsAccountIdentity">
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
-                              {currentDisplayName}
+                              {profileForm.display_name ||
+                                currentDisplayName}
                             </span>
                             {auth.user.verified ? <VerifiedBadge /> : null}
                           </strong>
-                          <span>@{auth.user.username}</span>
+                          <span>@{profileForm.username || auth.user.username}</span>
                           <small>{auth.user.email}</small>
                         </div>
                       </div>
                     </div>
-                  </>
-                )}
 
-                {settingsTab === "profile" && (
-                  <form className="profileSettingsForm" onSubmit={saveProfileSettings}>
-                    <h1>My Profile</h1>
+                    <section className="accountSettingsSection">
+                      <h2>Profile Information</h2>
 
-                    <div className="settingsAvatarEditor">
-                      <div className="settingsAvatarEditorPreview">
-                        <AvatarWithStatus
-                          user={{
-                            avatar_url:
-                              profileForm.avatar_url || "/default-avatar.png",
-                            effective_status:
-                              auth.user.effective_status || "offline"
-                          }}
-                          className="settingsAvatarPreview"
-                          alt="Profile avatar"
-                        />
-                        <label className="settingsAvatarEditButton" title="Upload avatar">
-                          <span className="customPencilIcon" aria-hidden="true" />
+                      <div className="settingsFormGrid">
+                        <label>
+                          <span>Username</span>
                           <input
-                            type="file"
-                            accept="image/*"
+                            value={profileForm.username}
                             onChange={(event) =>
-                              handleAvatarFile(event.target.files?.[0])
+                              setProfileForm((current) => ({
+                                ...current,
+                                username: event.target.value
+                              }))
                             }
+                            maxLength={16}
+                            placeholder="username"
                           />
                         </label>
-                        <button
-                          className="settingsAvatarClearButton"
-                          type="button"
-                          onClick={() =>
+
+                        <label>
+                          <span>Display Name</span>
+                          <input
+                            value={profileForm.display_name}
+                            onChange={(event) =>
+                              setProfileForm((current) => ({
+                                ...current,
+                                display_name: event.target.value
+                              }))
+                            }
+                            maxLength={16}
+                            placeholder="Display name"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Pronouns</span>
+                          <input
+                            value={profileForm.pronouns}
+                            onChange={(event) =>
+                              setProfileForm((current) => ({
+                                ...current,
+                                pronouns: event.target.value
+                              }))
+                            }
+                            maxLength={16}
+                            placeholder="e.g. he/him"
+                          />
+                        </label>
+
+                        <label>
+                          <span>Banner Color</span>
+                          <div className="bannerColorField">
+                            <input
+                              type="color"
+                              value={profileForm.banner_color || "#5b1115"}
+                              onChange={(event) =>
+                                setProfileForm((current) => ({
+                                  ...current,
+                                  banner_color: event.target.value
+                                }))
+                              }
+                            />
+                            <code>
+                              {profileForm.banner_color || "#5b1115"}
+                            </code>
+                          </div>
+                        </label>
+                      </div>
+
+                      <label>
+                        <span>About Me</span>
+                        <textarea
+                          value={profileForm.bio}
+                          onChange={(event) =>
                             setProfileForm((current) => ({
                               ...current,
-                              avatar_url: null
+                              bio: event.target.value
                             }))
                           }
-                        >
-                          ×
-                        </button>
-                      </div>
-                      <div>
-                        <strong>Profile Avatar</strong>
-                        <span>PNG, JPG, WEBP and other image formats up to 10 MB.</span>
-                      </div>
-                    </div>
-
-                    <label>
-                      <span>Username</span>
-                      <input
-                        value={profileForm.username}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            username: event.target.value
-                          }))
-                        }
-                        maxLength={16}
-                        placeholder="username"
-                      />
-                    </label>
-
-                    <label>
-                      <span>Display Name</span>
-                      <input
-                        value={profileForm.display_name}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            display_name: event.target.value
-                          }))
-                        }
-                        maxLength={16}
-                        placeholder="Display name"
-                      />
-                    </label>
-
-                    <label>
-                      <span>Pronouns</span>
-                      <input
-                        value={profileForm.pronouns}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            pronouns: event.target.value
-                          }))
-                        }
-                        maxLength={16}
-                        placeholder="e.g. he/him"
-                      />
-                    </label>
-
-                    <label>
-                      <span>About Me</span>
-                      <textarea
-                        value={profileForm.bio}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            bio: event.target.value
-                          }))
-                        }
-                        maxLength={190}
-                        rows={6}
-                        placeholder="Tell people a little about yourself"
-                      />
-                      <small>{profileForm.bio.length}/190</small>
-                    </label>
+                          maxLength={190}
+                          rows={6}
+                          placeholder="Tell people a little about yourself"
+                        />
+                        <small>{profileForm.bio.length}/190</small>
+                      </label>
+                    </section>
 
                     <button type="submit" disabled={savingSettings}>
                       {savingSettings ? "Saving..." : "Save Changes"}
@@ -3202,12 +3353,20 @@ function WebApp() {
                               ) : null}
                             </strong>
                             <span>
-                              {session.country || "Unknown location"} ·{" "}
+                              {[
+                                session.city,
+                                session.region,
+                                session.country
+                              ].filter(Boolean).join(", ") || "Location unavailable"} ·{" "}
                               {session.last_seen_at
                                 ? `Active ${formatLocalDate(session.last_seen_at)} ${formatLocalTime(session.last_seen_at)}`
                                 : "Last activity unknown"}
                             </span>
-                            <small>{session.user_agent || "Unknown device"}</small>
+                            <small>
+                              {session.user_agent ||
+                                navigator.userAgent ||
+                                "Device information unavailable"}
+                            </small>
                           </div>
                           {!session.current && (
                             <button
@@ -3263,7 +3422,13 @@ function WebApp() {
       <aside className="memberProfilePanel">
         {activeChat?.other_user ? (
           <>
-            <div className="profileBanner" />
+            <div
+              className="profileBanner"
+              style={{
+                background:
+                  activeChat.other_user.banner_color || "#5b1115"
+              }}
+            />
             <div className="memberProfileBody">
               <AvatarWithStatus
                 user={activeChat.other_user}
@@ -3366,6 +3531,12 @@ function AdminApp() {
   const [userMenu, setUserMenu] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [chatActionsOpen, setChatActionsOpen] = useState(false);
+  const [saveCooldownUntil, setSaveCooldownUntil] = useState(0);
+  const [clientLocation, setClientLocation] = useState({
+    country: "",
+    city: "",
+    region: ""
+  });
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -3492,6 +3663,30 @@ function AdminApp() {
     }, 1400);
   }
 
+  async function removeFriend(user) {
+    setConfirmDialog(null);
+    setUserMenu(null);
+    setChatActionsOpen(false);
+
+    try {
+      await api("/api/friends/remove", {
+        method: "POST",
+        body: JSON.stringify({ user_id: user.id })
+      });
+
+      setFriends((current) =>
+        current.filter((friend) => friend.id !== user.id)
+      );
+
+      setSocialToast({
+        title: "Friend Removed",
+        text: `${user.display_name || user.username} was removed from your friends.`
+      });
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
   async function blockUser(user) {
     setConfirmDialog(null);
     setUserMenu(null);
@@ -3544,6 +3739,56 @@ function AdminApp() {
       }
     } catch (error) {
       setUiError(error.message);
+    }
+  }
+
+  function ensureSaveCooldown() {
+    const now = Date.now();
+
+    if (saveCooldownUntil > now) {
+      const seconds = Math.ceil((saveCooldownUntil - now) / 1000);
+      setUiError(`Please wait ${seconds} second${seconds === 1 ? "" : "s"} before saving again.`);
+      return false;
+    }
+
+    setSaveCooldownUntil(now + 5000);
+    return true;
+  }
+
+  async function resolveClientLocation() {
+    try {
+      const response = await fetch("https://www.cloudflare.com/cdn-cgi/trace", {
+        cache: "no-store"
+      });
+      const text = await response.text();
+      const values = Object.fromEntries(
+        text
+          .trim()
+          .split("\\n")
+          .map((line) => line.split("=", 2))
+      );
+
+      setClientLocation((current) => ({
+        ...current,
+        country: values.loc || current.country
+      }));
+    } catch {
+      // Country fallback is optional.
+    }
+
+    try {
+      const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone || "";
+      const parts = timezone.split("/");
+      const city = parts.length > 1
+        ? parts[parts.length - 1].replaceAll("_", " ")
+        : "";
+
+      setClientLocation((current) => ({
+        ...current,
+        city: current.city || city
+      }));
+    } catch {
+      // Browser timezone fallback is optional.
     }
   }
 

@@ -27,8 +27,25 @@ export async function onRequestGet(context) {
   const rawToken = getCookie(context.request, getSessionCookieName());
   const currentHash = rawToken ? await sha256Hex(rawToken) : "";
 
+  const url = new URL(context.request.url);
+  const clientCountry = String(url.searchParams.get("country") || "").slice(0, 8);
+  const clientCity = String(url.searchParams.get("city") || "").slice(0, 120);
+  const clientRegion = String(url.searchParams.get("region") || "").slice(0, 120);
+
+  if (user.current_session_id && (clientCountry || clientCity || clientRegion)) {
+    await context.env.DB.prepare(
+      `UPDATE sessions
+       SET country = COALESCE(NULLIF(?, ''), country),
+           city = COALESCE(NULLIF(?, ''), city),
+           region = COALESCE(NULLIF(?, ''), region)
+       WHERE id = ?`
+    )
+      .bind(clientCountry, clientCity, clientRegion, user.current_session_id)
+      .run();
+  }
+
   const rows = await context.env.DB.prepare(
-    `SELECT id, refresh_token_hash, user_agent, country,
+    `SELECT id, refresh_token_hash, user_agent, country, city, region,
             created_at, last_seen_at, expires_at
      FROM sessions
      WHERE user_id = ?
@@ -46,6 +63,8 @@ export async function onRequestGet(context) {
       device_name: deviceName(row.user_agent),
       user_agent: row.user_agent,
       country: row.country,
+      city: row.city,
+      region: row.region,
       created_at: row.created_at,
       last_seen_at: row.last_seen_at,
       expires_at: row.expires_at,

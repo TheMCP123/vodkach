@@ -426,29 +426,6 @@ function AvatarWithStatus({
       </span>
     </span>
   );
-}) {
-  const avatar = user?.avatar_url || "/default-avatar.png";
-  const status = user?.effective_status || "offline";
-
-  return (
-    <span className={`avatarWithStatus ${className}`}>
-      <img src={avatar} alt={alt} draggable="false" />
-      {clickableStatus ? (
-        <button
-          className="avatarStatusBadge clickable"
-          type="button"
-          aria-label="Change status"
-          onClick={onStatusClick}
-        >
-          <StatusGlyph status={status} />
-        </button>
-      ) : (
-        <span className="avatarStatusBadge" aria-label={status}>
-          <StatusGlyph status={status} />
-        </span>
-      )}
-    </span>
-  );
 }
 
 function VerifiedBadge({ className = "" }) {
@@ -2729,6 +2706,158 @@ function WebApp() {
                         <span>PNG, JPG, WEBP and other image formats up to 10 MB.</span>
                       </div>
                     </div>
+
+                    <label>
+                      <span>Username</span>
+                      <input
+                        value={profileForm.username}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            username: event.target.value
+                          }))
+                        }
+                        maxLength={16}
+                        placeholder="username"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Display Name</span>
+                      <input
+                        value={profileForm.display_name}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            display_name: event.target.value
+                          }))
+                        }
+                        maxLength={16}
+                        placeholder="Display name"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Pronouns</span>
+                      <input
+                        value={profileForm.pronouns}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            pronouns: event.target.value
+                          }))
+                        }
+                        maxLength={16}
+                        placeholder="e.g. he/him"
+                      />
+                    </label>
+
+                    <label>
+                      <span>About Me</span>
+                      <textarea
+                        value={profileForm.bio}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            bio: event.target.value
+                          }))
+                        }
+                        maxLength={190}
+                        rows={6}
+                        placeholder="Tell people a little about yourself"
+                      />
+                      <small>{profileForm.bio.length}/190</small>
+                    </label>
+
+                    <button type="submit" disabled={savingSettings}>
+                      {savingSettings ? "Saving..." : "Save Changes"}
+                    </button>
+                  </form>
+                )}
+
+                {settingsTab === "sessions" && (
+                  <>
+                    <div className="sessionsHeader">
+                      <div>
+                        <h1>Active Sessions</h1>
+                        <p>Devices currently signed in to your Vodkach account.</p>
+                      </div>
+                      <button type="button" onClick={revokeOtherSessions}>
+                        Log Out All Other Sessions
+                      </button>
+                    </div>
+
+                    <div className="sessionsList">
+                      {loadingSessions && (
+                        <div className="settingsEmptyState">Loading sessions...</div>
+                      )}
+
+                      {!loadingSessions && sessions.length === 0 && (
+                        <div className="settingsEmptyState">No active sessions.</div>
+                      )}
+
+                      {sessions.map((session) => (
+                        <article className="sessionCard" key={session.id}>
+                          <div className="sessionDeviceIcon">
+                            <SettingsNavIcon type="sessions" />
+                          </div>
+                          <div className="sessionDetails">
+                            <strong>
+                              {session.device_name || "Unknown Browser"}
+                              {session.current ? (
+                                <span className="currentSessionLabel">Current</span>
+                              ) : null}
+                            </strong>
+                            <span>
+                              {session.country || "Unknown location"} ·{" "}
+                              {session.last_seen_at
+                                ? `Active ${formatLocalDate(session.last_seen_at)} ${formatLocalTime(session.last_seen_at)}`
+                                : "Last activity unknown"}
+                            </span>
+                            <small>{session.user_agent || "Unknown device"}</small>
+                          </div>
+                          {!session.current && (
+                            <button
+                              type="button"
+                              onClick={() => revokeSession(session.id)}
+                            >
+                              Log Out
+                            </button>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  </>
+                )}
+
+                {settingsTab === "notifications" && (
+                  <>
+                    <h1>Notifications</h1>
+                    <label className="settingsToggleRow">
+                      <div>
+                        <strong>Message sounds</strong>
+                        <span>
+                          Play a sound for messages outside your active chat.
+                        </span>
+                      </div>
+                      <input
+                        type="checkbox"
+                        checked={soundEnabled}
+                        onChange={(event) => {
+                          const enabled = event.target.checked;
+                          setSoundEnabled(enabled);
+                          localStorage.setItem(
+                            "vodkach_message_sound",
+                            enabled ? "on" : "off"
+                          );
+                        }}
+                      />
+                    </label>
+                  </>
+                )}
+              </section>
+            </div>
+          </div>
         )}
 
         {uiError && (

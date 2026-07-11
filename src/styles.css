@@ -3447,3 +3447,334 @@ h1 {
   background: #1b1c20;
   border: 1px solid rgba(255,255,255,.055);
 }
+
+
+/* Patch 049: unified statuses, instant profile updates, links, social toasts */
+
+.statusTooltipWrap {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  z-index: 8;
+  width: 16px;
+  height: 16px;
+}
+
+.statusTooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 100;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #fff;
+  background: #090a0c;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 10px 28px rgba(0,0,0,.42);
+  font-size: .7rem;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 3px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+
+.statusTooltipWrap:hover .statusTooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.avatarStatusBadge {
+  inset: 0 !important;
+  width: 16px !important;
+  height: 16px !important;
+  border-width: 3px !important;
+}
+
+.statusDot {
+  width: 10px !important;
+  height: 10px !important;
+}
+
+.statusMoon {
+  width: 10px !important;
+  height: 10px !important;
+  overflow: hidden;
+  background: #f0b232 !important;
+}
+
+.statusMoon::after {
+  width: 9px !important;
+  height: 9px !important;
+  left: 4px !important;
+  top: -3px !important;
+  background: #151619 !important;
+}
+
+.sidebarProfileAvatarWrap .statusMoon::after {
+  background: #101114 !important;
+}
+
+.memberProfileAvatarWrap .statusMoon::after {
+  background: #121316 !important;
+}
+
+.statusDnd {
+  position: relative;
+  width: 10px !important;
+  height: 10px !important;
+  display: block !important;
+  background: #f23f43 !important;
+  color: transparent !important;
+}
+
+.statusDnd > span {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 4px;
+  height: 2px;
+  border-radius: 2px;
+  background: #fff;
+}
+
+.chatListAvatarWrap .statusTooltipWrap,
+.socialAvatarWrap .statusTooltipWrap {
+  right: -4px;
+  bottom: -4px;
+}
+
+.memberProfileAvatarWrap .statusTooltipWrap {
+  right: -2px;
+  bottom: -2px;
+  width: 20px;
+  height: 20px;
+}
+
+.memberProfileAvatarWrap .avatarStatusBadge {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.memberProfileAvatarWrap .statusDot {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.memberProfileAvatarWrap .statusMoon,
+.memberProfileAvatarWrap .statusDnd {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+.memberProfileAvatarWrap .statusDnd > span {
+  left: 2px;
+  right: 2px;
+  top: 5px;
+}
+
+.settingsAvatarEditorPreview {
+  position: relative;
+  width: 76px;
+  height: 76px;
+  flex: 0 0 auto;
+}
+
+.settingsAvatarEditButton,
+.settingsAvatarClearButton {
+  position: absolute;
+  z-index: 15;
+  width: 26px;
+  height: 26px;
+  border: 3px solid #151619;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+
+.settingsAvatarEditButton {
+  right: -6px;
+  bottom: -6px;
+  background: #fc0303;
+}
+
+.settingsAvatarEditButton input {
+  display: none;
+}
+
+.settingsAvatarClearButton {
+  right: -6px;
+  top: -6px;
+  border: 0;
+  background: #2b2d31;
+  font-size: 1rem;
+}
+
+.settingsAvatarEditor > div:last-child {
+  display: grid;
+  gap: 4px;
+}
+
+.settingsAvatarEditor > div:last-child strong {
+  color: #fff;
+}
+
+.settingsAvatarEditor > div:last-child span {
+  color: #8e949c;
+  font-size: .76rem;
+}
+
+.memberHandleLine {
+  margin-top: 3px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #8e949c;
+  font-size: .78rem;
+}
+
+.memberPronouns {
+  margin: 0 !important;
+  color: #aeb4bc !important;
+}
+
+.messageLink {
+  padding: 0;
+  border: 0;
+  color: #4da3ff;
+  background: transparent;
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
+.messageLink:hover {
+  color: #75b9ff;
+}
+
+.pendingMessageText {
+  color: #7b8088 !important;
+}
+
+.sentMessageText {
+  color: #f0f1f3 !important;
+}
+
+.appMessage.grouped {
+  margin-bottom: 1px !important;
+}
+
+.appMessage:not(.grouped) {
+  margin-top: 11px !important;
+}
+
+.messageMeta .nameWithBadge {
+  font-size: 1.12rem !important;
+}
+
+.memberProfileBody h2.nameWithBadge {
+  font-size: 1.32rem !important;
+}
+
+.linkWarningOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 5000;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(4,5,7,.78);
+  backdrop-filter: blur(6px);
+}
+
+.linkWarningModal {
+  width: min(440px, 100%);
+  padding: 22px;
+  border-radius: 10px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.075);
+  box-shadow: 0 22px 70px rgba(0,0,0,.55);
+}
+
+.linkWarningModal h2 {
+  margin: 0 0 8px;
+  color: #fff;
+  font-size: 1.18rem;
+}
+
+.linkWarningModal p {
+  margin: 0 0 12px;
+  color: #aeb4bc;
+}
+
+.linkWarningModal code {
+  display: block;
+  margin-bottom: 18px;
+  padding: 9px 10px;
+  border-radius: 6px;
+  overflow: hidden;
+  color: #75b9ff;
+  background: #101114;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.linkWarningModal > div {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.linkWarningModal button {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #2b2d31;
+  font-weight: 760;
+}
+
+.linkWarningModal button.primary {
+  background: #fc0303;
+}
+
+.socialToast {
+  position: fixed;
+  right: 18px;
+  top: 18px;
+  z-index: 4200;
+  width: min(340px, calc(100vw - 36px));
+  padding: 13px 14px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 9px;
+  display: grid;
+  gap: 3px;
+  color: #fff;
+  background: #17181c;
+  box-shadow: 0 16px 44px rgba(0,0,0,.45);
+  text-align: left;
+  animation: toastIn .16s ease-out;
+}
+
+.socialToast strong {
+  color: #fff;
+}
+
+.socialToast span {
+  color: #aeb4bc;
+  font-size: .8rem;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -319,10 +319,17 @@ function StatusGlyph({ status }) {
   }
 
   if (status === "dnd") {
-    return <span className="statusDnd" aria-hidden="true">−</span>;
+    return <span className="statusDnd" aria-hidden="true"><span /></span>;
   }
 
   return <span className={`statusDot ${status || "offline"}`} aria-hidden="true" />;
+}
+
+function statusLabel(status) {
+  if (status === "online") return "Online";
+  if (status === "sleeping") return "Sleeping";
+  if (status === "dnd") return "Do Not Disturb";
+  return "Offline";
 }
 
 function parseServerDate(value) {
@@ -400,6 +407,32 @@ function AvatarWithStatus({
   return (
     <span className={`avatarWithStatus ${className}`}>
       <img src={avatar} alt={alt} draggable="false" />
+      <span className="statusTooltipWrap">
+        {clickableStatus ? (
+          <button
+            className="avatarStatusBadge clickable"
+            type="button"
+            aria-label="Change status"
+            onClick={onStatusClick}
+          >
+            <StatusGlyph status={status} />
+          </button>
+        ) : (
+          <span className="avatarStatusBadge" aria-label={status}>
+            <StatusGlyph status={status} />
+          </span>
+        )}
+        <span className="statusTooltip">{statusLabel(status)}</span>
+      </span>
+    </span>
+  );
+}) {
+  const avatar = user?.avatar_url || "/default-avatar.png";
+  const status = user?.effective_status || "offline";
+
+  return (
+    <span className={`avatarWithStatus ${className}`}>
+      <img src={avatar} alt={alt} draggable="false" />
       {clickableStatus ? (
         <button
           className="avatarStatusBadge clickable"
@@ -436,6 +469,28 @@ function VerifiedBadge({ className = "" }) {
       </span>
     </span>
   );
+}
+
+
+function splitTextWithLinks(text) {
+  const value = String(text || "");
+  const regex = /((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/gi;
+  const parts = [];
+  let last = 0;
+
+  value.replace(regex, (match, _group, index) => {
+    if (index > last) parts.push({ type: "text", value: value.slice(last, index) });
+    parts.push({
+      type: "link",
+      value: match,
+      href: /^https?:\/\//i.test(match) ? match : `https://${match}`
+    });
+    last = index + match.length;
+    return match;
+  });
+
+  if (last < value.length) parts.push({ type: "text", value: value.slice(last) });
+  return parts;
 }
 
 function WebApp() {
@@ -478,6 +533,8 @@ function WebApp() {
   });
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [linkWarning, setLinkWarning] = useState(null);
+  const [socialToast, setSocialToast] = useState(null);
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [uiError, setUiError] = useState("");
@@ -495,6 +552,9 @@ function WebApp() {
   const messageAudioRef = useRef(null);
   const sendingMessageRef = useRef(false);
   const draftHydratingRef = useRef(false);
+  const previousIncomingIdsRef = useRef(new Set());
+  const previousFriendIdsRef = useRef(new Set());
+  const socialReadyRef = useRef(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -738,6 +798,12 @@ function WebApp() {
     }
 
     setAvatarPreview(dataUrl);
+    if (settingsOpen) {
+      setProfileForm((current) => ({
+        ...current,
+        avatar_url: dataUrl
+      }));
+    }
     setFormError("");
     closeAvatarCropper();
   }
@@ -820,8 +886,37 @@ function WebApp() {
     );
     notificationsReadyRef.current = true;
 
-    setFriends(friendsData.friends || []);
-    setIncoming(requestsData.incoming || []);
+    const nextFriends = friendsData.friends || [];
+    const nextIncoming = requestsData.incoming || [];
+
+    if (socialReadyRef.current) {
+      const newRequest = nextIncoming.find(
+        (item) => !previousIncomingIdsRef.current.has(item.id)
+      );
+
+      const newFriend = nextFriends.find(
+        (item) => !previousFriendIdsRef.current.has(item.id)
+      );
+
+      if (newRequest) {
+        setSocialToast({
+          title: "New Friend Request",
+          text: `${newRequest.display_name || newRequest.username} sent you a friend request`
+        });
+      } else if (newFriend) {
+        setSocialToast({
+          title: "Friend Request Accepted",
+          text: `${newFriend.display_name || newFriend.username} is now your friend`
+        });
+      }
+    }
+
+    previousIncomingIdsRef.current = new Set(nextIncoming.map((item) => item.id));
+    previousFriendIdsRef.current = new Set(nextFriends.map((item) => item.id));
+    socialReadyRef.current = true;
+
+    setFriends(nextFriends);
+    setIncoming(nextIncoming);
     setOutgoing(requestsData.outgoing || []);
     setChats(nextChats);
   }
@@ -947,7 +1042,7 @@ function WebApp() {
     }
 
     heartbeat();
-    const timer = window.setInterval(heartbeat, 12000);
+    const timer = window.setInterval(heartbeat, 5000);
 
     return () => {
       stopped = true;
@@ -1081,7 +1176,7 @@ function WebApp() {
 
     const timer = window.setInterval(() => {
       loadSocial().catch(() => {});
-    }, 1200);
+    }, 1000);
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
@@ -1357,6 +1452,14 @@ function WebApp() {
           : current.user
       }));
 
+      setFriends((current) =>
+        current.map((item) =>
+          item.id === auth.user.id
+            ? { ...item, effective_status: data.effective_status }
+            : item
+        )
+      );
+      setChats((current) => [...current]);
       loadSocial().catch(() => {});
     } catch (error) {
       setUiError(error.message);
@@ -1387,6 +1490,18 @@ function WebApp() {
             }
           : current.user
       }));
+      setUsername(data.username);
+      setDisplayName(data.display_name);
+      setAvatarPreview(data.avatar_url || "/default-avatar.png");
+      setProfileForm((current) => ({
+        ...current,
+        username: data.username,
+        display_name: data.display_name,
+        avatar_url: data.avatar_url,
+        pronouns: data.pronouns,
+        bio: data.bio
+      }));
+      loadSocial().catch(() => {});
     } catch (error) {
       setUiError(error.message);
     } finally {
@@ -2403,11 +2518,7 @@ function WebApp() {
                   maxLength={4000}
                 />
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>
-                  {editingMessage
-                    ? "Save"
-                    : sendingMessage
-                      ? "Sending..."
-                      : "Send"}
+                  {editingMessage ? "Save" : "Send"}
                 </button>
               </div>
             </form>
@@ -2447,6 +2558,44 @@ function WebApp() {
               <DeleteActionIcon />
               <span>Delete For Everyone</span>
             </button>
+          </div>
+        )}
+
+        {socialToast && (
+          <button
+            className="socialToast"
+            type="button"
+            onClick={() => setSocialToast(null)}
+          >
+            <strong>{socialToast.title}</strong>
+            <span>{socialToast.text}</span>
+          </button>
+        )}
+
+        {linkWarning && (
+          <div className="linkWarningOverlay" role="dialog" aria-modal="true">
+            <div className="linkWarningModal">
+              <h2>Open External Link?</h2>
+              <p>
+                Are you sure you want to open this link in another tab?
+              </p>
+              <code>{linkWarning.label}</code>
+              <div>
+                <button type="button" onClick={() => setLinkWarning(null)}>
+                  Cancel
+                </button>
+                <button
+                  className="primary"
+                  type="button"
+                  onClick={() => {
+                    window.open(linkWarning.href, "_blank", "noopener,noreferrer");
+                    setLinkWarning(null);
+                  }}
+                >
+                  Open Link
+                </button>
+              </div>
+            </div>
           </div>
         )}
 
@@ -2541,182 +2690,45 @@ function WebApp() {
                     <h1>My Profile</h1>
 
                     <div className="settingsAvatarEditor">
-                      <AvatarWithStatus
-                        user={{
-                          avatar_url:
-                            profileForm.avatar_url || "/default-avatar.png",
-                          effective_status:
-                            auth.user.effective_status || "offline"
-                        }}
-                        className="settingsAvatarPreview"
-                        alt="Profile avatar"
-                      />
-                      <label>
-                        <span>Avatar URL</span>
-                        <input
-                          value={profileForm.avatar_url || ""}
-                          onChange={(event) =>
+                      <div className="settingsAvatarEditorPreview">
+                        <AvatarWithStatus
+                          user={{
+                            avatar_url:
+                              profileForm.avatar_url || "/default-avatar.png",
+                            effective_status:
+                              auth.user.effective_status || "offline"
+                          }}
+                          className="settingsAvatarPreview"
+                          alt="Profile avatar"
+                        />
+                        <label className="settingsAvatarEditButton" title="Upload avatar">
+                          <span className="customPencilIcon" aria-hidden="true" />
+                          <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(event) =>
+                              handleAvatarFile(event.target.files?.[0])
+                            }
+                          />
+                        </label>
+                        <button
+                          className="settingsAvatarClearButton"
+                          type="button"
+                          onClick={() =>
                             setProfileForm((current) => ({
                               ...current,
-                              avatar_url: event.target.value || null
+                              avatar_url: null
                             }))
                           }
-                          placeholder="Keep empty for default avatar"
-                        />
-                      </label>
-                    </div>
-
-                    <label>
-                      <span>Username</span>
-                      <input
-                        value={profileForm.username}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            username: event.target.value
-                          }))
-                        }
-                        maxLength={16}
-                        placeholder="username"
-                      />
-                    </label>
-
-                    <label>
-                      <span>Display Name</span>
-                      <input
-                        value={profileForm.display_name}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            display_name: event.target.value
-                          }))
-                        }
-                        maxLength={16}
-                        placeholder="Display name"
-                      />
-                    </label>
-
-                    <label>
-                      <span>Pronouns</span>
-                      <input
-                        value={profileForm.pronouns}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            pronouns: event.target.value
-                          }))
-                        }
-                        maxLength={40}
-                        placeholder="e.g. he/him"
-                      />
-                    </label>
-
-                    <label>
-                      <span>About Me</span>
-                      <textarea
-                        value={profileForm.bio}
-                        onChange={(event) =>
-                          setProfileForm((current) => ({
-                            ...current,
-                            bio: event.target.value
-                          }))
-                        }
-                        maxLength={190}
-                        rows={6}
-                        placeholder="Tell people a little about yourself"
-                      />
-                      <small>{profileForm.bio.length}/190</small>
-                    </label>
-
-                    <button type="submit" disabled={savingSettings}>
-                      {savingSettings ? "Saving..." : "Save Changes"}
-                    </button>
-                  </form>
-                )}
-
-                {settingsTab === "sessions" && (
-                  <>
-                    <div className="sessionsHeader">
-                      <div>
-                        <h1>Active Sessions</h1>
-                        <p>Devices currently signed in to your Vodkach account.</p>
+                        >
+                          ×
+                        </button>
                       </div>
-                      <button type="button" onClick={revokeOtherSessions}>
-                        Log Out All Other Sessions
-                      </button>
-                    </div>
-
-                    <div className="sessionsList">
-                      {loadingSessions && (
-                        <div className="settingsEmptyState">Loading sessions...</div>
-                      )}
-
-                      {!loadingSessions && sessions.length === 0 && (
-                        <div className="settingsEmptyState">No active sessions.</div>
-                      )}
-
-                      {sessions.map((session) => (
-                        <article className="sessionCard" key={session.id}>
-                          <div className="sessionDeviceIcon">
-                            <SettingsNavIcon type="sessions" />
-                          </div>
-                          <div className="sessionDetails">
-                            <strong>
-                              {session.device_name || "Unknown Browser"}
-                              {session.current ? (
-                                <span className="currentSessionLabel">Current</span>
-                              ) : null}
-                            </strong>
-                            <span>
-                              {session.country || "Unknown location"} ·{" "}
-                              {session.last_seen_at
-                                ? `Active ${formatLocalDate(session.last_seen_at)} ${formatLocalTime(session.last_seen_at)}`
-                                : "Last activity unknown"}
-                            </span>
-                            <small>{session.user_agent || "Unknown device"}</small>
-                          </div>
-                          {!session.current && (
-                            <button
-                              type="button"
-                              onClick={() => revokeSession(session.id)}
-                            >
-                              Log Out
-                            </button>
-                          )}
-                        </article>
-                      ))}
-                    </div>
-                  </>
-                )}
-
-                {settingsTab === "notifications" && (
-                  <>
-                    <h1>Notifications</h1>
-                    <label className="settingsToggleRow">
                       <div>
-                        <strong>Message sounds</strong>
-                        <span>
-                          Play a sound for messages outside your active chat.
-                        </span>
+                        <strong>Profile Avatar</strong>
+                        <span>PNG, JPG, WEBP and other image formats up to 10 MB.</span>
                       </div>
-                      <input
-                        type="checkbox"
-                        checked={soundEnabled}
-                        onChange={(event) => {
-                          const enabled = event.target.checked;
-                          setSoundEnabled(enabled);
-                          localStorage.setItem(
-                            "vodkach_message_sound",
-                            enabled ? "on" : "off"
-                          );
-                        }}
-                      />
-                    </label>
-                  </>
-                )}
-              </section>
-            </div>
-          </div>
+                    </div>
         )}
 
         {uiError && (
@@ -2743,30 +2755,15 @@ function WebApp() {
                 </span>
                 {activeChat.other_user.verified ? <VerifiedBadge /> : null}
               </h2>
-              <span>@{activeChat.other_user.username}</span>
-
-              {activeChat.other_user.pronouns ? (
-                <span className="memberPronouns">
-                  {activeChat.other_user.pronouns}
-                </span>
-              ) : null}
-
-              <div className="memberStatusLine">
-                <StatusGlyph
-                  status={activeChat.other_user.effective_status || "offline"}
-                />
-                <span>
-                  {activeChat.other_user.effective_status === "dnd"
-                    ? "Do Not Disturb"
-                    : activeChat.other_user.effective_status === "sleeping"
-                      ? "Sleeping"
-                      : activeChat.other_user.effective_status === "online"
-                        ? "Online"
-                        : "Offline"}
-                </span>
+              <div className="memberHandleLine">
+                <span>@{activeChat.other_user.username}</span>
+                {activeChat.other_user.pronouns ? (
+                  <span className="memberPronouns">
+                    {activeChat.other_user.pronouns}
+                  </span>
+                ) : null}
               </div>
-
-              {activeChat.other_user.bio ? (
+{activeChat.other_user.bio ? (
                 <div className="memberProfileSection">
                   <strong>About Me</strong>
                   <p>{activeChat.other_user.bio}</p>
@@ -2818,6 +2815,8 @@ function AdminApp() {
   });
   const [sessions, setSessions] = useState([]);
   const [loadingSessions, setLoadingSessions] = useState(false);
+  const [linkWarning, setLinkWarning] = useState(null);
+  const [socialToast, setSocialToast] = useState(null);
   const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
@@ -3163,13 +3162,11 @@ function AppMessage({
       onContextMenu={onContextMenu}
     >
       {!grouped && (
-        <AvatarWithStatus
-          user={{
-            avatar_url: avatarUrl || "/default-avatar.png",
-            effective_status: message.sender?.effective_status || "offline"
-          }}
-          className="messageAvatarWrap"
+        <img
+          className="messageAvatarImage"
+          src={avatarUrl || "/default-avatar.png"}
           alt="User avatar"
+          draggable="false"
         />
       )}
 
@@ -3191,8 +3188,31 @@ function AppMessage({
           </div>
         )}
 
-        <p className={message.deleted_at ? "deletedMessageText" : ""}>
-          {text}
+        <p
+          className={[
+            message.deleted_at ? "deletedMessageText" : "",
+            message.optimistic ? "pendingMessageText" : "sentMessageText"
+          ].join(" ")}
+        >
+          {splitTextWithLinks(text).map((part, index) =>
+            part.type === "link" ? (
+              <button
+                key={`${part.value}_${index}`}
+                className="messageLink"
+                type="button"
+                onClick={() =>
+                  setLinkWarning({
+                    href: part.href,
+                    label: part.value
+                  })
+                }
+              >
+                {part.value}
+              </button>
+            ) : (
+              <span key={`${part.value}_${index}`}>{part.value}</span>
+            )
+          )}
           {message.edited_at && !message.deleted_at && (
             <span className="editedLabel">Edited</span>
           )}

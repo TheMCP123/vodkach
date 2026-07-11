@@ -50,8 +50,14 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: "Display Name is invalid" }, { status: 400 });
   }
 
-  if (visibleLength(pronouns) > 40) {
-    return json({ ok: false, error: "Pronouns must be 40 characters or less" }, { status: 400 });
+  if (
+    visibleLength(pronouns) > 16 ||
+    BLOCKED_DISPLAY_NAME_REGEX.test(pronouns)
+  ) {
+    return json(
+      { ok: false, error: "Pronouns must be 16 characters or less" },
+      { status: 400 }
+    );
   }
 
   if (visibleLength(bio) > 190) {

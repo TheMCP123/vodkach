@@ -459,8 +459,19 @@
               <strong>${escapeHtml(user.display_name || user.username || user.email)}</strong>
               <span>${escapeHtml(user.email)}${user.username ? ` • @${escapeHtml(user.username)}` : ""}</span>
             </div>
-            <div class="meta">${escapeHtml(user.access_status)}</div>
+            <div class="meta">
+              ${escapeHtml(user.access_status)}
+              ${user.verified ? ' • Verified' : ''}
+            </div>
             <div class="actions">
+              <button
+                class="${user.verified ? 'danger' : ''}"
+                data-action="verify"
+                data-user="${escapeHtml(user.id)}"
+                data-verified="${user.verified ? '1' : '0'}"
+              >
+                ${user.verified ? 'Remove verification' : 'Verify'}
+              </button>
               <button class="secondary" data-action="temp-ban" data-user="${escapeHtml(user.id)}">Temp ban</button>
               <button class="danger" data-action="block" data-user="${escapeHtml(user.id)}">Block</button>
               <button data-action="unban" data-user="${escapeHtml(user.id)}">Unban</button>
@@ -502,6 +513,12 @@
       if (action === "approve") return post("/api/admin/requests/approve", { user_id: userId });
       if (action === "reject") return post("/api/admin/requests/reject", { user_id: userId });
       if (action === "block") return post("/api/admin/users/block", { user_id: userId });
+      if (action === "verify") {
+        return post("/api/admin/users/verify", {
+          user_id: userId,
+          verified: button.dataset.verified !== "1"
+        });
+      }
       if (action === "unban") return post("/api/admin/users/unban", { user_id: userId });
       if (action === "delete") {
         if (!confirm("Delete this account and all related data permanently?")) return;

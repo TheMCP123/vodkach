@@ -2063,3 +2063,105 @@ h1 {
 .avatarEditor {
   background: transparent !important;
 }
+
+
+/* Patch 043: square avatars, verified badges, larger message avatars */
+
+.sidebarProfileAvatar,
+.chatListAvatar,
+.socialAvatar,
+.chatStartAvatar,
+.memberProfileAvatar,
+.messageAvatarImage,
+.adminAvatar {
+  border-radius: 10px !important;
+}
+
+.profileAvatarWrap,
+.sidebarProfileAvatar {
+  width: 34px !important;
+  height: 34px !important;
+}
+
+.chatListAvatar {
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 7px !important;
+}
+
+.socialAvatar {
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+}
+
+.chatStartAvatar {
+  border-radius: 14px !important;
+}
+
+.memberProfileAvatar {
+  border-radius: 18px !important;
+}
+
+.messageAvatarImage {
+  width: 40px !important;
+  height: 40px !important;
+  border-radius: 11px !important;
+  object-fit: cover;
+  flex: 0 0 auto;
+}
+
+.appMessage {
+  gap: 12px !important;
+}
+
+.nameWithBadge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  min-width: 0;
+}
+
+.verifiedBadge {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  filter: drop-shadow(0 2px 6px rgba(252, 3, 3, .28));
+}
+
+.verifiedBadge.small {
+  width: 14px;
+  height: 14px;
+  margin-left: 5px;
+}
+
+.verifiedBadge svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.verifiedBadge circle {
+  fill: #fc0303;
+  stroke: rgba(255,255,255,.22);
+  stroke-width: 1;
+}
+
+.verifiedBadge path {
+  fill: none;
+  stroke: #fff;
+  stroke-width: 2.35;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chatListName {
+  min-width: 0;
+  display: inline-flex;
+  align-items: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

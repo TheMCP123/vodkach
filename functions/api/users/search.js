@@ -35,7 +35,8 @@ export async function onRequestGet(context) {
       id,
       username,
       display_name,
-      avatar_url
+      avatar_url,
+      verified
     FROM users
     WHERE username IS NOT NULL
       AND access_status = 'approved'

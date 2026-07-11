@@ -12,6 +12,7 @@ export async function onRequestGet(context) {
       other_users.username,
       other_users.display_name,
       other_users.avatar_url,
+      other_users.verified,
       other_users.created_at,
       friendships.created_at AS friends_since
     FROM friendships

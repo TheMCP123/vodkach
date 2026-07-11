@@ -1,5 +1,4 @@
 import { getCurrentUser, json } from "../../_shared/auth.js";
-import { requireApprovedUser } from "../../_shared/account.js";
 
 function makeId(prefix) {
   const bytes = new Uint8Array(18);
@@ -49,9 +48,6 @@ export async function onRequestGet(context) {
     );
   }
 
-  const approvalResponse = requireApprovedUser(user);
-  if (approvalResponse) return approvalResponse;
-
   const url = new URL(context.request.url);
   const chatId = String(url.searchParams.get("chat_id") || "").trim();
   const before = String(url.searchParams.get("before") || "").trim();
@@ -96,7 +92,8 @@ export async function onRequestGet(context) {
         messages.deleted_at,
         users.username AS sender_username,
         users.display_name AS sender_display_name,
-        users.avatar_url AS sender_avatar_url
+        users.avatar_url AS sender_avatar_url,
+        users.verified AS sender_verified
       FROM messages
       JOIN users ON users.id = messages.sender_user_id
       WHERE messages.chat_id = ?
@@ -118,7 +115,8 @@ export async function onRequestGet(context) {
         messages.deleted_at,
         users.username AS sender_username,
         users.display_name AS sender_display_name,
-        users.avatar_url AS sender_avatar_url
+        users.avatar_url AS sender_avatar_url,
+        users.verified AS sender_verified
       FROM messages
       JOIN users ON users.id = messages.sender_user_id
       WHERE messages.chat_id = ?
@@ -147,7 +145,8 @@ export async function onRequestGet(context) {
       id: row.sender_user_id,
       username: row.sender_username,
       display_name: row.sender_display_name,
-      avatar_url: row.sender_avatar_url
+      avatar_url: row.sender_avatar_url,
+      verified: Boolean(row.sender_verified)
     }
   }));
 
@@ -169,9 +168,6 @@ export async function onRequestPost(context) {
       { status: 401 }
     );
   }
-
-  const approvalResponse = requireApprovedUser(user);
-  if (approvalResponse) return approvalResponse;
 
   const body = await readJson(context.request);
 

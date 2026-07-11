@@ -11,7 +11,7 @@ export async function onRequestGet(context) {
   const like = `%${q}%`;
 
   const rows = await context.env.DB.prepare(
-    `SELECT id, email, username, display_name, avatar_url, access_status,
+    `SELECT id, email, username, display_name, avatar_url, verified, access_status,
             requested_at, approved_at, rejected_at, disabled_at,
             banned_until, ban_reason, created_at
      FROM users

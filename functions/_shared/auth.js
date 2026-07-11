@@ -137,6 +137,7 @@ export async function getCurrentUser(request, env) {
       users.username,
       users.display_name,
       users.avatar_url,
+      users.verified,
       users.access_status,
       users.requested_at,
       users.approved_at,

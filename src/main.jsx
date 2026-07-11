@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
 import {
   ArrowRight,
@@ -282,6 +282,18 @@ function Landing() {
 
 
 
+
+function VerifiedBadge({ className = "" }) {
+  return (
+    <span className={`verifiedBadge ${className}`} title="Verified" aria-label="Verified">
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <circle cx="12" cy="12" r="10" />
+        <path d="M7.4 12.2 10.4 15.2 16.8 8.8" />
+      </svg>
+    </span>
+  );
+}
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -313,6 +325,9 @@ function WebApp() {
   const [captchaVerified, setCaptchaVerified] = useState(false);
   const [avatarCropper, setAvatarCropper] = useState(null);
   const [cropDrag, setCropDrag] = useState(null);
+  const previousChatLatestRef = useRef(new Map());
+  const notificationsReadyRef = useRef(false);
+  const messageAudioRef = useRef(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -602,10 +617,49 @@ function WebApp() {
       api("/api/chats")
     ]);
 
+    const nextChats = chatsData.chats || [];
+
+    if (notificationsReadyRef.current) {
+      for (const chat of nextChats) {
+        const latest = chat.latest_message;
+        if (!latest?.id) continue;
+
+        const previousId = previousChatLatestRef.current.get(chat.id);
+
+        if (
+          previousId &&
+          previousId !== latest.id &&
+          latest.sender_user_id !== auth.user?.id
+        ) {
+          const directlyViewingThisChat =
+            document.visibilityState === "visible" &&
+            view === "chat" &&
+            activeChat?.id === chat.id;
+
+          if (!directlyViewingThisChat && messageAudioRef.current) {
+            try {
+              messageAudioRef.current.currentTime = 0;
+              messageAudioRef.current.volume = 0.75;
+              await messageAudioRef.current.play();
+            } catch {
+              // Browser may block audio until the first user interaction.
+            }
+          }
+        }
+      }
+    }
+
+    previousChatLatestRef.current = new Map(
+      nextChats
+        .filter((chat) => chat.latest_message?.id)
+        .map((chat) => [chat.id, chat.latest_message.id])
+    );
+    notificationsReadyRef.current = true;
+
     setFriends(friendsData.friends || []);
     setIncoming(requestsData.incoming || []);
     setOutgoing(requestsData.outgoing || []);
-    setChats(chatsData.chats || []);
+    setChats(nextChats);
   }
 
   async function loadMessages(chat) {
@@ -618,6 +672,18 @@ function WebApp() {
     loadMe().catch(() => {
       setAuth({ loading: false, authenticated: false, user: null });
     });
+  }, []);
+
+  useEffect(() => {
+    const audio = new Audio("/message.mp3");
+    audio.preload = "auto";
+    audio.volume = 0.75;
+    messageAudioRef.current = audio;
+
+    return () => {
+      audio.pause();
+      messageAudioRef.current = null;
+    };
   }, []);
 
   useEffect(() => {
@@ -1373,11 +1439,12 @@ function WebApp() {
               }}
             >
               <img className="chatListAvatar" src={getAvatar(chat.other_user)} alt="Chat avatar" />
-              <span>
+              <span className="chatListName">
                 {chat.other_user?.display_name ||
                   chat.other_user?.username ||
                   chat.title ||
                   "Direct chat"}
+                {chat.other_user?.verified ? <VerifiedBadge className="small" /> : null}
               </span>
             </button>
           ))}
@@ -1393,7 +1460,10 @@ function WebApp() {
             </span>
 
             <span className="sidebarProfileText">
-              <strong>{currentDisplayName}</strong>
+              <strong className="nameWithBadge">
+                {currentDisplayName}
+                {auth.user.verified ? <VerifiedBadge /> : null}
+              </strong>
               <span>@{auth.user.username}</span>
             </span>
           </button>
@@ -1470,7 +1540,10 @@ function WebApp() {
                         <div className="socialRow" key={user.id}>
                           <img className="socialAvatar" src={getAvatar(user)} alt="User avatar" />
                           <div className="socialIdentity">
-                            <strong>{user.display_name || user.username}</strong>
+                            <strong className="nameWithBadge">
+                              {user.display_name || user.username}
+                              {user.verified ? <VerifiedBadge /> : null}
+                            </strong>
                             <span>@{user.username}</span>
                           </div>
 
@@ -1504,7 +1577,10 @@ function WebApp() {
                       <div className="socialRow" key={request.id}>
                         <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
-                          <strong>{request.display_name || request.username}</strong>
+                          <strong className="nameWithBadge">
+                            {request.display_name || request.username}
+                            {request.verified ? <VerifiedBadge /> : null}
+                          </strong>
                           <span>@{request.username}</span>
                         </div>
                         <div className="rowActions">
@@ -1531,7 +1607,10 @@ function WebApp() {
                       <div className="socialRow" key={request.id}>
                         <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
-                          <strong>{request.display_name || request.username}</strong>
+                          <strong className="nameWithBadge">
+                            {request.display_name || request.username}
+                            {request.verified ? <VerifiedBadge /> : null}
+                          </strong>
                           <span>@{request.username}</span>
                         </div>
                         <span className="requestState">Outgoing</span>
@@ -1556,7 +1635,10 @@ function WebApp() {
                       <div className="socialRow" key={friend.id}>
                         <img className="socialAvatar" src={getAvatar(friend)} alt="Friend avatar" />
                         <div className="socialIdentity">
-                          <strong>{friend.display_name || friend.username}</strong>
+                          <strong className="nameWithBadge">
+                            {friend.display_name || friend.username}
+                            {friend.verified ? <VerifiedBadge /> : null}
+                          </strong>
                           <span>@{friend.username}</span>
                         </div>
                         <button type="button" onClick={() => openFriendChat(friend)}>
@@ -1593,8 +1675,9 @@ function WebApp() {
               {messages.map((message) => (
                 <AppMessage
                   key={message.id}
-                  avatar="__default_avatar__"
+                  avatarUrl={getAvatar(message.sender)}
                   name={message.sender?.display_name || message.sender?.username || "User"}
+                  verified={Boolean(message.sender?.verified)}
                   time={new Date(message.created_at).toLocaleTimeString([], {
                     hour: "2-digit",
                     minute: "2-digit"
@@ -1641,9 +1724,10 @@ function WebApp() {
                 src={getAvatar(activeChat.other_user)}
                 alt="Profile avatar"
               />
-              <h2>
+              <h2 className="nameWithBadge">
                 {activeChat.other_user.display_name ||
                   activeChat.other_user.username}
+                {activeChat.other_user.verified ? <VerifiedBadge /> : null}
               </h2>
               <span>@{activeChat.other_user.username}</span>
 
@@ -1987,17 +2071,22 @@ function InfoItem({ title, text }) {
   );
 }
 
-function AppMessage({ avatar, name, time, text, accent }) {
+function AppMessage({ avatarUrl, name, verified, time, text }) {
   return (
     <div className="appMessage">
-      {avatar === "__default_avatar__" ? (
-        <DefaultAvatar className="messageAvatarImage" alt="User avatar" />
-      ) : (
-        <div className={accent ? "avatar accent" : "avatar"}>{avatar}</div>
-      )}
+      <img
+        className="messageAvatarImage"
+        src={avatarUrl || "/default-avatar.png"}
+        alt="User avatar"
+        draggable="false"
+      />
+
       <div>
         <div className="messageMeta">
-          <strong>{name}</strong>
+          <strong className="nameWithBadge">
+            {name}
+            {verified ? <VerifiedBadge /> : null}
+          </strong>
           <span>{time}</span>
         </div>
         <p>{text}</p>

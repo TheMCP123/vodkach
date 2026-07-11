@@ -42,7 +42,8 @@ export async function onRequestGet(context) {
       users.id AS user_id,
       users.username,
       users.display_name,
-      users.avatar_url
+      users.avatar_url,
+      users.verified
     FROM friend_requests
     JOIN users ON users.id = friend_requests.requester_id
     WHERE friend_requests.addressee_id = ?
@@ -60,7 +61,8 @@ export async function onRequestGet(context) {
       users.id AS user_id,
       users.username,
       users.display_name,
-      users.avatar_url
+      users.avatar_url,
+      users.verified
     FROM friend_requests
     JOIN users ON users.id = friend_requests.addressee_id
     WHERE friend_requests.requester_id = ?

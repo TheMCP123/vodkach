@@ -97,6 +97,7 @@ export async function onRequestPost(context) {
     const form = new FormData();
     form.set("secret", env.TURNSTILE_SECRET_KEY);
     form.set("response", turnstileToken);
+    form.set("idempotency_key", crypto.randomUUID());
 
     const remoteIp = request.headers.get("CF-Connecting-IP");
     if (remoteIp) form.set("remoteip", remoteIp);
@@ -111,11 +112,15 @@ export async function onRequestPost(context) {
 
     const verification = await verifyResponse.json();
 
-    if (!verification.success) {
+    if (!verifyResponse.ok || !verification.success) {
+      const codes = Array.isArray(verification["error-codes"])
+        ? verification["error-codes"].join(", ")
+        : "unknown";
+
       return json(
         {
           ok: false,
-          error: "Cloudflare verification failed"
+          error: `Cloudflare verification failed (${codes})`
         },
         { status: 400 }
       );
@@ -124,7 +129,7 @@ export async function onRequestPost(context) {
 
   if (
     avatarUrl &&
-    (!avatarUrl.startsWith("data:image/webp;base64,") || avatarUrl.length > 750000)
+    (!avatarUrl.startsWith("data:image/webp;base64,") || avatarUrl.length > 1000000)
   ) {
     return json(
       {
@@ -178,6 +183,6 @@ export async function onRequestPost(context) {
     ok: true,
     username,
     display_name: displayName,
-    avatar_url: avatarUrl
+    avatar_url: avatarUrl || null
   });
 }

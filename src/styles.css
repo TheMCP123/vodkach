@@ -1695,3 +1695,30 @@ h1 {
     align-items: flex-start;
   }
 }
+
+
+/* Patch 038: registration fixes */
+
+.createAvatarPreview {
+  color: transparent;
+  text-indent: -9999px;
+}
+
+.avatarEditButton,
+.avatarClearButton {
+  z-index: 2;
+}
+
+.avatarClearButton {
+  font-family: Arial, sans-serif;
+  font-weight: 700;
+}
+
+.turnstileBox {
+  width: 100%;
+  overflow: hidden;
+}
+
+.turnstileBox iframe {
+  max-width: 100%;
+}

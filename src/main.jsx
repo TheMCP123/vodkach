@@ -307,6 +307,8 @@ function WebApp() {
   const [avatarPreview, setAvatarPreview] = useState("");
   const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
   const [selectedProfile, setSelectedProfile] = useState(null);
+  const [profileDraftInitialized, setProfileDraftInitialized] = useState(false);
+  const [turnstileWidgetId, setTurnstileWidgetId] = useState(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -331,11 +333,19 @@ function WebApp() {
   }
 
   function getAvatar(user) {
-    return user?.avatar_url || "/default-avatar.png";
+    const value = user?.avatar_url;
+    return value && value !== "null" ? value : "/default-avatar.png";
   }
 
   async function handleAvatarFile(file) {
     if (!file) return;
+
+    const maxInputBytes = 10 * 1024 * 1024;
+
+    if (file.size > maxInputBytes) {
+      setFormError("Avatar file must be 10 MB or smaller");
+      return;
+    }
 
     if (!file.type.startsWith("image/")) {
       setFormError("Choose an image file");
@@ -348,38 +358,41 @@ function WebApp() {
     image.onload = () => {
       URL.revokeObjectURL(objectUrl);
 
-      if (image.width > 1024 || image.height > 1024) {
-        setFormError("Avatar must be 1024×1024 px or smaller");
+      const maxSide = 1024;
+      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+
+      const context = canvas.getContext("2d", { alpha: true });
+      context.imageSmoothingEnabled = true;
+      context.imageSmoothingQuality = "high";
+      context.clearRect(0, 0, width, height);
+      context.drawImage(image, 0, 0, width, height);
+
+      let quality = 0.9;
+      let dataUrl = canvas.toDataURL("image/webp", quality);
+
+      while (dataUrl.length > 900000 && quality > 0.45) {
+        quality -= 0.08;
+        dataUrl = canvas.toDataURL("image/webp", quality);
+      }
+
+      if (dataUrl.length > 1000000) {
+        setFormError("This image could not be compressed enough. Choose another image.");
         return;
       }
 
-      const size = Math.min(512, Math.max(image.width, image.height));
-      const canvas = document.createElement("canvas");
-      canvas.width = size;
-      canvas.height = size;
-      const context = canvas.getContext("2d");
-
-      context.fillStyle = "#101114";
-      context.fillRect(0, 0, size, size);
-
-      const scale = Math.max(size / image.width, size / image.height);
-      const width = image.width * scale;
-      const height = image.height * scale;
-      context.drawImage(
-        image,
-        (size - width) / 2,
-        (size - height) / 2,
-        width,
-        height
-      );
-
-      setAvatarPreview(canvas.toDataURL("image/webp", 0.82));
+      setAvatarPreview(dataUrl);
       setFormError("");
     };
 
     image.onerror = () => {
       URL.revokeObjectURL(objectUrl);
-      setFormError("Could not read this image");
+      setFormError("This image format is not supported by your browser");
     };
 
     image.src = objectUrl;
@@ -405,9 +418,15 @@ function WebApp() {
       user: data.user || null
     });
 
-    if (data.user?.username) setUsername(data.user.username);
-    if (data.user?.display_name) setDisplayName(data.user.display_name);
-    if (data.user?.avatar_url) setAvatarPreview(data.user.avatar_url);
+    if (data.user?.username) {
+      setUsername(data.user.username);
+    }
+
+    if (!profileDraftInitialized && data.user) {
+      setDisplayName(data.user.username ? (data.user.display_name || "") : "");
+      setAvatarPreview(data.user.avatar_url || "/default-avatar.png");
+      setProfileDraftInitialized(true);
+    }
   }
 
   async function loadSocial() {
@@ -458,16 +477,55 @@ function WebApp() {
   useEffect(() => {
     if (!turnstileSiteKey || auth.user?.username) return;
 
+    let cancelled = false;
+    let attempts = 0;
+
+    function renderWidget() {
+      if (cancelled) return;
+
+      const container = document.getElementById("vodkach-turnstile");
+
+      if (!container || !window.turnstile) {
+        attempts += 1;
+        if (attempts < 80) window.setTimeout(renderWidget, 100);
+        return;
+      }
+
+      container.innerHTML = "";
+
+      const widgetId = window.turnstile.render(container, {
+        sitekey: turnstileSiteKey,
+        theme: "dark",
+        size: "flexible",
+        callback: () => setFormError(""),
+        "expired-callback": () => {
+          setFormError("Cloudflare verification expired. Complete it again.");
+        },
+        "error-callback": () => {
+          setFormError("Cloudflare verification could not load.");
+        }
+      });
+
+      setTurnstileWidgetId(widgetId);
+    }
+
     const existing = document.querySelector('script[data-vodkach-turnstile="1"]');
 
-    if (!existing) {
+    if (existing) {
+      renderWidget();
+    } else {
       const script = document.createElement("script");
-      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js";
+      script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
       script.async = true;
       script.defer = true;
       script.dataset.vodkachTurnstile = "1";
+      script.onload = renderWidget;
       document.head.appendChild(script);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, [turnstileSiteKey, auth.user?.username]);
 
   useEffect(() => {
@@ -570,7 +628,9 @@ function WebApp() {
     setFormError("");
 
     const turnstileToken =
-      event.currentTarget.querySelector('[name="cf-turnstile-response"]')?.value || "";
+      turnstileWidgetId !== null && window.turnstile
+        ? window.turnstile.getResponse(turnstileWidgetId)
+        : "";
 
     if (turnstileSiteKey && !turnstileToken) {
       setFormError("Complete the Cloudflare verification");
@@ -585,13 +645,20 @@ function WebApp() {
         body: JSON.stringify({
           username,
           display_name: displayName,
-          avatar_url: avatarPreview || null,
+          avatar_url:
+            avatarPreview && avatarPreview !== "/default-avatar.png"
+              ? avatarPreview
+              : null,
           turnstile_token: turnstileToken
         })
       });
       await loadMe();
     } catch (error) {
       setFormError(error.message);
+
+      if (turnstileWidgetId !== null && window.turnstile) {
+        window.turnstile.reset(turnstileWidgetId);
+      }
     } finally {
       setSavingProfile(false);
     }
@@ -869,7 +936,7 @@ function WebApp() {
                   className="avatarClearButton"
                   type="button"
                   title="Clear avatar"
-                  onClick={() => setAvatarPreview("")}
+                  onClick={() => setAvatarPreview("/default-avatar.png")}
                 >
                   ×
                 </button>
@@ -909,12 +976,7 @@ function WebApp() {
           </div>
 
           {turnstileSiteKey ? (
-            <div
-              className="cf-turnstile turnstileBox"
-              data-sitekey={turnstileSiteKey}
-              data-theme="dark"
-              data-size="flexible"
-            />
+            <div id="vodkach-turnstile" className="turnstileBox" />
           ) : (
             <div className="turnstileSetupNotice">
               Turnstile is not configured yet.
@@ -1304,7 +1366,8 @@ function AdminApp() {
   }
 
   function getAvatar(user) {
-    return user?.avatar_url || "/default-avatar.png";
+    const value = user?.avatar_url;
+    return value && value !== "null" ? value : "/default-avatar.png";
   }
 
   async function handleAvatarFile(file) {

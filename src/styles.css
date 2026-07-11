@@ -1801,13 +1801,238 @@ h1 {
 }
 
 
-/* Patch 040: preserve transparent pixels in uploaded avatars */
+/* Patch 041: advanced square avatar cropper */
 
-.createAvatarPreview {
-  background-image: none !important;
-  background-color: transparent !important;
+.avatarCropperOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(3, 4, 6, .82);
+  backdrop-filter: blur(8px);
 }
 
-.avatarEditor {
-  background: transparent !important;
+.avatarCropperModal {
+  width: min(620px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: 18px;
+  border-radius: 12px;
+  background: #17181c;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 28px 90px rgba(0,0,0,.55);
+}
+
+.avatarCropperHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 18px;
+  align-items: flex-start;
+  margin-bottom: 16px;
+}
+
+.avatarCropperHeader h2 {
+  margin: 0 0 5px;
+  font-size: 1.15rem;
+}
+
+.avatarCropperHeader p {
+  margin: 0;
+  color: #8e949c;
+  font-size: .82rem;
+}
+
+.avatarCropperClose {
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 6px;
+  color: #c9cdd3;
+  background: #25272c;
+  font-size: 1.25rem;
+}
+
+.avatarCropperStage {
+  position: relative;
+  max-width: 100%;
+  margin: 0 auto;
+  overflow: hidden;
+  touch-action: none;
+  user-select: none;
+  background:
+    linear-gradient(45deg, #25272b 25%, transparent 25%),
+    linear-gradient(-45deg, #25272b 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #25272b 75%),
+    linear-gradient(-45deg, transparent 75%, #25272b 75%),
+    #1d1f23;
+  background-size: 24px 24px;
+  background-position:
+    0 0,
+    0 12px,
+    12px -12px,
+    -12px 0;
+  border-radius: 8px;
+}
+
+.avatarCropperImage {
+  position: absolute;
+  left: 0;
+  top: 0;
+  max-width: none;
+  pointer-events: auto;
+  cursor: grab;
+  transform-origin: top left;
+}
+
+.avatarCropperImage:active {
+  cursor: grabbing;
+}
+
+.avatarCropMask {
+  position: absolute;
+  z-index: 2;
+  background: rgba(0, 0, 0, .58);
+  pointer-events: none;
+}
+
+.avatarCropMaskTop {
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.avatarCropMaskLeft {
+  left: 0;
+}
+
+.avatarCropMaskBottom {
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+
+.avatarCropSquare {
+  position: absolute;
+  z-index: 3;
+  border: 2px solid #fff;
+  cursor: move;
+  box-shadow:
+    0 0 0 1px rgba(0,0,0,.55),
+    0 0 28px rgba(0,0,0,.28);
+}
+
+.cropGridLine {
+  position: absolute;
+  background: rgba(255,255,255,.28);
+  pointer-events: none;
+}
+
+.cropGridVertical {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.cropGridHorizontal {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+.cropGridVertical.one { left: 33.333%; }
+.cropGridVertical.two { left: 66.666%; }
+.cropGridHorizontal.one { top: 33.333%; }
+.cropGridHorizontal.two { top: 66.666%; }
+
+.cropHandle {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border: 3px solid #fff;
+  background: #fc0303;
+  border-radius: 4px;
+  z-index: 4;
+}
+
+.cropHandle-nw {
+  left: -10px;
+  top: -10px;
+  cursor: nwse-resize;
+}
+
+.cropHandle-ne {
+  right: -10px;
+  top: -10px;
+  cursor: nesw-resize;
+}
+
+.cropHandle-sw {
+  left: -10px;
+  bottom: -10px;
+  cursor: nesw-resize;
+}
+
+.cropHandle-se {
+  right: -10px;
+  bottom: -10px;
+  cursor: nwse-resize;
+}
+
+.avatarCropperControls {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+}
+
+.avatarCropperControls label {
+  display: grid;
+  gap: 7px;
+}
+
+.avatarCropperControls label > span {
+  color: #c7cbd1;
+  font-size: .78rem;
+  font-weight: 760;
+}
+
+.avatarCropperControls input[type="range"] {
+  width: 100%;
+  accent-color: #fc0303;
+}
+
+.avatarCropperActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.avatarCropperActions button {
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  color: #f4f5f7;
+  background: #2b2d31;
+  font-weight: 760;
+}
+
+.avatarCropperActions .primary {
+  background: #fc0303;
+}
+
+@media (max-width: 620px) {
+  .avatarCropperOverlay {
+    padding: 10px;
+  }
+
+  .avatarCropperModal {
+    padding: 14px;
+  }
+
+  .avatarCropperStage {
+    width: min(520px, calc(100vw - 48px)) !important;
+    height: min(520px, calc(100vw - 48px)) !important;
+  }
 }

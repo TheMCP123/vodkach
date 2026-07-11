@@ -311,6 +311,8 @@ function WebApp() {
   const [turnstileWidgetId, setTurnstileWidgetId] = useState(null);
   const [captchaStarted, setCaptchaStarted] = useState(false);
   const [captchaVerified, setCaptchaVerified] = useState(false);
+  const [avatarCropper, setAvatarCropper] = useState(null);
+  const [cropDrag, setCropDrag] = useState(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -358,37 +360,32 @@ function WebApp() {
     const image = new Image();
 
     image.onload = () => {
-      URL.revokeObjectURL(objectUrl);
+      const stageSize = 520;
+      const minCropSize = 120;
+      const initialCropSize = 360;
+      const fitScale = Math.min(
+        stageSize / image.width,
+        stageSize / image.height
+      );
 
-      const maxSide = 1024;
-      const scale = Math.min(1, maxSide / Math.max(image.width, image.height));
-      const width = Math.max(1, Math.round(image.width * scale));
-      const height = Math.max(1, Math.round(image.height * scale));
+      setAvatarCropper({
+        objectUrl,
+        image,
+        imageWidth: image.width,
+        imageHeight: image.height,
+        stageSize,
+        minCropSize,
+        crop: {
+          x: (stageSize - initialCropSize) / 2,
+          y: (stageSize - initialCropSize) / 2,
+          size: initialCropSize
+        },
+        zoom: 1,
+        fitScale,
+        imageX: (stageSize - image.width * fitScale) / 2,
+        imageY: (stageSize - image.height * fitScale) / 2
+      });
 
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-
-      const context = canvas.getContext("2d", { alpha: true });
-      context.imageSmoothingEnabled = true;
-      context.imageSmoothingQuality = "high";
-      context.clearRect(0, 0, width, height);
-      context.drawImage(image, 0, 0, width, height);
-
-      let quality = 0.9;
-      let dataUrl = canvas.toDataURL("image/webp", quality);
-
-      while (dataUrl.length > 900000 && quality > 0.45) {
-        quality -= 0.08;
-        dataUrl = canvas.toDataURL("image/webp", quality);
-      }
-
-      if (dataUrl.length > 1000000) {
-        setFormError("This image could not be compressed enough. Choose another image.");
-        return;
-      }
-
-      setAvatarPreview(dataUrl);
       setFormError("");
     };
 
@@ -398,6 +395,190 @@ function WebApp() {
     };
 
     image.src = objectUrl;
+  }
+
+  function closeAvatarCropper() {
+    if (avatarCropper?.objectUrl) {
+      URL.revokeObjectURL(avatarCropper.objectUrl);
+    }
+
+    setAvatarCropper(null);
+    setCropDrag(null);
+
+    const input = document.querySelector(".avatarEditButton input");
+    if (input) input.value = "";
+  }
+
+  function beginCropDrag(event, mode, handle = null) {
+    if (!avatarCropper) return;
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    setCropDrag({
+      mode,
+      handle,
+      startX: event.clientX,
+      startY: event.clientY,
+      startCrop: { ...avatarCropper.crop },
+      startImageX: avatarCropper.imageX,
+      startImageY: avatarCropper.imageY
+    });
+
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  }
+
+  function moveCropDrag(event) {
+    if (!avatarCropper || !cropDrag) return;
+
+    const dx = event.clientX - cropDrag.startX;
+    const dy = event.clientY - cropDrag.startY;
+    const stageSize = avatarCropper.stageSize;
+
+    if (cropDrag.mode === "image") {
+      setAvatarCropper((current) => ({
+        ...current,
+        imageX: cropDrag.startImageX + dx,
+        imageY: cropDrag.startImageY + dy
+      }));
+      return;
+    }
+
+    if (cropDrag.mode === "crop") {
+      const size = cropDrag.startCrop.size;
+      const x = Math.max(
+        0,
+        Math.min(stageSize - size, cropDrag.startCrop.x + dx)
+      );
+      const y = Math.max(
+        0,
+        Math.min(stageSize - size, cropDrag.startCrop.y + dy)
+      );
+
+      setAvatarCropper((current) => ({
+        ...current,
+        crop: { x, y, size }
+      }));
+      return;
+    }
+
+    if (cropDrag.mode === "resize") {
+      const start = cropDrag.startCrop;
+      const minSize = avatarCropper.minCropSize;
+      let size = start.size;
+      let x = start.x;
+      let y = start.y;
+
+      if (cropDrag.handle === "se") {
+        size = Math.max(minSize, start.size + Math.max(dx, dy));
+      }
+
+      if (cropDrag.handle === "sw") {
+        size = Math.max(minSize, start.size + Math.max(-dx, dy));
+        x = start.x + start.size - size;
+      }
+
+      if (cropDrag.handle === "ne") {
+        size = Math.max(minSize, start.size + Math.max(dx, -dy));
+        y = start.y + start.size - size;
+      }
+
+      if (cropDrag.handle === "nw") {
+        size = Math.max(minSize, start.size + Math.max(-dx, -dy));
+        x = start.x + start.size - size;
+        y = start.y + start.size - size;
+      }
+
+      size = Math.min(size, stageSize);
+      x = Math.max(0, Math.min(stageSize - size, x));
+      y = Math.max(0, Math.min(stageSize - size, y));
+
+      setAvatarCropper((current) => ({
+        ...current,
+        crop: { x, y, size }
+      }));
+    }
+  }
+
+  function endCropDrag() {
+    setCropDrag(null);
+  }
+
+  function setCropZoom(nextZoom) {
+    if (!avatarCropper) return;
+
+    const zoom = Number(nextZoom);
+    const previousScale = avatarCropper.fitScale * avatarCropper.zoom;
+    const nextScale = avatarCropper.fitScale * zoom;
+    const centerX = avatarCropper.crop.x + avatarCropper.crop.size / 2;
+    const centerY = avatarCropper.crop.y + avatarCropper.crop.size / 2;
+
+    const sourceCenterX = (centerX - avatarCropper.imageX) / previousScale;
+    const sourceCenterY = (centerY - avatarCropper.imageY) / previousScale;
+
+    setAvatarCropper((current) => ({
+      ...current,
+      zoom,
+      imageX: centerX - sourceCenterX * nextScale,
+      imageY: centerY - sourceCenterY * nextScale
+    }));
+  }
+
+  function applyAvatarCrop() {
+    if (!avatarCropper) return;
+
+    const {
+      image,
+      crop,
+      fitScale,
+      zoom,
+      imageX,
+      imageY
+    } = avatarCropper;
+
+    const scale = fitScale * zoom;
+    const sourceX = (crop.x - imageX) / scale;
+    const sourceY = (crop.y - imageY) / scale;
+    const sourceSize = crop.size / scale;
+    const outputSize = 512;
+
+    const canvas = document.createElement("canvas");
+    canvas.width = outputSize;
+    canvas.height = outputSize;
+
+    const context = canvas.getContext("2d", { alpha: true });
+    context.clearRect(0, 0, outputSize, outputSize);
+    context.imageSmoothingEnabled = true;
+    context.imageSmoothingQuality = "high";
+
+    context.drawImage(
+      image,
+      sourceX,
+      sourceY,
+      sourceSize,
+      sourceSize,
+      0,
+      0,
+      outputSize,
+      outputSize
+    );
+
+    let quality = 0.92;
+    let dataUrl = canvas.toDataURL("image/webp", quality);
+
+    while (dataUrl.length > 900000 && quality > 0.45) {
+      quality -= 0.08;
+      dataUrl = canvas.toDataURL("image/webp", quality);
+    }
+
+    if (dataUrl.length > 1000000) {
+      setFormError("This image could not be compressed enough.");
+      return;
+    }
+
+    setAvatarPreview(dataUrl);
+    setFormError("");
+    closeAvatarCropper();
   }
 
   async function loadTurnstile() {
@@ -1033,6 +1214,144 @@ function WebApp() {
             {savingProfile ? "Creating..." : "Create account"}
           </button>
         </form>
+
+        {avatarCropper && (
+          <div className="avatarCropperOverlay" role="dialog" aria-modal="true">
+            <div className="avatarCropperModal">
+              <header className="avatarCropperHeader">
+                <div>
+                  <h2>Edit avatar</h2>
+                  <p>Move the image and resize the square selection.</p>
+                </div>
+
+                <button
+                  className="avatarCropperClose"
+                  type="button"
+                  onClick={closeAvatarCropper}
+                  aria-label="Close"
+                >
+                  ×
+                </button>
+              </header>
+
+              <div
+                className="avatarCropperStage"
+                style={{
+                  width: avatarCropper.stageSize,
+                  height: avatarCropper.stageSize
+                }}
+                onPointerMove={moveCropDrag}
+                onPointerUp={endCropDrag}
+                onPointerCancel={endCropDrag}
+                onPointerLeave={(event) => {
+                  if (event.buttons === 0) endCropDrag();
+                }}
+              >
+                <img
+                  className="avatarCropperImage"
+                  src={avatarCropper.objectUrl}
+                  alt=""
+                  draggable="false"
+                  style={{
+                    width:
+                      avatarCropper.imageWidth *
+                      avatarCropper.fitScale *
+                      avatarCropper.zoom,
+                    height:
+                      avatarCropper.imageHeight *
+                      avatarCropper.fitScale *
+                      avatarCropper.zoom,
+                    transform: `translate(${avatarCropper.imageX}px, ${avatarCropper.imageY}px)`
+                  }}
+                  onPointerDown={(event) => beginCropDrag(event, "image")}
+                />
+
+                <div
+                  className="avatarCropMask avatarCropMaskTop"
+                  style={{ height: avatarCropper.crop.y }}
+                />
+                <div
+                  className="avatarCropMask avatarCropMaskLeft"
+                  style={{
+                    top: avatarCropper.crop.y,
+                    width: avatarCropper.crop.x,
+                    height: avatarCropper.crop.size
+                  }}
+                />
+                <div
+                  className="avatarCropMask avatarCropMaskRight"
+                  style={{
+                    top: avatarCropper.crop.y,
+                    left: avatarCropper.crop.x + avatarCropper.crop.size,
+                    right: 0,
+                    height: avatarCropper.crop.size
+                  }}
+                />
+                <div
+                  className="avatarCropMask avatarCropMaskBottom"
+                  style={{
+                    top: avatarCropper.crop.y + avatarCropper.crop.size
+                  }}
+                />
+
+                <div
+                  className="avatarCropSquare"
+                  style={{
+                    left: avatarCropper.crop.x,
+                    top: avatarCropper.crop.y,
+                    width: avatarCropper.crop.size,
+                    height: avatarCropper.crop.size
+                  }}
+                  onPointerDown={(event) => beginCropDrag(event, "crop")}
+                >
+                  <span className="cropGridLine cropGridVertical one" />
+                  <span className="cropGridLine cropGridVertical two" />
+                  <span className="cropGridLine cropGridHorizontal one" />
+                  <span className="cropGridLine cropGridHorizontal two" />
+
+                  {["nw", "ne", "sw", "se"].map((handle) => (
+                    <button
+                      key={handle}
+                      className={`cropHandle cropHandle-${handle}`}
+                      type="button"
+                      aria-label={`Resize ${handle}`}
+                      onPointerDown={(event) =>
+                        beginCropDrag(event, "resize", handle)
+                      }
+                    />
+                  ))}
+                </div>
+              </div>
+
+              <div className="avatarCropperControls">
+                <label>
+                  <span>Zoom</span>
+                  <input
+                    type="range"
+                    min="1"
+                    max="4"
+                    step="0.01"
+                    value={avatarCropper.zoom}
+                    onChange={(event) => setCropZoom(event.target.value)}
+                  />
+                </label>
+
+                <div className="avatarCropperActions">
+                  <button type="button" onClick={closeAvatarCropper}>
+                    Cancel
+                  </button>
+                  <button
+                    className="primary"
+                    type="button"
+                    onClick={applyAvatarCrop}
+                  >
+                    Apply
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
     );
   }

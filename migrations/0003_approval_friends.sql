@@ -1,6 +1,6 @@
--- Vodkach D1 account approval + friends schema (fixed)
--- For a clean database after 0002_text_chats_messages.sql.
--- Run once.
+-- Vodkach D1 approval + friends migration
+-- Correct version for a database where access_status does NOT exist yet.
+-- Run once after 0002_text_chats_messages.sql.
 
 PRAGMA foreign_keys = ON;
 
@@ -12,9 +12,11 @@ ALTER TABLE users ADD COLUMN rejected_at TEXT;
 ALTER TABLE users ADD COLUMN disabled_at TEXT;
 
 UPDATE users
-SET requested_at = COALESCE(requested_at, created_at, datetime('now'));
+SET requested_at = COALESCE(created_at, datetime('now'))
+WHERE requested_at IS NULL;
 
-CREATE INDEX IF NOT EXISTS idx_users_access_status ON users (access_status);
+CREATE INDEX IF NOT EXISTS idx_users_access_status
+ON users (access_status);
 
 CREATE TABLE IF NOT EXISTS friend_requests (
   id TEXT PRIMARY KEY,

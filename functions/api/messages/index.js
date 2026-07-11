@@ -90,12 +90,20 @@ export async function onRequestGet(context) {
         messages.created_at,
         messages.edited_at,
         messages.deleted_at,
+        messages.reply_to_message_id,
         users.username AS sender_username,
         users.display_name AS sender_display_name,
         users.avatar_url AS sender_avatar_url,
-        users.verified AS sender_verified
+        users.verified AS sender_verified,
+        reply_messages.body_ciphertext AS reply_text,
+        reply_users.display_name AS reply_sender_display_name,
+        reply_users.username AS reply_sender_username
       FROM messages
       JOIN users ON users.id = messages.sender_user_id
+      LEFT JOIN messages reply_messages
+        ON reply_messages.id = messages.reply_to_message_id
+      LEFT JOIN users reply_users
+        ON reply_users.id = reply_messages.sender_user_id
       WHERE messages.chat_id = ?
         AND datetime(messages.created_at) < datetime(?)
       ORDER BY datetime(messages.created_at) DESC
@@ -113,12 +121,20 @@ export async function onRequestGet(context) {
         messages.created_at,
         messages.edited_at,
         messages.deleted_at,
+        messages.reply_to_message_id,
         users.username AS sender_username,
         users.display_name AS sender_display_name,
         users.avatar_url AS sender_avatar_url,
-        users.verified AS sender_verified
+        users.verified AS sender_verified,
+        reply_messages.body_ciphertext AS reply_text,
+        reply_users.display_name AS reply_sender_display_name,
+        reply_users.username AS reply_sender_username
       FROM messages
       JOIN users ON users.id = messages.sender_user_id
+      LEFT JOIN messages reply_messages
+        ON reply_messages.id = messages.reply_to_message_id
+      LEFT JOIN users reply_users
+        ON reply_users.id = reply_messages.sender_user_id
       WHERE messages.chat_id = ?
       ORDER BY datetime(messages.created_at) DESC
       LIMIT ?`;
@@ -141,6 +157,17 @@ export async function onRequestGet(context) {
     created_at: row.created_at,
     edited_at: row.edited_at,
     deleted_at: row.deleted_at,
+    reply_to_message_id: row.reply_to_message_id,
+    reply_to: row.reply_to_message_id
+      ? {
+          id: row.reply_to_message_id,
+          sender_name:
+            row.reply_sender_display_name ||
+            row.reply_sender_username ||
+            "User",
+          text: row.reply_text || "Message deleted"
+        }
+      : null,
     sender: {
       id: row.sender_user_id,
       username: row.sender_username,
@@ -187,6 +214,9 @@ export async function onRequestPost(context) {
   const algorithm = String(body.body_algorithm || body.algorithm || "pending-client-e2ee").trim();
   const senderDeviceId = body.sender_device_id ? String(body.sender_device_id) : null;
   const clientMessageId = body.client_message_id ? String(body.client_message_id).slice(0, 120) : null;
+  const replyToMessageId = body.reply_to_message_id
+    ? String(body.reply_to_message_id).trim()
+    : null;
 
   if (!chatId) {
     return json(
@@ -218,6 +248,28 @@ export async function onRequestPost(context) {
       },
       { status: 404 }
     );
+  }
+
+  if (replyToMessageId) {
+    const replyTarget = await context.env.DB.prepare(
+      `SELECT 1 AS ok
+       FROM messages
+       WHERE id = ?
+         AND chat_id = ?
+       LIMIT 1`
+    )
+      .bind(replyToMessageId, chatId)
+      .first();
+
+    if (!replyTarget) {
+      return json(
+        {
+          ok: false,
+          error: "Reply target not found"
+        },
+        { status: 400 }
+      );
+    }
   }
 
   if (senderDeviceId) {
@@ -256,9 +308,10 @@ export async function onRequestPost(context) {
           client_message_id,
           body_ciphertext,
           body_nonce,
-          body_algorithm
+          body_algorithm,
+          reply_to_message_id
         )
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).bind(
         messageId,
         chatId,
@@ -267,7 +320,8 @@ export async function onRequestPost(context) {
         clientMessageId,
         ciphertext,
         nonce,
-        algorithm
+        algorithm,
+        replyToMessageId
       ),
 
       context.env.DB.prepare(
@@ -328,7 +382,8 @@ export async function onRequestPost(context) {
       body_version,
       created_at,
       edited_at,
-      deleted_at
+      deleted_at,
+      reply_to_message_id
      FROM messages
      WHERE id = ?
      LIMIT 1`

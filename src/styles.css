@@ -2442,3 +2442,316 @@ h1 {
 .appMessage:not(.grouped) + .appMessage.grouped {
   margin-top: -7px !important;
 }
+
+
+/* Patch 046: cleaner grouped messages, actions menu, settings */
+
+.messageMeta .nameWithBadge,
+.chatHeaderIdentity .nameWithBadge,
+.memberProfileBody .nameWithBadge,
+.sidebarProfileText .nameWithBadge,
+.socialIdentity .nameWithBadge {
+  color: #ffffff !important;
+}
+
+.messageMeta .nameWithBadge {
+  font-size: 1rem !important;
+  font-weight: 700 !important;
+}
+
+.groupedMessageTime {
+  display: none !important;
+}
+
+.appMessage {
+  padding: 2px 8px;
+  margin: 0 0 10px !important;
+  border-radius: 6px;
+}
+
+.appMessage.grouped {
+  min-height: 28px;
+  margin: 0 0 4px !important;
+  padding-left: 60px;
+}
+
+.appMessage:not(.grouped) {
+  margin-top: 14px !important;
+}
+
+.appMessage:hover {
+  background: rgba(255,255,255,.025);
+}
+
+.messageContent p {
+  margin: 3px 0 0;
+  line-height: 1.42;
+}
+
+.appMessage.grouped .messageContent p {
+  margin: 0;
+}
+
+.messageReplyPreview {
+  max-width: 560px;
+  margin: 3px 0 5px;
+  padding: 5px 8px;
+  border-left: 2px solid #fc0303;
+  display: grid;
+  gap: 1px;
+  color: #8e949c;
+  background: rgba(255,255,255,.018);
+  border-radius: 0 4px 4px 0;
+}
+
+.messageReplyPreview strong {
+  color: #d8dade;
+  font-size: .72rem;
+}
+
+.messageReplyPreview span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .74rem;
+}
+
+.editedLabel {
+  margin-left: 5px;
+  color: #666c75;
+  font-size: .64rem;
+}
+
+.deletedMessageText {
+  color: #686e77 !important;
+  font-style: italic;
+}
+
+.messageContextMenu {
+  position: fixed;
+  z-index: 2000;
+  width: 190px;
+  padding: 6px;
+  border-radius: 8px;
+  display: grid;
+  gap: 2px;
+  background: #111216;
+  border: 1px solid rgba(255,255,255,.075);
+  box-shadow: 0 16px 44px rgba(0,0,0,.5);
+}
+
+.messageContextMenu button {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #d8dade;
+  background: transparent;
+  text-align: left;
+  font-size: .78rem;
+}
+
+.messageContextMenu button:hover {
+  color: #fff;
+  background: #25272c;
+}
+
+.messageContextMenu button.danger {
+  color: #ff7777;
+}
+
+.messageContextMenu button.danger:hover {
+  color: #fff;
+  background: #b3261e;
+}
+
+.messageComposer.composerForm {
+  height: auto !important;
+  min-height: 42px;
+  padding: 0 !important;
+  display: block;
+  overflow: hidden;
+}
+
+.composerContext {
+  min-height: 42px;
+  padding: 7px 10px;
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  align-items: center;
+  background: #17181c;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+}
+
+.composerContext > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.composerContext strong {
+  color: #fc6b6b;
+  font-size: .72rem;
+}
+
+.composerContext span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #8e949c;
+  font-size: .72rem;
+}
+
+.composerContext button {
+  width: 26px !important;
+  min-width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  color: #aeb4bc !important;
+  font-size: 1rem !important;
+}
+
+.composerInputRow {
+  height: 42px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 7px 0 12px;
+}
+
+.composerInputRow input {
+  min-width: 0;
+  flex: 1;
+  border: 0;
+  outline: 0;
+  color: #f4f5f7;
+  background: transparent;
+}
+
+.composerInputRow > button {
+  min-width: 62px;
+  height: 30px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  background: #fc0303;
+  font-size: .74rem;
+  font-weight: 800;
+}
+
+.settingsPage {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 210px minmax(0, 1fr);
+  background: #151619;
+}
+
+.settingsNav {
+  padding: 28px 12px;
+  background: #111216;
+  border-right: 1px solid rgba(255,255,255,.055);
+}
+
+.settingsNav h2 {
+  margin: 0 8px 14px;
+  color: #777d86;
+  font-size: .7rem;
+  text-transform: uppercase;
+  letter-spacing: .07em;
+}
+
+.settingsNav button {
+  width: 100%;
+  min-height: 36px;
+  margin-bottom: 3px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #aeb4bc;
+  background: transparent;
+  text-align: left;
+}
+
+.settingsNav button:hover,
+.settingsNav button.active {
+  color: #fff;
+  background: #25272c;
+}
+
+.settingsContent {
+  max-width: 760px;
+  padding: 34px;
+}
+
+.settingsContent h1 {
+  margin: 0 0 20px;
+  font-size: 1.35rem;
+}
+
+.settingsAccountCard {
+  padding: 18px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.settingsAccountCard img {
+  width: 66px;
+  height: 66px;
+  border-radius: 16px;
+  object-fit: cover;
+}
+
+.settingsAccountCard > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.settingsAccountCard > div > span,
+.settingsAccountCard small {
+  color: #8e949c;
+}
+
+.settingsDangerButton {
+  margin-top: 16px;
+  min-height: 36px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  background: #b3261e;
+  font-weight: 750;
+}
+
+.settingsToggleRow {
+  padding: 16px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.settingsToggleRow > div {
+  display: grid;
+  gap: 4px;
+}
+
+.settingsToggleRow span {
+  color: #8e949c;
+  font-size: .8rem;
+}
+
+.settingsToggleRow input {
+  width: 18px;
+  height: 18px;
+  accent-color: #fc0303;
+}

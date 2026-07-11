@@ -325,6 +325,13 @@ function WebApp() {
   const [chatText, setChatText] = useState("");
   const [busy, setBusy] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageMenu, setMessageMenu] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [settingsTab, setSettingsTab] = useState("account");
+  const [soundEnabled, setSoundEnabled] = useState(
+    localStorage.getItem("vodkach_message_sound") !== "off"
+  );
   const [uiError, setUiError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
@@ -647,7 +654,7 @@ function WebApp() {
             view === "chat" &&
             activeChat?.id === chat.id;
 
-          if (!directlyViewingThisChat && messageAudioRef.current) {
+          if (!directlyViewingThisChat && soundEnabled && messageAudioRef.current) {
             try {
               messageAudioRef.current.currentTime = 0;
               messageAudioRef.current.volume = 0.65;
@@ -720,6 +727,20 @@ function WebApp() {
     loadMe().catch(() => {
       setAuth({ loading: false, authenticated: false, user: null });
     });
+  }, []);
+
+  useEffect(() => {
+    function closeMenu() {
+      setMessageMenu(null);
+    }
+
+    window.addEventListener("click", closeMenu);
+    window.addEventListener("blur", closeMenu);
+
+    return () => {
+      window.removeEventListener("click", closeMenu);
+      window.removeEventListener("blur", closeMenu);
+    };
   }, []);
 
   useEffect(() => {
@@ -1024,11 +1045,99 @@ function WebApp() {
     }
   }
 
+  async function deleteMessage(message) {
+    setMessageMenu(null);
+
+    try {
+      await api("/api/messages/delete", {
+        method: "POST",
+        body: JSON.stringify({
+          message_id: message.id
+        })
+      });
+
+      setMessages((current) =>
+        current.map((item) =>
+          item.id === message.id
+            ? {
+                ...item,
+                body_ciphertext: "",
+                deleted_at: new Date().toISOString()
+              }
+            : item
+        )
+      );
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function saveEditedMessage() {
+    if (!editingMessage) return;
+
+    const text = chatText.trim();
+    if (!text) return;
+
+    const target = editingMessage;
+    setEditingMessage(null);
+    setChatText("");
+
+    try {
+      const data = await api("/api/messages/edit", {
+        method: "POST",
+        body: JSON.stringify({
+          message_id: target.id,
+          body_ciphertext: text
+        })
+      });
+
+      setMessages((current) =>
+        current.map((message) =>
+          message.id === target.id
+            ? {
+                ...message,
+                body_ciphertext: text,
+                edited_at: data.message?.edited_at || new Date().toISOString()
+              }
+            : message
+        )
+      );
+    } catch (error) {
+      setChatText(text);
+      setEditingMessage(target);
+      setUiError(error.message);
+    }
+  }
+
+  function beginReply(message) {
+    setMessageMenu(null);
+    setEditingMessage(null);
+    setReplyingTo(message);
+    requestAnimationFrame(() => {
+      document.querySelector(".composerForm input")?.focus();
+    });
+  }
+
+  function beginEdit(message) {
+    setMessageMenu(null);
+    setReplyingTo(null);
+    setEditingMessage(message);
+    setChatText(message.body_ciphertext || "");
+    requestAnimationFrame(() => {
+      document.querySelector(".composerForm input")?.focus();
+    });
+  }
+
   async function sendMessage(event) {
     event.preventDefault();
 
     const text = chatText.trim();
     const chatId = activeChat?.id;
+
+    if (editingMessage) {
+      await saveEditedMessage();
+      return;
+    }
 
     if (!text || !chatId || sendingMessageRef.current) return;
 
@@ -1049,11 +1158,23 @@ function WebApp() {
       body_algorithm: "plain-v0",
       created_at: new Date().toISOString(),
       sender: auth.user,
+      reply_to_message_id: replyingTo?.id || null,
+      reply_to: replyingTo
+        ? {
+            id: replyingTo.id,
+            sender_name:
+              replyingTo.sender?.display_name ||
+              replyingTo.sender?.username ||
+              "User",
+            text: replyingTo.body_ciphertext
+          }
+        : null,
       optimistic: true
     };
 
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
+    setReplyingTo(null);
 
     try {
       const data = await api("/api/messages", {
@@ -1063,7 +1184,8 @@ function WebApp() {
           body_ciphertext: text,
           body_algorithm: "plain-v0",
           client_message_id: clientMessageId,
-          sender_device_id: localStorage.getItem(DEVICE_ID_KEY) || null
+          sender_device_id: localStorage.getItem(DEVICE_ID_KEY) || null,
+          reply_to_message_id: replyingTo?.id || null
         })
       });
 
@@ -1552,7 +1674,12 @@ function WebApp() {
             </span>
           </button>
 
-          <button className="profileSettingsButton" type="button" aria-label="Settings">
+          <button
+            className="profileSettingsButton"
+            type="button"
+            aria-label="Settings"
+            onClick={() => setView("settings")}
+          >
             <Settings size={16} />
           </button>
         </div>
@@ -1743,6 +1870,74 @@ function WebApp() {
           </>
         )}
 
+        {view === "settings" && (
+          <section className="settingsPage">
+            <aside className="settingsNav">
+              <h2>User Settings</h2>
+              <button
+                className={settingsTab === "account" ? "active" : ""}
+                type="button"
+                onClick={() => setSettingsTab("account")}
+              >
+                My Account
+              </button>
+              <button
+                className={settingsTab === "notifications" ? "active" : ""}
+                type="button"
+                onClick={() => setSettingsTab("notifications")}
+              >
+                Notifications
+              </button>
+            </aside>
+
+            <div className="settingsContent">
+              {settingsTab === "account" && (
+                <>
+                  <h1>My Account</h1>
+                  <div className="settingsAccountCard">
+                    <img src={getAvatar(auth.user)} alt="Profile avatar" />
+                    <div>
+                      <strong className="nameWithBadge">
+                        <span className="displayNameText">{currentDisplayName}</span>
+                        {auth.user.verified ? <VerifiedBadge /> : null}
+                      </strong>
+                      <span>@{auth.user.username}</span>
+                      <small>{auth.user.email}</small>
+                    </div>
+                  </div>
+                  <button className="settingsDangerButton" type="button" onClick={logout}>
+                    Sign Out
+                  </button>
+                </>
+              )}
+
+              {settingsTab === "notifications" && (
+                <>
+                  <h1>Notifications</h1>
+                  <label className="settingsToggleRow">
+                    <div>
+                      <strong>Message sounds</strong>
+                      <span>Play a sound for incoming messages outside the active chat.</span>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={soundEnabled}
+                      onChange={(event) => {
+                        const enabled = event.target.checked;
+                        setSoundEnabled(enabled);
+                        localStorage.setItem(
+                          "vodkach_message_sound",
+                          enabled ? "on" : "off"
+                        );
+                      }}
+                    />
+                  </label>
+                </>
+              )}
+            </div>
+          </section>
+        )}
+
         {view === "chat" && activeChat && (
           <>
             <header className="appChatHeader">
@@ -1773,6 +1968,7 @@ function WebApp() {
               {messages.map((message, index) => (
                 <AppMessage
                   key={message.id}
+                  message={message}
                   grouped={shouldGroupMessage(messages[index - 1], message)}
                   avatarUrl={getAvatar(message.sender)}
                   name={message.sender?.display_name || message.sender?.username || "User"}
@@ -1782,6 +1978,16 @@ function WebApp() {
                     minute: "2-digit"
                   })}
                   text={message.deleted_at ? "Message deleted" : message.body_ciphertext}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    setMessageMenu({
+                      message,
+                      x: Math.min(event.clientX, window.innerWidth - 210),
+                      y: Math.min(event.clientY, window.innerHeight - 170)
+                    });
+                  }}
                 />
               ))}
 
@@ -1793,17 +1999,89 @@ function WebApp() {
             </div>
 
             <form className="messageComposer composerForm" onSubmit={sendMessage}>
-              <input
-                value={chatText}
-                onChange={(event) => setChatText(event.target.value)}
-                placeholder={`Message ${activeTitle}`}
-                maxLength={4000}
-              />
-              <button type="submit" disabled={!chatText.trim() || sendingMessage}>
-                {sendingMessage ? "Sending..." : "Send"}
-              </button>
+              {(replyingTo || editingMessage) && (
+                <div className="composerContext">
+                  <div>
+                    <strong>
+                      {editingMessage
+                        ? "Editing message"
+                        : `Replying to ${
+                            replyingTo.sender?.display_name ||
+                            replyingTo.sender?.username ||
+                            "User"
+                          }`}
+                    </strong>
+                    <span>
+                      {(editingMessage?.body_ciphertext ||
+                        replyingTo?.body_ciphertext ||
+                        "").slice(0, 90)}
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setReplyingTo(null);
+                      setEditingMessage(null);
+                      setChatText("");
+                    }}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+
+              <div className="composerInputRow">
+                <input
+                  value={chatText}
+                  onChange={(event) => setChatText(event.target.value)}
+                  placeholder={
+                    editingMessage ? "Edit message" : `Message ${activeTitle}`
+                  }
+                  maxLength={4000}
+                />
+                <button type="submit" disabled={!chatText.trim() || sendingMessage}>
+                  {editingMessage
+                    ? "Save"
+                    : sendingMessage
+                      ? "Sending..."
+                      : "Send"}
+                </button>
+              </div>
             </form>
           </>
+        )}
+
+        {messageMenu && (
+          <div
+            className="messageContextMenu"
+            style={{
+              left: messageMenu.x,
+              top: messageMenu.y
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" onClick={() => beginReply(messageMenu.message)}>
+              Reply
+            </button>
+
+            {messageMenu.message.sender_user_id === auth.user.id &&
+              !messageMenu.message.deleted_at && (
+                <button
+                  type="button"
+                  onClick={() => beginEdit(messageMenu.message)}
+                >
+                  Edit
+                </button>
+              )}
+
+            <button
+              className="danger"
+              type="button"
+              onClick={() => deleteMessage(messageMenu.message)}
+            >
+              Delete For Everyone
+            </button>
+          </div>
         )}
 
         {uiError && (
@@ -1861,6 +2139,13 @@ function AdminApp() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [sendingMessage, setSendingMessage] = useState(false);
+  const [messageMenu, setMessageMenu] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
+  const [replyingTo, setReplyingTo] = useState(null);
+  const [settingsTab, setSettingsTab] = useState("account");
+  const [soundEnabled, setSoundEnabled] = useState(
+    localStorage.getItem("vodkach_message_sound") !== "off"
+  );
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -2189,18 +2474,21 @@ function shouldGroupMessage(previous, current) {
 }
 
 function AppMessage({
+  message,
   avatarUrl,
   name,
   verified,
   time,
   text,
-  grouped = false
+  grouped = false,
+  onContextMenu
 }) {
   return (
-    <div className={grouped ? "appMessage grouped" : "appMessage"}>
-      {grouped ? (
-        <span className="groupedMessageTime">{time}</span>
-      ) : (
+    <div
+      className={grouped ? "appMessage grouped" : "appMessage"}
+      onContextMenu={onContextMenu}
+    >
+      {!grouped && (
         <img
           className="messageAvatarImage"
           src={avatarUrl || "/default-avatar.png"}
@@ -2219,7 +2507,20 @@ function AppMessage({
             <span>{time}</span>
           </div>
         )}
-        <p>{text}</p>
+
+        {message.reply_to && !message.deleted_at && (
+          <div className="messageReplyPreview">
+            <strong>{message.reply_to.sender_name}</strong>
+            <span>{message.reply_to.text}</span>
+          </div>
+        )}
+
+        <p className={message.deleted_at ? "deletedMessageText" : ""}>
+          {text}
+          {message.edited_at && !message.deleted_at && (
+            <span className="editedLabel">Edited</span>
+          )}
+        </p>
       </div>
     </div>
   );

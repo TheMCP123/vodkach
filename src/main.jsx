@@ -285,7 +285,7 @@ function Landing() {
 
 function VerifiedBadge({ className = "" }) {
   return (
-    <span className={`verifiedBadge ${className}`} title="Verified" aria-label="Verified">
+    <span className={`verifiedBadge ${className}`} title="Verified User" aria-label="Verified User">
       <svg viewBox="0 0 24 24" aria-hidden="true">
         <circle cx="12" cy="12" r="10" />
         <path d="M7.4 12.2 10.4 15.2 16.8 8.8" />
@@ -315,6 +315,7 @@ function WebApp() {
   const [loadingSearch, setLoadingSearch] = useState(false);
   const [chatText, setChatText] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
   const [uiError, setUiError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
   const [turnstileSiteKey, setTurnstileSiteKey] = useState("");
@@ -328,6 +329,7 @@ function WebApp() {
   const previousChatLatestRef = useRef(new Map());
   const notificationsReadyRef = useRef(false);
   const messageAudioRef = useRef(null);
+  const sendingMessageRef = useRef(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -639,7 +641,7 @@ function WebApp() {
           if (!directlyViewingThisChat && messageAudioRef.current) {
             try {
               messageAudioRef.current.currentTime = 0;
-              messageAudioRef.current.volume = 0.75;
+              messageAudioRef.current.volume = 0.65;
               await messageAudioRef.current.play();
             } catch {
               // Browser may block audio until the first user interaction.
@@ -664,8 +666,45 @@ function WebApp() {
 
   async function loadMessages(chat) {
     if (!chat?.id) return;
-    const data = await api(`/api/messages?chat_id=${encodeURIComponent(chat.id)}&limit=100`);
-    setMessages(data.messages || []);
+
+    const data = await api(
+      `/api/messages?chat_id=${encodeURIComponent(chat.id)}&limit=100`
+    );
+    const serverMessages = data.messages || [];
+
+    setMessages((current) => {
+      const serverClientIds = new Set(
+        serverMessages
+          .map((message) => message.client_message_id)
+          .filter(Boolean)
+      );
+
+      const pendingOptimistic = current.filter(
+        (message) =>
+          message.optimistic &&
+          message.chat_id === chat.id &&
+          !serverClientIds.has(message.client_message_id)
+      );
+
+      const combined = [...serverMessages, ...pendingOptimistic];
+      const seen = new Set();
+
+      return combined
+        .filter((message) => {
+          const key = message.client_message_id
+            ? `client:${message.client_message_id}`
+            : `id:${message.id}`;
+
+          if (seen.has(key)) return false;
+          seen.add(key);
+          return true;
+        })
+        .sort(
+          (a, b) =>
+            new Date(a.created_at).getTime() -
+            new Date(b.created_at).getTime()
+        );
+    });
   }
 
   useEffect(() => {
@@ -677,7 +716,7 @@ function WebApp() {
   useEffect(() => {
     const audio = new Audio("/message.mp3");
     audio.preload = "auto";
-    audio.volume = 0.75;
+    audio.volume = 0.65;
     messageAudioRef.current = audio;
 
     return () => {
@@ -978,17 +1017,24 @@ function WebApp() {
 
   async function sendMessage(event) {
     event.preventDefault();
-    const text = chatText.trim();
-    if (!text || !activeChat?.id || busy) return;
 
-    setBusy(true);
+    const text = chatText.trim();
+    const chatId = activeChat?.id;
+
+    if (!text || !chatId || sendingMessageRef.current) return;
+
+    sendingMessageRef.current = true;
+    setSendingMessage(true);
     setUiError("");
 
     const clientMessageId = crypto.randomUUID();
+    const optimisticId = `optimistic_${clientMessageId}`;
+
     const optimisticMessage = {
-      id: `optimistic_${clientMessageId}`,
-      chat_id: activeChat.id,
+      id: optimisticId,
+      chat_id: chatId,
       sender_user_id: auth.user.id,
+      sender_device_id: localStorage.getItem(DEVICE_ID_KEY) || null,
       client_message_id: clientMessageId,
       body_ciphertext: text,
       body_algorithm: "plain-v0",
@@ -1001,10 +1047,10 @@ function WebApp() {
     setChatText("");
 
     try {
-      await api("/api/messages", {
+      const data = await api("/api/messages", {
         method: "POST",
         body: JSON.stringify({
-          chat_id: activeChat.id,
+          chat_id: chatId,
           body_ciphertext: text,
           body_algorithm: "plain-v0",
           client_message_id: clientMessageId,
@@ -1012,14 +1058,31 @@ function WebApp() {
         })
       });
 
-      await Promise.all([loadMessages(activeChat), loadSocial()]);
+      if (data.message) {
+        setMessages((current) =>
+          current.map((message) =>
+            message.id === optimisticId
+              ? {
+                  ...data.message,
+                  sender: auth.user,
+                  optimistic: false
+                }
+              : message
+          )
+        );
+      }
+
+      loadMessages({ id: chatId }).catch(() => {});
+      loadSocial().catch(() => {});
     } catch (error) {
       setMessages((current) =>
-        current.filter((message) => message.id !== `optimistic_${clientMessageId}`)
+        current.filter((message) => message.id !== optimisticId)
       );
+      setChatText((current) => current || text);
       setUiError(error.message);
     } finally {
-      setBusy(false);
+      sendingMessageRef.current = false;
+      setSendingMessage(false);
     }
   }
 
@@ -1439,12 +1502,24 @@ function WebApp() {
               }}
             >
               <img className="chatListAvatar" src={getAvatar(chat.other_user)} alt="Chat avatar" />
-              <span className="chatListName">
-                {chat.other_user?.display_name ||
-                  chat.other_user?.username ||
-                  chat.title ||
-                  "Direct chat"}
-                {chat.other_user?.verified ? <VerifiedBadge className="small" /> : null}
+              <span className="chatListIdentity">
+                <span className="chatListPrimary">
+                  <span>
+                    {chat.other_user?.display_name ||
+                      chat.other_user?.username ||
+                      chat.title ||
+                      "Direct chat"}
+                  </span>
+                  {chat.other_user?.verified ? (
+                    <VerifiedBadge className="small" />
+                  ) : null}
+                </span>
+
+                {chat.other_user?.username ? (
+                  <span className="chatListSecondary">
+                    @{chat.other_user.username}
+                  </span>
+                ) : null}
               </span>
             </button>
           ))}
@@ -1656,7 +1731,15 @@ function WebApp() {
         {view === "chat" && activeChat && (
           <>
             <header className="appChatHeader">
-              <div><strong>{activeTitle}</strong></div>
+              <div className="chatHeaderIdentity">
+                <strong className="nameWithBadge">
+                  {activeTitle}
+                  {activeChat.other_user?.verified ? <VerifiedBadge /> : null}
+                </strong>
+                {activeChat.other_user?.username ? (
+                  <span>@{activeChat.other_user.username}</span>
+                ) : null}
+              </div>
               <div className="chatHeaderActions">
                 <Phone size={18} />
                 <MoreVertical size={19} />
@@ -1700,8 +1783,8 @@ function WebApp() {
                 placeholder={`Message ${activeTitle}`}
                 maxLength={4000}
               />
-              <button type="submit" disabled={!chatText.trim() || busy}>
-                Send
+              <button type="submit" disabled={!chatText.trim() || sendingMessage}>
+                {sendingMessage ? "Sending..." : "Send"}
               </button>
             </form>
           </>
@@ -1759,6 +1842,7 @@ function AdminApp() {
   const [banEmail, setBanEmail] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [sendingMessage, setSendingMessage] = useState(false);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {

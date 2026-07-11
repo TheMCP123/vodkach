@@ -2165,3 +2165,85 @@ h1 {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+
+/* Patch 044: cleaner sidebar typography + robust message sending */
+
+.sidebarNavButton,
+.channelButton,
+.channelButton span,
+.chatListPrimary,
+.chatListSecondary,
+.emptySidebarText,
+.channelList > p {
+  font-weight: 500 !important;
+}
+
+.channelList > p {
+  color: #777d86 !important;
+  font-size: 0.68rem !important;
+}
+
+.chatListIdentity {
+  min-width: 0;
+  flex: 1 1 auto;
+  display: grid;
+  gap: 2px;
+  text-align: left;
+}
+
+.chatListPrimary {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #d8dade;
+  font-size: 0.82rem;
+  line-height: 1.05;
+}
+
+.chatListPrimary > span:first-child {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chatListSecondary {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #777d86;
+  font-size: 0.69rem;
+  line-height: 1.05;
+}
+
+.chatHeaderIdentity {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.chatHeaderIdentity strong {
+  font-size: 0.92rem;
+  line-height: 1.05;
+}
+
+.chatHeaderIdentity > span {
+  color: #777d86;
+  font-size: 0.7rem;
+  line-height: 1.05;
+}
+
+.messageMeta .nameWithBadge {
+  font-weight: 650;
+}
+
+.composerForm button:disabled {
+  pointer-events: none;
+}
+
+.verifiedBadge {
+  cursor: help;
+}

@@ -2247,3 +2247,198 @@ h1 {
 .verifiedBadge {
   cursor: help;
 }
+
+
+/* Patch 045: verified alignment, grouped messages, custom scrollbar */
+
+.nameWithBadge {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 4px !important;
+  min-width: 0;
+  max-width: 100%;
+  vertical-align: middle;
+}
+
+.displayNameText {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verifiedBadgeWrap {
+  position: relative;
+  flex: 0 0 auto;
+  display: inline-grid;
+  place-items: center;
+  width: 17px;
+  height: 17px;
+  vertical-align: middle;
+  outline: none;
+}
+
+.verifiedBadgeWrap.small {
+  width: 14px;
+  height: 14px;
+}
+
+.verifiedBadge {
+  width: 100%;
+  height: 100%;
+  display: inline-grid;
+  place-items: center;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 6px rgba(252, 3, 3, .28));
+}
+
+.verifiedTooltip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  z-index: 50;
+  padding: 6px 8px;
+  border-radius: 6px;
+  color: #fff;
+  background: #0b0c0f;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 8px 24px rgba(0,0,0,.35);
+  font-size: .72rem;
+  line-height: 1;
+  white-space: nowrap;
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-50%, 4px);
+  transition: opacity .12s ease, transform .12s ease;
+}
+
+.verifiedTooltip::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 7px;
+  height: 7px;
+  background: #0b0c0f;
+  border-right: 1px solid rgba(255,255,255,.08);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  transform: translate(-50%, -4px) rotate(45deg);
+}
+
+.verifiedBadgeWrap:hover .verifiedTooltip,
+.verifiedBadgeWrap:focus-visible .verifiedTooltip {
+  opacity: 1;
+  transform: translate(-50%, 0);
+}
+
+.chatListPrimary {
+  justify-content: flex-start !important;
+}
+
+.chatListPrimary .verifiedBadgeWrap {
+  margin-left: 0 !important;
+}
+
+.sidebarProfileText,
+.chatHeaderIdentity,
+.memberProfileBody {
+  min-width: 0;
+}
+
+.memberProfileBody h2.nameWithBadge {
+  display: flex !important;
+  width: 100%;
+}
+
+.memberProfileBody > span,
+.chatHeaderIdentity > span,
+.sidebarProfileText > span {
+  display: block !important;
+  margin-top: 2px;
+}
+
+.chatListAvatar {
+  width: 30px !important;
+  height: 30px !important;
+  border-radius: 9px !important;
+}
+
+.socialAvatar {
+  width: 44px !important;
+  height: 44px !important;
+  border-radius: 12px !important;
+}
+
+.channelButton {
+  min-height: 46px !important;
+}
+
+.appMessages {
+  scrollbar-width: thin;
+  scrollbar-color: #3a3d43 transparent;
+}
+
+.appMessages::-webkit-scrollbar {
+  width: 10px;
+}
+
+.appMessages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.appMessages::-webkit-scrollbar-thumb {
+  min-height: 44px;
+  border: 3px solid transparent;
+  border-radius: 10px;
+  background: #3a3d43;
+  background-clip: padding-box;
+}
+
+.appMessages::-webkit-scrollbar-thumb:hover {
+  background: #4a4e55;
+  background-clip: padding-box;
+}
+
+.appMessage {
+  position: relative;
+  margin-bottom: 14px !important;
+}
+
+.appMessage.grouped {
+  min-height: 24px;
+  margin-top: -8px !important;
+  margin-bottom: 3px !important;
+  padding-left: 52px;
+}
+
+.appMessage.grouped .messageContent {
+  min-width: 0;
+}
+
+.groupedMessageTime {
+  position: absolute;
+  left: 0;
+  top: 2px;
+  width: 42px;
+  color: transparent;
+  font-size: .64rem;
+  text-align: right;
+  transition: color .12s ease;
+}
+
+.appMessage.grouped:hover .groupedMessageTime {
+  color: #686e77;
+}
+
+.messageContent {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.appMessage.grouped p {
+  margin: 0;
+}
+
+.appMessage:not(.grouped) + .appMessage.grouped {
+  margin-top: -7px !important;
+}

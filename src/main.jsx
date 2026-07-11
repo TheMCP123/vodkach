@@ -285,11 +285,20 @@ function Landing() {
 
 function VerifiedBadge({ className = "" }) {
   return (
-    <span className={`verifiedBadge ${className}`} title="Verified User" aria-label="Verified User">
-      <svg viewBox="0 0 24 24" aria-hidden="true">
-        <circle cx="12" cy="12" r="10" />
-        <path d="M7.4 12.2 10.4 15.2 16.8 8.8" />
-      </svg>
+    <span
+      className={`verifiedBadgeWrap ${className}`}
+      aria-label="Verified User"
+      tabIndex={0}
+    >
+      <span className="verifiedBadge">
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M7.4 12.2 10.4 15.2 16.8 8.8" />
+        </svg>
+      </span>
+      <span className="verifiedTooltip" role="tooltip">
+        Verified User
+      </span>
     </span>
   );
 }
@@ -1536,7 +1545,7 @@ function WebApp() {
 
             <span className="sidebarProfileText">
               <strong className="nameWithBadge">
-                {currentDisplayName}
+                <span className="displayNameText">{currentDisplayName}</span>
                 {auth.user.verified ? <VerifiedBadge /> : null}
               </strong>
               <span>@{auth.user.username}</span>
@@ -1653,7 +1662,9 @@ function WebApp() {
                         <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
-                            {request.display_name || request.username}
+                            <span className="displayNameText">
+                              {request.display_name || request.username}
+                            </span>
                             {request.verified ? <VerifiedBadge /> : null}
                           </strong>
                           <span>@{request.username}</span>
@@ -1683,7 +1694,9 @@ function WebApp() {
                         <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
-                            {request.display_name || request.username}
+                            <span className="displayNameText">
+                              {request.display_name || request.username}
+                            </span>
                             {request.verified ? <VerifiedBadge /> : null}
                           </strong>
                           <span>@{request.username}</span>
@@ -1711,7 +1724,9 @@ function WebApp() {
                         <img className="socialAvatar" src={getAvatar(friend)} alt="Friend avatar" />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
-                            {friend.display_name || friend.username}
+                            <span className="displayNameText">
+                              {friend.display_name || friend.username}
+                            </span>
                             {friend.verified ? <VerifiedBadge /> : null}
                           </strong>
                           <span>@{friend.username}</span>
@@ -1733,7 +1748,7 @@ function WebApp() {
             <header className="appChatHeader">
               <div className="chatHeaderIdentity">
                 <strong className="nameWithBadge">
-                  {activeTitle}
+                  <span className="displayNameText">{activeTitle}</span>
                   {activeChat.other_user?.verified ? <VerifiedBadge /> : null}
                 </strong>
                 {activeChat.other_user?.username ? (
@@ -1755,9 +1770,10 @@ function WebApp() {
                 </div>
               )}
 
-              {messages.map((message) => (
+              {messages.map((message, index) => (
                 <AppMessage
                   key={message.id}
+                  grouped={shouldGroupMessage(messages[index - 1], message)}
                   avatarUrl={getAvatar(message.sender)}
                   name={message.sender?.display_name || message.sender?.username || "User"}
                   verified={Boolean(message.sender?.verified)}
@@ -1808,8 +1824,10 @@ function WebApp() {
                 alt="Profile avatar"
               />
               <h2 className="nameWithBadge">
-                {activeChat.other_user.display_name ||
-                  activeChat.other_user.username}
+                <span className="displayNameText">
+                  {activeChat.other_user.display_name ||
+                    activeChat.other_user.username}
+                </span>
                 {activeChat.other_user.verified ? <VerifiedBadge /> : null}
               </h2>
               <span>@{activeChat.other_user.username}</span>
@@ -2155,24 +2173,52 @@ function InfoItem({ title, text }) {
   );
 }
 
-function AppMessage({ avatarUrl, name, verified, time, text }) {
-  return (
-    <div className="appMessage">
-      <img
-        className="messageAvatarImage"
-        src={avatarUrl || "/default-avatar.png"}
-        alt="User avatar"
-        draggable="false"
-      />
 
-      <div>
-        <div className="messageMeta">
-          <strong className="nameWithBadge">
-            {name}
-            {verified ? <VerifiedBadge /> : null}
-          </strong>
-          <span>{time}</span>
-        </div>
+function shouldGroupMessage(previous, current) {
+  if (!previous || !current) return false;
+  if (previous.sender_user_id !== current.sender_user_id) return false;
+
+  const previousTime = new Date(previous.created_at).getTime();
+  const currentTime = new Date(current.created_at).getTime();
+
+  if (!Number.isFinite(previousTime) || !Number.isFinite(currentTime)) {
+    return false;
+  }
+
+  return currentTime - previousTime <= 3 * 60 * 1000;
+}
+
+function AppMessage({
+  avatarUrl,
+  name,
+  verified,
+  time,
+  text,
+  grouped = false
+}) {
+  return (
+    <div className={grouped ? "appMessage grouped" : "appMessage"}>
+      {grouped ? (
+        <span className="groupedMessageTime">{time}</span>
+      ) : (
+        <img
+          className="messageAvatarImage"
+          src={avatarUrl || "/default-avatar.png"}
+          alt="User avatar"
+          draggable="false"
+        />
+      )}
+
+      <div className="messageContent">
+        {!grouped && (
+          <div className="messageMeta">
+            <strong className="nameWithBadge">
+              <span className="displayNameText">{name}</span>
+              {verified ? <VerifiedBadge /> : null}
+            </strong>
+            <span>{time}</span>
+          </div>
+        )}
         <p>{text}</p>
       </div>
     </div>

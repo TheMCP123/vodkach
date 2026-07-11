@@ -14,7 +14,7 @@ function normalizeUsername(value) {
 }
 
 function normalizeDisplayName(value) {
-  return String(value || "").trim();
+  return String(value || "").replace(/^\s+|\s+$/gu, "");
 }
 
 function getDisplayLength(value) {

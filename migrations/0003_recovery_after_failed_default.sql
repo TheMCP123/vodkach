@@ -1,10 +1,9 @@
--- Vodkach D1 account approval + friends schema (fixed)
--- For a clean database after 0002_text_chats_messages.sql.
+-- Recovery for the failed original 0003 migration.
+-- Use this when access_status was already added and D1 failed on requested_at.
 -- Run once.
 
 PRAGMA foreign_keys = ON;
 
-ALTER TABLE users ADD COLUMN access_status TEXT NOT NULL DEFAULT 'pending';
 ALTER TABLE users ADD COLUMN requested_at TEXT;
 ALTER TABLE users ADD COLUMN approved_at TEXT;
 ALTER TABLE users ADD COLUMN approved_by TEXT;

@@ -2516,7 +2516,7 @@ function WebApp() {
 
               {friendsTab === "pending" && (
                 <section className="socialSection">
-                  <h2>Pending — {incoming.length + outgoing.length}</h2>
+                  <h2>Pending - {incoming.length + outgoing.length}</h2>
                   <div className="socialList">
                     {incoming.map((request) => (
                       <div className="socialRow" key={request.id}>
@@ -2589,7 +2589,7 @@ function WebApp() {
 
               {friendsTab === "all" && (
                 <section className="socialSection">
-                  <h2>All Friends — {friends.length}</h2>
+                  <h2>All Friends - {friends.length}</h2>
                   <div className="socialList">
                     {friends.length === 0 && (
                       <div className="socialEmpty">No friends yet.</div>
@@ -3194,15 +3194,11 @@ function WebApp() {
                       <div className="settingsAccountBanner" />
                       <div className="settingsAccountBody">
                         <div className="settingsAccountAvatarEditor">
-                          <AvatarWithStatus
-                            user={{
-                              avatar_url:
-                                profileForm.avatar_url || "/default-avatar.png",
-                              effective_status:
-                                auth.user.effective_status || "offline"
-                            }}
-                            className="settingsAccountAvatar"
+                          <img
+                            className="settingsAccountAvatarImage"
+                            src={profileForm.avatar_url || "/default-avatar.png"}
                             alt="Profile avatar"
+                            draggable="false"
                           />
                           <label className="settingsAvatarEditButton" title="Upload avatar">
                             <span className="customPencilIcon" aria-hidden="true" />
@@ -4070,7 +4066,7 @@ function AppMessage({
       id={`message_${message.id}`}
       className={[
         grouped ? "appMessage grouped" : "appMessage",
-        message.optimistic ? "optimisticMessage" : ""
+        message.optimistic ? "optimisticMessage messageSendingAnimation" : ""
       ].join(" ")}
       onContextMenu={onContextMenu}
     >

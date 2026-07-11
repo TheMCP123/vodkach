@@ -4888,3 +4888,214 @@ html.vodkachWebHost .discordAuthLogo img {
 html.vodkachWebHost .refinedCreateCard {
   width: min(540px, calc(100vw - 32px));
 }
+
+
+/* Patch 056: Discord-like status geometry and UI spacing */
+
+/* One proportional status system */
+.avatarWithStatus {
+  position: relative !important;
+  overflow: visible !important;
+  --status-scale: .31;
+  --ring-scale: .22;
+}
+
+.statusTooltipWrap {
+  position: absolute !important;
+  right: calc(var(--avatar-size) * -.035) !important;
+  bottom: calc(var(--avatar-size) * -.035) !important;
+  width: calc(var(--avatar-size) * var(--status-scale)) !important;
+  height: calc(var(--avatar-size) * var(--status-scale)) !important;
+  overflow: visible !important;
+  z-index: 8 !important;
+}
+
+.avatarStatusBadge {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  padding: 0 !important;
+  border:
+    calc(var(--avatar-size) * var(--status-scale) * var(--ring-scale))
+    solid var(--status-ring, #151619) !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  box-sizing: border-box !important;
+  background: var(--status-ring, #151619) !important;
+  box-shadow: none !important;
+}
+
+.statusDot,
+.statusMoon,
+.statusDnd {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+.statusMoon {
+  position: relative !important;
+  overflow: hidden !important;
+  background: #f0b232 !important;
+}
+
+.statusMoon::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 92% !important;
+  height: 92% !important;
+  left: 43% !important;
+  top: -22% !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  background: var(--status-ring, #151619) !important;
+  box-shadow: none !important;
+}
+
+.statusDnd {
+  position: relative !important;
+  display: block !important;
+  background: #f23f43 !important;
+}
+
+.statusDnd > span {
+  position: absolute !important;
+  left: 23% !important;
+  right: 23% !important;
+  top: 43% !important;
+  height: 14% !important;
+  border-radius: 99px !important;
+  background: #fff !important;
+}
+
+/* Per-context avatar sizes */
+.sidebarProfileAvatarWrap {
+  --avatar-size: 34px !important;
+  --status-ring: #101114;
+}
+
+.chatListAvatarWrap {
+  --avatar-size: 30px !important;
+  --status-ring: #151619;
+}
+
+.socialAvatarWrap {
+  --avatar-size: 44px !important;
+  --status-ring: #151619;
+}
+
+.chatStartAvatarWrap {
+  --avatar-size: 72px !important;
+  --status-ring: #151619;
+}
+
+.memberProfileAvatarWrap {
+  --avatar-size: 84px !important;
+  --status-ring: #121316;
+}
+
+.profileModalAvatar {
+  --avatar-size: 96px !important;
+  --status-ring: #17181c;
+}
+
+/* Settings avatar has no status */
+.settingsAccountAvatarEditor {
+  overflow: visible !important;
+}
+
+.settingsAccountAvatarImage {
+  width: 92px !important;
+  height: 92px !important;
+  display: block;
+  border: 7px solid #1b1c20;
+  border-radius: 20px;
+  object-fit: cover;
+  background: transparent;
+}
+
+/* Match placeholder and actual avatar radius in right profile */
+.memberProfileAvatarWrap,
+.memberProfileAvatarWrap > img {
+  border-radius: 18px !important;
+}
+
+.memberProfileAvatarWrap {
+  overflow: visible !important;
+  background: #121316 !important;
+}
+
+/* Verified badge alignment and no glow */
+.verifiedBadgeWrap {
+  transform: translateY(1px);
+}
+
+.verifiedBadge {
+  filter: none !important;
+}
+
+.verifiedBadge svg {
+  filter: none !important;
+}
+
+/* Form spacing */
+.accountSettingsForm {
+  padding-bottom: 44px !important;
+}
+
+.accountSettingsSection {
+  margin-bottom: 18px !important;
+}
+
+.accountSettingsSection > label:last-of-type {
+  margin-bottom: 20px !important;
+}
+
+.profileSettingsForm > button[type="submit"] {
+  margin-top: 14px !important;
+  min-height: 40px !important;
+  align-self: flex-start;
+}
+
+.profileSettingsForm textarea {
+  margin-bottom: 0 !important;
+}
+
+/* Clean close buttons */
+.settingsCloseButton,
+.profileModalClose,
+.avatarCropperClose {
+  width: auto !important;
+  height: auto !important;
+  padding: 4px 8px !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  line-height: 1 !important;
+}
+
+/* Message animation only while optimistic */
+.appMessage {
+  animation: none !important;
+}
+
+.messageSendingAnimation {
+  animation: messageSendIn .14s ease-out !important;
+}
+
+@keyframes messageSendIn {
+  from {
+    opacity: .35;
+    transform: translateY(3px);
+  }
+  to {
+    opacity: .68;
+    transform: translateY(0);
+  }
+}

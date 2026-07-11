@@ -5099,3 +5099,143 @@ html.vodkachWebHost .refinedCreateCard {
     transform: translateY(0);
   }
 }
+
+
+/* Patch 057: restore compact profile, multiline composer, edit controls */
+
+/* Right profile: compact and correctly layered */
+.memberProfilePanel {
+  position: relative !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.profileBanner {
+  height: 96px !important;
+  min-height: 96px !important;
+}
+
+.memberProfileBody {
+  position: relative !important;
+  padding: 54px 18px 22px !important;
+}
+
+.memberProfileAvatarWrap {
+  position: absolute !important;
+  left: 18px !important;
+  top: -46px !important;
+  width: 82px !important;
+  height: 82px !important;
+  margin: 0 !important;
+  border: 6px solid #121316 !important;
+  border-radius: 18px !important;
+}
+
+.memberProfileBody h2.nameWithBadge {
+  width: 100% !important;
+  margin: 0 0 4px !important;
+  color: #fff !important;
+  font-size: 1.2rem !important;
+  line-height: 1.2 !important;
+}
+
+.memberHandleLine {
+  margin: 0 0 16px !important;
+}
+
+.memberProfileSection {
+  margin-top: 16px !important;
+  padding-top: 14px !important;
+}
+
+.memberProfileSection strong {
+  color: #fff !important;
+}
+
+.memberProfileSection p,
+.memberProfileSection span {
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+/* Message composer supports Shift+Enter */
+.composerInputRow {
+  min-height: 44px !important;
+  height: auto !important;
+  align-items: flex-end !important;
+  padding: 7px 7px 7px 12px !important;
+}
+
+.composerInputRow textarea {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 30px;
+  max-height: 150px;
+  padding: 6px 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  overflow-y: auto;
+  color: #f4f5f7;
+  background: transparent;
+  font: inherit;
+  line-height: 1.38;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.messageContent,
+.messageContent p {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.messageContent p {
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+}
+
+/* Edit avatar buttons: centered and non-overlapping */
+.settingsAvatarEditButton,
+.avatarEditButton {
+  right: -5px !important;
+  bottom: -5px !important;
+  width: 28px !important;
+  height: 28px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 3px solid #1b1c20 !important;
+  border-radius: 50% !important;
+  box-sizing: border-box !important;
+}
+
+.settingsAvatarClearButton,
+.avatarClearButton {
+  right: -5px !important;
+  top: -5px !important;
+  width: 26px !important;
+  height: 26px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 50% !important;
+  line-height: 1 !important;
+}
+
+.customPencilIcon {
+  margin: 0 !important;
+  transform: rotate(-45deg) translate(0, 0) !important;
+}
+
+/* Prevent random animation when clicking existing messages */
+.appMessage:not(.optimisticMessage) {
+  animation: none !important;
+  transform: none !important;
+}
+
+.messageSendingAnimation {
+  pointer-events: auto;
+}

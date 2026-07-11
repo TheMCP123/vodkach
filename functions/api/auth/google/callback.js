@@ -204,20 +204,42 @@ export async function onRequestGet(context) {
 
   const userAgent = request.headers.get("User-Agent") || "Unknown device";
   const country = request.headers.get("CF-IPCountry") || null;
+  const deviceId = getCookie(request, "vodkach_device_id") || null;
+
+  if (deviceId) {
+    await env.DB.prepare(
+      `UPDATE sessions
+       SET revoked_at = datetime('now')
+       WHERE user_id = ?
+         AND device_id = ?
+         AND revoked_at IS NULL`
+    )
+      .bind(userId, deviceId)
+      .run();
+  }
 
   await env.DB.prepare(
     `INSERT INTO sessions (
       id,
       user_id,
+      device_id,
       refresh_token_hash,
       user_agent,
       country,
       last_seen_at,
       created_at,
       expires_at
-    ) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)`
+    ) VALUES (?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)`
   )
-    .bind(sessionId, userId, sessionHash, userAgent.slice(0, 500), country, expiresAt)
+    .bind(
+      sessionId,
+      userId,
+      deviceId,
+      sessionHash,
+      userAgent.slice(0, 500),
+      country,
+      expiresAt
+    )
     .run();
 
   const returnToCookie = getCookie(request, "vodkach_return_to");

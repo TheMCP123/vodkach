@@ -548,7 +548,9 @@ function WebApp() {
   const [cropDrag, setCropDrag] = useState(null);
   const previousChatLatestRef = useRef(new Map());
   const notificationsReadyRef = useRef(false);
-  const messageAudioRef = useRef(null);
+  const messageAudioRef = useRef([]);
+  const messageAudioIndexRef = useRef(0);
+  const audioUnlockedRef = useRef(false);
   const sendingMessageRef = useRef(false);
   const draftHydratingRef = useRef(false);
   const previousIncomingIdsRef = useRef(new Set());
@@ -1015,13 +1017,24 @@ function WebApp() {
             view === "chat" &&
             activeChat?.id === chat.id;
 
-          if (!directlyViewingThisChat && soundEnabled && messageAudioRef.current) {
+          if (
+            !directlyViewingThisChat &&
+            soundEnabled &&
+            messageAudioRef.current.length
+          ) {
+            const audios = messageAudioRef.current;
+            const audio =
+              audios[messageAudioIndexRef.current % audios.length];
+
+            messageAudioIndexRef.current += 1;
+
             try {
-              messageAudioRef.current.currentTime = 0;
-              messageAudioRef.current.volume = 0.65;
-              await messageAudioRef.current.play();
+              audio.pause();
+              audio.currentTime = 0;
+              audio.volume = 0.65;
+              await audio.play();
             } catch {
-              // Browser may block audio until the first user interaction.
+              audioUnlockedRef.current = false;
             }
           }
         }
@@ -1153,14 +1166,45 @@ function WebApp() {
   }, []);
 
   useEffect(() => {
-    const audio = new Audio("/message.mp3");
-    audio.preload = "auto";
-    audio.volume = 0.65;
-    messageAudioRef.current = audio;
+    const audios = [new Audio("/message.mp3"), new Audio("/message.mp3")];
+
+    for (const audio of audios) {
+      audio.preload = "auto";
+      audio.volume = 0.65;
+      audio.load();
+    }
+
+    messageAudioRef.current = audios;
+
+    async function unlockAudio() {
+      if (audioUnlockedRef.current) return;
+
+      const audio = audios[0];
+
+      try {
+        audio.muted = true;
+        await audio.play();
+        audio.pause();
+        audio.currentTime = 0;
+        audio.muted = false;
+        audioUnlockedRef.current = true;
+      } catch {
+        // The next user interaction will retry.
+      }
+    }
+
+    window.addEventListener("pointerdown", unlockAudio);
+    window.addEventListener("keydown", unlockAudio);
 
     return () => {
-      audio.pause();
-      messageAudioRef.current = null;
+      window.removeEventListener("pointerdown", unlockAudio);
+      window.removeEventListener("keydown", unlockAudio);
+
+      for (const audio of audios) {
+        audio.pause();
+      }
+
+      messageAudioRef.current = [];
     };
   }, []);
 
@@ -1169,7 +1213,7 @@ function WebApp() {
 
     const timer = window.setInterval(() => {
       loadMe().catch(() => {});
-    }, 650);
+    }, 450);
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated]);
@@ -1775,7 +1819,7 @@ function WebApp() {
     setEditingMessage(null);
     setReplyingTo(message);
     requestAnimationFrame(() => {
-      document.querySelector(".composerForm input")?.focus();
+      document.querySelector(".composerForm textarea")?.focus();
     });
   }
 
@@ -1785,7 +1829,7 @@ function WebApp() {
     setEditingMessage(message);
     setChatText(message.body_ciphertext || "");
     requestAnimationFrame(() => {
-      document.querySelector(".composerForm input")?.focus();
+      document.querySelector(".composerForm textarea")?.focus();
     });
   }
 
@@ -2818,13 +2862,24 @@ function WebApp() {
               )}
 
               <div className="composerInputRow">
-                <input
+                <textarea
                   value={chatText}
                   onChange={(event) => setChatText(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (
+                      event.key === "Enter" &&
+                      !event.shiftKey &&
+                      !event.nativeEvent.isComposing
+                    ) {
+                      event.preventDefault();
+                      event.currentTarget.form?.requestSubmit();
+                    }
+                  }}
                   placeholder={
                     editingMessage ? "Edit message" : `Message ${activeTitle}`
                   }
-                  maxLength={4000}
+                  maxLength={1000}
+                  rows={1}
                 />
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>
                   {editingMessage ? "Save" : "Send"}

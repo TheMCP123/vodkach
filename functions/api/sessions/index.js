@@ -45,7 +45,7 @@ export async function onRequestGet(context) {
   }
 
   const rows = await context.env.DB.prepare(
-    `SELECT id, refresh_token_hash, user_agent, country, city, region,
+    `SELECT id, device_id, refresh_token_hash, user_agent, country, city, region,
             created_at, last_seen_at, expires_at
      FROM sessions
      WHERE user_id = ?
@@ -56,9 +56,20 @@ export async function onRequestGet(context) {
     .bind(user.id)
     .all();
 
+  const uniqueRows = [];
+  const seenDevices = new Set();
+
+  for (const row of rows.results || []) {
+    const key = row.device_id || `${row.user_agent || ""}|${row.country || ""}`;
+
+    if (seenDevices.has(key)) continue;
+    seenDevices.add(key);
+    uniqueRows.push(row);
+  }
+
   return json({
     ok: true,
-    sessions: (rows.results || []).map((row) => ({
+    sessions: uniqueRows.map((row) => ({
       id: row.id,
       device_name: deviceName(row.user_agent),
       user_agent: row.user_agent,

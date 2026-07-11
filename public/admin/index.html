@@ -1,0 +1,539 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="color-scheme" content="dark" />
+  <title>Vodkach Admin</title>
+  <link rel="icon" type="image/png" href="/vodkach.png" />
+  <style>
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; background: #101114; color: #f4f5f7; font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+
+    .hidden { display: none !important; }
+
+    .login-screen {
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      padding: 24px;
+      background: radial-gradient(circle at 20% 0%, rgba(252, 3, 3, .08), transparent 28%), #0b0c0f;
+    }
+
+    .login-card {
+      width: min(420px, 100%);
+      padding: 28px;
+      border-radius: 10px;
+      background: #17181c;
+      border: 1px solid rgba(255,255,255,.07);
+      box-shadow: 0 18px 60px rgba(0,0,0,.35);
+    }
+
+    .login-card img { width: 42px; height: 42px; border-radius: 10px; }
+    .login-card h1 { margin: 18px 0 8px; font-size: 1.7rem; }
+    .login-card p { margin: 0 0 18px; color: #aeb4bc; line-height: 1.5; }
+
+    .login-card a {
+      min-height: 42px;
+      display: grid;
+      place-items: center;
+      border-radius: 6px;
+      color: #fff;
+      background: #fc0303;
+      text-decoration: none;
+      font-weight: 800;
+    }
+
+    .admin-shell {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: 230px minmax(0, 1fr);
+    }
+
+    .sidebar {
+      padding: 16px 12px;
+      background: #0b0c0f;
+      border-right: 1px solid rgba(255,255,255,.06);
+    }
+
+    .brand {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      margin-bottom: 22px;
+    }
+
+    .brand img { width: 38px; height: 38px; border-radius: 9px; }
+    .brand div { display: grid; }
+    .brand span { color: #7f858f; font-size: .72rem; }
+
+    .nav-button {
+      width: 100%;
+      min-height: 38px;
+      margin-bottom: 4px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 6px;
+      color: #aeb4bc;
+      background: transparent;
+      text-align: left;
+    }
+
+    .nav-button.active,
+    .nav-button:hover {
+      color: #fff;
+      background: #1d1f23;
+    }
+
+    .content {
+      min-width: 0;
+      padding: 24px;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      gap: 16px;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .topbar h1 { margin: 0; font-size: 1.5rem; }
+    .topbar p { margin: 4px 0 0; color: #777d86; }
+
+    .logout {
+      min-height: 34px;
+      padding: 0 12px;
+      border: 0;
+      border-radius: 5px;
+      color: #fff;
+      background: #2b2d31;
+    }
+
+    .error {
+      margin-bottom: 14px;
+      padding: 10px 12px;
+      border-radius: 6px;
+      color: #ffb3b3;
+      background: rgba(127,29,29,.25);
+    }
+
+    .search,
+    .ban-form {
+      max-width: 720px;
+      min-height: 42px;
+      margin-bottom: 16px;
+      padding: 0 12px;
+      border-radius: 7px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: #17181c;
+      border: 1px solid rgba(255,255,255,.06);
+    }
+
+    .search input,
+    .ban-form input {
+      flex: 1;
+      border: 0;
+      outline: 0;
+      color: #fff;
+      background: transparent;
+    }
+
+    .ban-form button {
+      min-height: 30px;
+      border: 0;
+      border-radius: 5px;
+      padding: 0 10px;
+      color: #fff;
+      background: #b3261e;
+      font-weight: 800;
+    }
+
+    .list { display: grid; gap: 8px; }
+
+    .row {
+      min-height: 66px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: #17181c;
+      border: 1px solid rgba(255,255,255,.055);
+    }
+
+    .avatar {
+      width: 38px;
+      height: 38px;
+      border-radius: 50%;
+      object-fit: cover;
+      background: #24262b;
+    }
+
+    .identity {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+      flex: 1;
+    }
+
+    .identity strong,
+    .identity span {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .identity span { color: #7f858f; font-size: .78rem; }
+
+    .meta {
+      color: #9da3ac;
+      font-size: .76rem;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .actions button,
+    .row > button {
+      min-height: 32px;
+      padding: 0 10px;
+      border: 0;
+      border-radius: 5px;
+      color: #fff;
+      background: #248046;
+      font-size: .74rem;
+      font-weight: 800;
+    }
+
+    .actions .secondary,
+    .row > .secondary { background: #2b2d31; }
+
+    .actions .danger { background: #b3261e; }
+
+    .empty {
+      padding: 20px;
+      color: #777d86;
+    }
+
+    @media (max-width: 760px) {
+      .admin-shell { grid-template-columns: 1fr; }
+      .sidebar { display: none; }
+      .content { padding: 16px; }
+      .row { align-items: flex-start; flex-wrap: wrap; }
+      .actions { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <section id="loading" class="login-screen">
+    <div class="login-card">
+      <img src="/vodkach.png" alt="Vodkach" />
+      <h1>Vodkach Admin</h1>
+      <p>Checking administrator session...</p>
+    </div>
+  </section>
+
+  <section id="login" class="login-screen hidden">
+    <div class="login-card">
+      <img src="/vodkach.png" alt="Vodkach" />
+      <h1>Vodkach Admin</h1>
+      <p>Sign in with an administrator Google account.</p>
+      <a href="/api/admin/login">Continue with Google</a>
+    </div>
+  </section>
+
+  <section id="denied" class="login-screen hidden">
+    <div class="login-card">
+      <img src="/vodkach.png" alt="Vodkach" />
+      <h1>Access denied</h1>
+      <p id="denied-email">This account is not listed in ADMIN_EMAILS.</p>
+      <a href="/api/admin/login">Try another Google account</a>
+    </div>
+  </section>
+
+  <main id="panel" class="admin-shell hidden">
+    <aside class="sidebar">
+      <div class="brand">
+        <img src="/vodkach.png" alt="Vodkach" />
+        <div>
+          <strong>Vodkach</strong>
+          <span>Admin Panel</span>
+        </div>
+      </div>
+
+      <button class="nav-button active" data-tab="requests">Requests</button>
+      <button class="nav-button" data-tab="users">Users</button>
+      <button class="nav-button" data-tab="bans">Bans</button>
+    </aside>
+
+    <section class="content">
+      <header class="topbar">
+        <div>
+          <h1 id="page-title">Access Requests</h1>
+          <p id="admin-email"></p>
+        </div>
+        <button id="logout" class="logout">Sign out</button>
+      </header>
+
+      <div id="error" class="error hidden"></div>
+
+      <section id="requests-view">
+        <div id="requests-list" class="list"></div>
+      </section>
+
+      <section id="users-view" class="hidden">
+        <label class="search">
+          <input id="user-search" placeholder="Search users, usernames, or emails" />
+        </label>
+        <div id="users-list" class="list"></div>
+      </section>
+
+      <section id="bans-view" class="hidden">
+        <form id="ban-form" class="ban-form">
+          <input id="ban-email" type="email" placeholder="email@example.com" required />
+          <button type="submit">Ban permanently</button>
+        </form>
+        <div id="bans-list" class="list"></div>
+      </section>
+    </section>
+  </main>
+
+  <script>
+    const state = {
+      tab: "requests",
+      me: null,
+      busy: false
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function show(id) {
+      for (const section of ["loading", "login", "denied", "panel"]) {
+        $(section).classList.toggle("hidden", section !== id);
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    async function api(path, options = {}) {
+      const response = await fetch(path, {
+        credentials: "include",
+        ...options,
+        headers: {
+          ...(options.body ? { "Content-Type": "application/json" } : {}),
+          ...(options.headers || {})
+        }
+      });
+
+      const data = await response.json().catch(() => ({}));
+
+      if (!response.ok || data.ok === false) {
+        throw new Error(data.error || `Request failed (${response.status})`);
+      }
+
+      return data;
+    }
+
+    function setError(message = "") {
+      $("error").textContent = message;
+      $("error").classList.toggle("hidden", !message);
+    }
+
+    async function loadMe() {
+      const data = await api("/api/admin/me");
+
+      if (!data.authenticated) {
+        show("login");
+        return;
+      }
+
+      if (!data.admin) {
+        $("denied-email").textContent =
+          `${data.user?.email || "This account"} is not listed in ADMIN_EMAILS.`;
+        show("denied");
+        return;
+      }
+
+      state.me = data.user;
+      $("admin-email").textContent = data.user?.email || "";
+      show("panel");
+      await loadCurrentTab();
+    }
+
+    function setTab(tab) {
+      state.tab = tab;
+
+      document.querySelectorAll(".nav-button").forEach((button) => {
+        button.classList.toggle("active", button.dataset.tab === tab);
+      });
+
+      $("requests-view").classList.toggle("hidden", tab !== "requests");
+      $("users-view").classList.toggle("hidden", tab !== "users");
+      $("bans-view").classList.toggle("hidden", tab !== "bans");
+
+      $("page-title").textContent =
+        tab === "requests" ? "Access Requests" :
+        tab === "users" ? "Users" :
+        "Banned Emails";
+
+      loadCurrentTab();
+    }
+
+    async function loadCurrentTab() {
+      setError("");
+
+      try {
+        if (state.tab === "requests") await loadRequests();
+        if (state.tab === "users") await loadUsers();
+        if (state.tab === "bans") await loadBans();
+      } catch (error) {
+        setError(error.message);
+      }
+    }
+
+    async function post(path, body) {
+      if (state.busy) return;
+      state.busy = true;
+      setError("");
+
+      try {
+        await api(path, {
+          method: "POST",
+          body: JSON.stringify(body)
+        });
+        await loadCurrentTab();
+      } catch (error) {
+        setError(error.message);
+      } finally {
+        state.busy = false;
+      }
+    }
+
+    async function loadRequests() {
+      const data = await api("/api/admin/requests?status=pending");
+      const rows = data.requests || [];
+
+      $("requests-list").innerHTML = rows.length
+        ? rows.map((user) => `
+          <article class="row">
+            <img class="avatar" src="${escapeHtml(user.avatar_url || "/default-avatar.png")}" alt="" />
+            <div class="identity">
+              <strong>${escapeHtml(user.display_name || user.email)}</strong>
+              <span>${escapeHtml(user.email)}</span>
+            </div>
+            <div class="actions">
+              <button data-action="approve" data-user="${escapeHtml(user.id)}">Accept</button>
+              <button class="secondary" data-action="reject" data-user="${escapeHtml(user.id)}">Deny</button>
+              <button class="danger" data-action="block" data-user="${escapeHtml(user.id)}">Block</button>
+            </div>
+          </article>
+        `).join("")
+        : `<div class="empty">No pending requests.</div>`;
+    }
+
+    async function loadUsers() {
+      const query = $("user-search").value.trim();
+      const data = await api(`/api/admin/users?q=${encodeURIComponent(query)}`);
+      const rows = data.users || [];
+
+      $("users-list").innerHTML = rows.length
+        ? rows.map((user) => `
+          <article class="row">
+            <img class="avatar" src="${escapeHtml(user.avatar_url || "/default-avatar.png")}" alt="" />
+            <div class="identity">
+              <strong>${escapeHtml(user.display_name || user.username || user.email)}</strong>
+              <span>${escapeHtml(user.email)}${user.username ? ` • @${escapeHtml(user.username)}` : ""}</span>
+            </div>
+            <div class="meta">${escapeHtml(user.access_status)}</div>
+            <div class="actions">
+              <button class="secondary" data-action="temp-ban" data-user="${escapeHtml(user.id)}">Temp ban</button>
+              <button class="danger" data-action="block" data-user="${escapeHtml(user.id)}">Block</button>
+              <button data-action="unban" data-user="${escapeHtml(user.id)}">Unban</button>
+            </div>
+          </article>
+        `).join("")
+        : `<div class="empty">No users found.</div>`;
+    }
+
+    async function loadBans() {
+      const data = await api("/api/admin/banned-emails");
+      const rows = data.banned_emails || [];
+
+      $("bans-list").innerHTML = rows.length
+        ? rows.map((item) => `
+          <article class="row">
+            <div class="identity">
+              <strong>${escapeHtml(item.email)}</strong>
+              <span>${escapeHtml(item.reason || "Permanent block")}</span>
+            </div>
+            <button class="secondary" data-action="unban-email" data-email="${escapeHtml(item.email)}">Unban</button>
+          </article>
+        `).join("")
+        : `<div class="empty">No banned emails.</div>`;
+    }
+
+    document.querySelectorAll(".nav-button").forEach((button) => {
+      button.addEventListener("click", () => setTab(button.dataset.tab));
+    });
+
+    document.addEventListener("click", async (event) => {
+      const button = event.target.closest("[data-action]");
+      if (!button) return;
+
+      const action = button.dataset.action;
+      const userId = button.dataset.user;
+
+      if (action === "approve") return post("/api/admin/requests/approve", { user_id: userId });
+      if (action === "reject") return post("/api/admin/requests/reject", { user_id: userId });
+      if (action === "block") return post("/api/admin/users/block", { user_id: userId });
+      if (action === "unban") return post("/api/admin/users/unban", { user_id: userId });
+      if (action === "unban-email") return post("/api/admin/banned-emails/unban", { email: button.dataset.email });
+
+      if (action === "temp-ban") {
+        const hours = Number(prompt("Ban duration in hours:", "24"));
+        if (!Number.isFinite(hours) || hours <= 0) return;
+        return post("/api/admin/users/temp-ban", { user_id: userId, hours });
+      }
+    });
+
+    let searchTimer;
+    $("user-search").addEventListener("input", () => {
+      clearTimeout(searchTimer);
+      searchTimer = setTimeout(() => loadUsers().catch((error) => setError(error.message)), 250);
+    });
+
+    $("ban-form").addEventListener("submit", async (event) => {
+      event.preventDefault();
+      const email = $("ban-email").value.trim();
+      if (!email) return;
+      await post("/api/admin/banned-emails", { email });
+      $("ban-email").value = "";
+    });
+
+    $("logout").addEventListener("click", async () => {
+      await fetch("/api/auth/logout", { method: "POST", credentials: "include" });
+      location.reload();
+    });
+
+    loadMe().catch((error) => {
+      setError(error.message);
+      show("login");
+    });
+  </script>
+</body>
+</html>

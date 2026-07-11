@@ -25,7 +25,7 @@ export async function onRequestGet(context) {
   return new Response(null, {
     status: 302,
     headers: {
-      Location: "/api/auth/google/start?return_to=%2Fadmin%3Fattempted%3D1",
+      Location: "/api/auth/google/start?return_to=%2Fadmin%2F",
       "Set-Cookie": clearCookie(getSessionCookieName())
     }
   });

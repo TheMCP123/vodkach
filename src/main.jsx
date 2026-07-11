@@ -504,26 +504,6 @@ function WebApp() {
     setCropDrag(null);
   }
 
-  function setCropZoom(nextZoom) {
-    if (!avatarCropper) return;
-
-    const zoom = Number(nextZoom);
-    const previousScale = avatarCropper.fitScale * avatarCropper.zoom;
-    const nextScale = avatarCropper.fitScale * zoom;
-    const centerX = avatarCropper.crop.x + avatarCropper.crop.size / 2;
-    const centerY = avatarCropper.crop.y + avatarCropper.crop.size / 2;
-
-    const sourceCenterX = (centerX - avatarCropper.imageX) / previousScale;
-    const sourceCenterY = (centerY - avatarCropper.imageY) / previousScale;
-
-    setAvatarCropper((current) => ({
-      ...current,
-      zoom,
-      imageX: centerX - sourceCenterX * nextScale,
-      imageY: centerY - sourceCenterY * nextScale
-    }));
-  }
-
   function applyAvatarCrop() {
     if (!avatarCropper) return;
 
@@ -531,12 +511,11 @@ function WebApp() {
       image,
       crop,
       fitScale,
-      zoom,
       imageX,
       imageY
     } = avatarCropper;
 
-    const scale = fitScale * zoom;
+    const scale = fitScale;
     const sourceX = (crop.x - imageX) / scale;
     const sourceY = (crop.y - imageY) / scale;
     const sourceSize = crop.size / scale;
@@ -1221,7 +1200,7 @@ function WebApp() {
               <header className="avatarCropperHeader">
                 <div>
                   <h2>Edit avatar</h2>
-                  <p>Move the image and resize the square selection.</p>
+                  <p>Move and resize the square selection.</p>
                 </div>
 
                 <button
@@ -1255,15 +1234,12 @@ function WebApp() {
                   style={{
                     width:
                       avatarCropper.imageWidth *
-                      avatarCropper.fitScale *
-                      avatarCropper.zoom,
+                      avatarCropper.fitScale,
                     height:
                       avatarCropper.imageHeight *
-                      avatarCropper.fitScale *
-                      avatarCropper.zoom,
+                      avatarCropper.fitScale,
                     transform: `translate(${avatarCropper.imageX}px, ${avatarCropper.imageY}px)`
                   }}
-                  onPointerDown={(event) => beginCropDrag(event, "image")}
                 />
 
                 <div
@@ -1324,18 +1300,6 @@ function WebApp() {
               </div>
 
               <div className="avatarCropperControls">
-                <label>
-                  <span>Zoom</span>
-                  <input
-                    type="range"
-                    min="1"
-                    max="4"
-                    step="0.01"
-                    value={avatarCropper.zoom}
-                    onChange={(event) => setCropZoom(event.target.value)}
-                  />
-                </label>
-
                 <div className="avatarCropperActions">
                   <button type="button" onClick={closeAvatarCropper}>
                     Cancel

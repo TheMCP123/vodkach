@@ -2036,3 +2036,30 @@ h1 {
     height: min(520px, calc(100vw - 48px)) !important;
   }
 }
+
+
+/* Patch 042: square-only cropper and no avatar layering */
+
+.avatarCropperImage {
+  pointer-events: none !important;
+  cursor: default !important;
+}
+
+.avatarCropperControls > label {
+  display: none !important;
+}
+
+.createAvatarPreview,
+.sidebarProfileAvatar,
+.chatListAvatar,
+.socialAvatar,
+.chatStartAvatar,
+.memberProfileAvatar,
+.messageAvatarImage {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+.avatarEditor {
+  background: transparent !important;
+}

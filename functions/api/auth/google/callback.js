@@ -83,22 +83,28 @@ export async function onRequestGet(context) {
     return json({ ok: false, error: "Google profile is missing required fields" }, { status: 400 });
   }
 
-  const bannedEmail = await env.DB.prepare(
-    `SELECT email, expires_at
-     FROM banned_emails
-     WHERE lower(email) = lower(?)
-       AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))
-     LIMIT 1`
-  )
-    .bind(profile.email)
-    .first();
+  let bannedEmail = null;
+
+  try {
+    bannedEmail = await env.DB.prepare(
+      `SELECT email, expires_at
+       FROM banned_emails
+       WHERE lower(email) = lower(?)
+         AND (expires_at IS NULL OR datetime(expires_at) > datetime('now'))
+       LIMIT 1`
+    )
+      .bind(profile.email)
+      .first();
+  } catch {
+    // Migration 0005 may not be applied yet. Do not break the entire login flow.
+  }
 
   if (bannedEmail) {
     return json({ ok: false, error: "This email is blocked from Vodkach" }, { status: 403 });
   }
 
   const existingUser = await env.DB.prepare(
-    `SELECT id, access_status, banned_until
+    `SELECT id, access_status
      FROM users
      WHERE google_sub = ? OR email = ?
      LIMIT 1`
@@ -113,19 +119,13 @@ export async function onRequestGet(context) {
 
   if (existingUser) {
     const adminCandidate = { email: profile.email };
-    const temporaryBanActive =
-      existingUser.banned_until &&
-      new Date(existingUser.banned_until).getTime() > Date.now();
-
     const nextAccessStatus = isAdminUser(adminCandidate, env)
       ? "approved"
       : existingUser.access_status === "blocked"
         ? "blocked"
-        : temporaryBanActive
-          ? existingUser.access_status || "approved"
-          : existingUser.access_status === "rejected"
-            ? "pending"
-            : existingUser.access_status || "pending";
+        : existingUser.access_status === "rejected"
+          ? "pending"
+          : existingUser.access_status || "pending";
 
     await env.DB.prepare(
       `UPDATE users
@@ -208,11 +208,18 @@ export async function onRequestGet(context) {
     .bind(sessionId, userId, sessionHash, expiresAt)
     .run();
 
+  const returnToCookie = getCookie(request, "vodkach_return_to");
+  const returnTo =
+    returnToCookie && returnToCookie.startsWith("/") && !returnToCookie.startsWith("//")
+      ? returnToCookie
+      : "/";
+
   const headers = new Headers();
   headers.append("Set-Cookie", createCookie(getSessionCookieName(), sessionToken, { maxAge: 30 * 24 * 60 * 60 }));
   headers.append("Set-Cookie", clearCookie(getStateCookieName()));
   headers.append("Set-Cookie", clearCookie(getVerifierCookieName()));
-  headers.set("Location", `${appUrl}/`);
+  headers.append("Set-Cookie", clearCookie("vodkach_return_to"));
+  headers.set("Location", `${appUrl}${returnTo}`);
 
   return new Response(null, {
     status: 302,

@@ -12,14 +12,7 @@ import {
   Search,
   Settings,
   ShieldCheck,
-  UserRound,
-  UserPlus,
-  Shield,
-  Ban,
-  Check,
-  X,
-  Clock,
-  LogOut
+  UserRound
 } from "lucide-react";
 import "./styles.css";
 
@@ -609,7 +602,7 @@ function WebApp() {
             <span>Vodkach</span>
           </div>
           <div className="discordStatusIcon pending">
-            <Clock size={24} />
+            <span aria-hidden="true">…</span>
           </div>
           <h1>Pending approval</h1>
           <p>Your request was sent. Access must be approved before account creation.</p>
@@ -618,7 +611,7 @@ function WebApp() {
             <strong>{auth.user?.email}</strong>
           </div>
           <button className="discordSecondaryButton" type="button" onClick={logout}>
-            <LogOut size={16} />
+            
             Sign out
           </button>
         </div>
@@ -635,7 +628,7 @@ function WebApp() {
             <span>Vodkach</span>
           </div>
           <div className="discordStatusIcon denied">
-            <X size={26} />
+            <span aria-hidden="true">×</span>
           </div>
           <h1>Access denied</h1>
           <p>This request was declined. You can choose a Google account and apply again.</p>
@@ -656,7 +649,7 @@ function WebApp() {
             <span>Vodkach</span>
           </div>
           <div className="discordStatusIcon denied">
-            <Ban size={25} />
+            <span aria-hidden="true">!</span>
           </div>
           <h1>Access blocked</h1>
           <p>This email is permanently blocked from Vodkach.</p>
@@ -677,31 +670,10 @@ function WebApp() {
             <span>Vodkach</span>
           </div>
           <div className="discordStatusIcon denied">
-            <Ban size={25} />
+            <span aria-hidden="true">!</span>
           </div>
           <h1>Account disabled</h1>
           <p>This account is currently unavailable.</p>
-          <button className="discordSecondaryButton" type="button" onClick={logout}>
-            Sign out
-          </button>
-        </div>
-      </main>
-    );
-  }
-
-  if (auth.user?.banned_until && new Date(auth.user.banned_until) > new Date()) {
-    return (
-      <main className="authScreen discordAuthScreen">
-        <div className="discordAuthCard">
-          <div className="discordAuthBrand">
-            <img src="/vodkach.png" alt="Vodkach" draggable="false" />
-            <span>Vodkach</span>
-          </div>
-          <div className="discordStatusIcon denied">
-            <Clock size={25} />
-          </div>
-          <h1>Temporarily banned</h1>
-          <p>Access is suspended until {new Date(auth.user.banned_until).toLocaleString()}.</p>
           <button className="discordSecondaryButton" type="button" onClick={logout}>
             Sign out
           </button>
@@ -1171,8 +1143,15 @@ function AdminApp() {
   }
 
   if (!auth.admin) {
-    window.location.replace("/");
-    return null;
+    window.setTimeout(() => window.location.replace("/"), 900);
+    return (
+      <main className="adminLoginScreen">
+        <div className="adminLoginCard">
+          <h1>Access denied</h1>
+          <p>This Google account is not listed in ADMIN_EMAILS.</p>
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -1184,13 +1163,13 @@ function AdminApp() {
         </div>
 
         <button className={tab === "requests" ? "active" : ""} onClick={() => setTab("requests")}>
-          <Clock size={16} /> Requests
+          Requests
         </button>
         <button className={tab === "users" ? "active" : ""} onClick={() => setTab("users")}>
           <UserRound size={16} /> Users
         </button>
         <button className={tab === "bans" ? "active" : ""} onClick={() => setTab("bans")}>
-          <Ban size={16} /> Bans
+          Bans
         </button>
       </aside>
 
@@ -1216,13 +1195,13 @@ function AdminApp() {
                 </div>
                 <div className="adminActions">
                   <button disabled={busy} onClick={() => action("/api/admin/requests/approve", { user_id: request.id })}>
-                    <Check size={15} /> Accept
+                    Accept
                   </button>
                   <button disabled={busy} className="secondary" onClick={() => action("/api/admin/requests/reject", { user_id: request.id })}>
-                    <X size={15} /> Deny
+                    Deny
                   </button>
                   <button disabled={busy} className="danger" onClick={() => action("/api/admin/users/block", { user_id: request.id })}>
-                    <Ban size={15} /> Block
+                    Block
                   </button>
                 </div>
               </div>
@@ -1251,10 +1230,10 @@ function AdminApp() {
                       if (!hours) return;
                       action("/api/admin/users/temp-ban", { user_id: user.id, hours: Number(hours) });
                     }}>
-                      <Clock size={15} /> Temp ban
+                      Temp ban
                     </button>
                     <button disabled={busy} className="danger" onClick={() => action("/api/admin/users/block", { user_id: user.id })}>
-                      <Ban size={15} /> Block
+                      Block
                     </button>
                     <button disabled={busy} onClick={() => action("/api/admin/users/unban", { user_id: user.id })}>
                       Unban

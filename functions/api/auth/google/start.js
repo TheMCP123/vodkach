@@ -12,8 +12,14 @@ export async function onRequestGet(context) {
   const { request, env } = context;
 
   const clientId = requireEnv(env, "GOOGLE_CLIENT_ID");
-  const appUrl = new URL(request.url).origin;
+  const requestUrl = new URL(request.url);
+  const appUrl = requestUrl.origin;
   const redirectUri = `${appUrl}/api/auth/google/callback`;
+  const requestedReturnTo = requestUrl.searchParams.get("return_to");
+  const returnTo =
+    requestedReturnTo && requestedReturnTo.startsWith("/") && !requestedReturnTo.startsWith("//")
+      ? requestedReturnTo
+      : "/";
 
   const state = randomToken(32);
   const codeVerifier = randomToken(64);
@@ -32,6 +38,7 @@ export async function onRequestGet(context) {
   const headers = new Headers();
   headers.append("Set-Cookie", createCookie(getStateCookieName(), state, { maxAge: 600 }));
   headers.append("Set-Cookie", createCookie(getVerifierCookieName(), codeVerifier, { maxAge: 600 }));
+  headers.append("Set-Cookie", createCookie("vodkach_return_to", returnTo, { maxAge: 600 }));
   headers.set("Location", googleUrl.toString());
 
   return new Response(null, {

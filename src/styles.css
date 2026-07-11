@@ -1454,3 +1454,21 @@ h1 {
     display: none;
   }
 }
+
+
+/* Patch 034 safety */
+#root {
+  width: 100%;
+  min-height: 100vh;
+}
+
+.discordAuthCard,
+.adminLoginCard {
+  color: #f4f5f7 !important;
+}
+
+.discordStatusIcon > span {
+  font-size: 1.55rem;
+  font-weight: 900;
+  line-height: 1;
+}

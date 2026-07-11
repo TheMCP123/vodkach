@@ -143,8 +143,6 @@ export async function getCurrentUser(request, env) {
       users.approved_by,
       users.rejected_at,
       users.disabled_at,
-      users.banned_until,
-      users.ban_reason,
       users.created_at
     FROM sessions
     JOIN users ON users.id = sessions.user_id

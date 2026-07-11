@@ -1799,3 +1799,15 @@ h1 {
   background-repeat: no-repeat;
   background-size: cover;
 }
+
+
+/* Patch 040: preserve transparent pixels in uploaded avatars */
+
+.createAvatarPreview {
+  background-image: none !important;
+  background-color: transparent !important;
+}
+
+.avatarEditor {
+  background: transparent !important;
+}

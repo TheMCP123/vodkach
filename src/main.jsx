@@ -802,12 +802,10 @@ function WebApp() {
     }
 
     setAvatarPreview(dataUrl);
-    if (settingsOpen) {
-      setProfileForm((current) => ({
-        ...current,
-        avatar_url: dataUrl
-      }));
-    }
+    setProfileForm((current) => ({
+      ...current,
+      avatar_url: dataUrl
+    }));
     setFormError("");
     closeAvatarCropper();
   }
@@ -1694,7 +1692,14 @@ function WebApp() {
     try {
       const data = await api("/api/user/profile", {
         method: "POST",
-        body: JSON.stringify(profileForm)
+        body: JSON.stringify({
+          ...profileForm,
+          avatar_url:
+            profileForm.avatar_url ||
+            (avatarPreview !== "/default-avatar.png"
+              ? avatarPreview
+              : null)
+        })
       });
 
       setAuth((current) => ({
@@ -1783,6 +1788,13 @@ function WebApp() {
     const target = editingMessage;
     setEditingMessage(null);
     setChatText("");
+    requestAnimationFrame(() => {
+      const textarea = document.querySelector(".composerForm textarea");
+      if (textarea) {
+        textarea.style.height = "32px";
+        textarea.style.overflowY = "hidden";
+      }
+    });
 
     try {
       const data = await api("/api/messages/edit", {
@@ -1881,6 +1893,13 @@ function WebApp() {
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
     setReplyingTo(null);
+    requestAnimationFrame(() => {
+      const textarea = document.querySelector(".composerForm textarea");
+      if (textarea) {
+        textarea.style.height = "32px";
+        textarea.style.overflowY = "hidden";
+      }
+    });
     scrollMessagesToBottom("smooth");
 
     try {
@@ -2864,7 +2883,20 @@ function WebApp() {
               <div className="composerInputRow">
                 <textarea
                   value={chatText}
-                  onChange={(event) => setChatText(event.target.value)}
+                  onChange={(event) => {
+                    setChatText(event.target.value);
+
+                    const element = event.currentTarget;
+                    element.style.height = "auto";
+                    const lineHeight = 20;
+                    const maxHeight = lineHeight * 5 + 12;
+                    element.style.height = `${Math.min(
+                      element.scrollHeight,
+                      maxHeight
+                    )}px`;
+                    element.style.overflowY =
+                      element.scrollHeight > maxHeight ? "auto" : "hidden";
+                  }}
                   onKeyDown={(event) => {
                     if (
                       event.key === "Enter" &&
@@ -2878,7 +2910,7 @@ function WebApp() {
                   placeholder={
                     editingMessage ? "Edit message" : `Message ${activeTitle}`
                   }
-                  maxLength={1000}
+                  maxLength={2000}
                   rows={1}
                 />
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>
@@ -3260,20 +3292,23 @@ function WebApp() {
                             <input
                               type="file"
                               accept="image/*"
-                              onChange={(event) =>
-                                handleAvatarFile(event.target.files?.[0])
-                              }
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                handleAvatarFile(file);
+                                event.target.value = "";
+                              }}
                             />
                           </label>
                           <button
                             className="settingsAvatarClearButton"
                             type="button"
-                            onClick={() =>
+                            onClick={() => {
                               setProfileForm((current) => ({
                                 ...current,
                                 avatar_url: null
-                              }))
-                            }
+                              }));
+                              setAvatarPreview("/default-avatar.png");
+                            }}
                           >
                             ×
                           </button>

@@ -19,9 +19,9 @@ export async function onRequestPost(context) {
   const messageId = String(body?.message_id || "").trim();
   const ciphertext = String(body?.body_ciphertext || "").trim();
 
-  if (!messageId || !ciphertext || Array.from(ciphertext).length > 1000) {
+  if (!messageId || !ciphertext || Array.from(ciphertext).length > 2000) {
     return json(
-      { ok: false, error: "Message must contain between 1 and 1000 characters" },
+      { ok: false, error: "Message must contain between 1 and 2000 characters" },
       { status: 400 }
     );
   }

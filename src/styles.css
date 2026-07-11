@@ -5239,3 +5239,162 @@ html.vodkachWebHost .refinedCreateCard {
 .messageSendingAnimation {
   pointer-events: auto;
 }
+
+
+/* Patch 058: Discord-like status sizing, working avatar editor, 1-5 line composer */
+
+/* Status size is proportional to the shown avatar box */
+.avatarWithStatus {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.sidebarProfileAvatarWrap {
+  --avatar-size: 36px !important;
+  --status-px: 14px;
+  --status-ring-px: 3px;
+}
+
+.chatListAvatarWrap {
+  --avatar-size: 32px !important;
+  --status-px: 13px;
+  --status-ring-px: 3px;
+}
+
+.socialAvatarWrap {
+  --avatar-size: 46px !important;
+  --status-px: 16px;
+  --status-ring-px: 3px;
+}
+
+.chatStartAvatarWrap {
+  --avatar-size: 72px !important;
+  --status-px: 20px;
+  --status-ring-px: 4px;
+}
+
+.memberProfileAvatarWrap {
+  --avatar-size: 84px !important;
+  --status-px: 22px;
+  --status-ring-px: 4px;
+}
+
+.profileModalAvatar {
+  --avatar-size: 96px !important;
+  --status-px: 24px;
+  --status-ring-px: 4px;
+}
+
+.statusTooltipWrap {
+  right: calc(var(--status-px) * -.16) !important;
+  bottom: calc(var(--status-px) * -.16) !important;
+  width: var(--status-px) !important;
+  height: var(--status-px) !important;
+}
+
+.avatarStatusBadge {
+  width: var(--status-px) !important;
+  height: var(--status-px) !important;
+  border-width: var(--status-ring-px) !important;
+  box-sizing: border-box !important;
+}
+
+.statusDot,
+.statusMoon,
+.statusDnd {
+  width: 100% !important;
+  height: 100% !important;
+}
+
+/* Right profile status stays attached to the avatar, not the panel */
+.memberProfileAvatarWrap .statusTooltipWrap {
+  right: -4px !important;
+  bottom: -4px !important;
+}
+
+/* Avatar editor: one anchored coordinate system */
+.settingsAccountAvatarEditor {
+  position: relative !important;
+  width: 92px !important;
+  height: 92px !important;
+  flex: 0 0 92px !important;
+  overflow: visible !important;
+}
+
+.settingsAccountAvatarImage {
+  position: absolute !important;
+  inset: 0 !important;
+  width: 92px !important;
+  height: 92px !important;
+  border: 7px solid #1b1c20 !important;
+  border-radius: 20px !important;
+  object-fit: cover !important;
+  box-sizing: border-box !important;
+}
+
+.settingsAccountAvatarEditor .settingsAvatarEditButton {
+  position: absolute !important;
+  right: -6px !important;
+  bottom: -6px !important;
+  top: auto !important;
+  left: auto !important;
+  width: 30px !important;
+  height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 4px solid #1b1c20 !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 20 !important;
+  background: #fc0303 !important;
+}
+
+.settingsAccountAvatarEditor .settingsAvatarClearButton {
+  position: absolute !important;
+  right: -5px !important;
+  top: -5px !important;
+  bottom: auto !important;
+  left: auto !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 3px solid #1b1c20 !important;
+  border-radius: 50% !important;
+  display: grid !important;
+  place-items: center !important;
+  z-index: 21 !important;
+  color: #fff !important;
+  background: #2b2d31 !important;
+  line-height: 1 !important;
+}
+
+.settingsAccountAvatarEditor .customPencilIcon {
+  position: relative !important;
+  left: 0 !important;
+  top: 0 !important;
+  margin: 0 !important;
+  transform: rotate(-45deg) !important;
+}
+
+/* Composer shows 1 line initially and up to 5 lines */
+.composerInputRow textarea {
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 112px !important;
+  padding: 6px 0 !important;
+  overflow-y: hidden;
+  resize: none !important;
+  line-height: 20px !important;
+  box-sizing: border-box;
+}
+
+.composerInputRow {
+  min-height: 46px !important;
+  align-items: flex-end !important;
+}
+
+.composerInputRow > button {
+  margin-bottom: 1px;
+}

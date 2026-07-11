@@ -7,13 +7,21 @@ export async function onRequestPost(context) {
     return json({ ok: false, error: "Not authenticated" }, { status: 401 });
   }
 
-  await context.env.DB.prepare(
-    `UPDATE users
-     SET last_seen_at = datetime('now')
-     WHERE id = ?`
-  )
-    .bind(user.id)
-    .run();
+  const rawSession = context.request.headers.get("Cookie") || "";
+
+  await context.env.DB.batch([
+    context.env.DB.prepare(
+      `UPDATE users
+       SET last_seen_at = datetime('now')
+       WHERE id = ?`
+    ).bind(user.id),
+
+    context.env.DB.prepare(
+      `UPDATE sessions
+       SET last_seen_at = datetime('now')
+       WHERE id = ?`
+    ).bind(user.current_session_id)
+  ]);
 
   const effectiveStatus =
     user.status_preference === "offline"

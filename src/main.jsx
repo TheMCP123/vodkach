@@ -350,6 +350,74 @@ function formatLocalDate(value) {
   return date.toLocaleDateString();
 }
 
+
+function SettingsNavIcon({ type }) {
+  const paths = {
+    account: (
+      <>
+        <circle cx="12" cy="8" r="3.2" />
+        <path d="M5.5 19c.7-3.3 3-5 6.5-5s5.8 1.7 6.5 5" />
+      </>
+    ),
+    profile: (
+      <>
+        <path d="M5 5h14v14H5z" />
+        <circle cx="9" cy="10" r="2" />
+        <path d="M12.5 14.5h4M12.5 10.5h4M8 16h8" />
+      </>
+    ),
+    sessions: (
+      <>
+        <rect x="4" y="5" width="16" height="11" rx="2" />
+        <path d="M9 20h6M12 16v4" />
+      </>
+    ),
+    notifications: (
+      <>
+        <path d="M7 10a5 5 0 0 1 10 0c0 5 2 5 2 6H5c0-1 2-1 2-6" />
+        <path d="M10 19h4" />
+      </>
+    )
+  };
+
+  return (
+    <svg className="settingsNavIcon" viewBox="0 0 24 24" aria-hidden="true">
+      {paths[type]}
+    </svg>
+  );
+}
+
+function AvatarWithStatus({
+  user,
+  className = "",
+  alt = "Avatar",
+  clickableStatus = false,
+  onStatusClick
+}) {
+  const avatar = user?.avatar_url || "/default-avatar.png";
+  const status = user?.effective_status || "offline";
+
+  return (
+    <span className={`avatarWithStatus ${className}`}>
+      <img src={avatar} alt={alt} draggable="false" />
+      {clickableStatus ? (
+        <button
+          className="avatarStatusBadge clickable"
+          type="button"
+          aria-label="Change status"
+          onClick={onStatusClick}
+        >
+          <StatusGlyph status={status} />
+        </button>
+      ) : (
+        <span className="avatarStatusBadge" aria-label={status}>
+          <StatusGlyph status={status} />
+        </span>
+      )}
+    </span>
+  );
+}
+
 function VerifiedBadge({ className = "" }) {
   return (
     <span
@@ -402,9 +470,15 @@ function WebApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
+    username: "",
+    display_name: "",
     pronouns: "",
-    bio: ""
+    bio: "",
+    avatar_url: null
   });
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
   const [uiError, setUiError] = useState("");
   const [avatarPreview, setAvatarPreview] = useState("");
@@ -688,18 +762,8 @@ function WebApp() {
       user: data.user || null
     });
 
-    if (data.user?.username) {
-      setUsername(data.user.username);
-    }
-
-    if (data.user) {
-      setProfileForm({
-        pronouns: data.user.pronouns || "",
-        bio: data.user.bio || ""
-      });
-    }
-
     if (!profileDraftInitialized && data.user) {
+      setUsername(data.user.username || "");
       setDisplayName(data.user.username ? (data.user.display_name || "") : "");
       setAvatarPreview(
         data.user.username
@@ -842,7 +906,7 @@ function WebApp() {
 
     const timer = window.setInterval(() => {
       loadMe().catch(() => {});
-    }, 2000);
+    }, 1000);
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated]);
@@ -883,7 +947,7 @@ function WebApp() {
     }
 
     heartbeat();
-    const timer = window.setInterval(heartbeat, 25000);
+    const timer = window.setInterval(heartbeat, 12000);
 
     return () => {
       stopped = true;
@@ -1017,7 +1081,7 @@ function WebApp() {
 
     const timer = window.setInterval(() => {
       loadSocial().catch(() => {});
-    }, 2000);
+    }, 1200);
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
@@ -1236,6 +1300,43 @@ function WebApp() {
     }
   }
 
+  async function loadSessions() {
+    setLoadingSessions(true);
+
+    try {
+      const data = await api("/api/sessions");
+      setSessions(data.sessions || []);
+    } catch (error) {
+      setUiError(error.message);
+    } finally {
+      setLoadingSessions(false);
+    }
+  }
+
+  async function revokeSession(sessionId) {
+    try {
+      await api("/api/sessions/revoke", {
+        method: "POST",
+        body: JSON.stringify({ session_id: sessionId })
+      });
+      await loadSessions();
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function revokeOtherSessions() {
+    try {
+      await api("/api/sessions/revoke-all", {
+        method: "POST",
+        body: JSON.stringify({ keep_current: true })
+      });
+      await loadSessions();
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
   async function updateStatus(status) {
     setStatusMenuOpen(false);
 
@@ -1278,6 +1379,9 @@ function WebApp() {
         user: current.user
           ? {
               ...current.user,
+              username: data.username,
+              display_name: data.display_name,
+              avatar_url: data.avatar_url,
               pronouns: data.pronouns,
               bio: data.bio
             }
@@ -1907,7 +2011,11 @@ function WebApp() {
                 setView("chat");
               }}
             >
-              <img className="chatListAvatar" src={getAvatar(chat.other_user)} alt="Chat avatar" />
+              <AvatarWithStatus
+                user={chat.other_user}
+                className="chatListAvatarWrap"
+                alt="Chat avatar"
+              />
               <span className="chatListIdentity">
                 <span className="chatListPrimary">
                   <span>
@@ -1933,20 +2041,16 @@ function WebApp() {
 
         <div className="bottomProfileBar">
           <button className="profileIdentityButton" type="button" title="Profile">
-            <span className="profileAvatarWrap">
-              <img className="sidebarProfileAvatar" src={getAvatar(auth.user)} alt="Profile avatar" />
-              <button
-                className={`profileStatusBadge ${auth.user.effective_status || "offline"}`}
-                type="button"
-                aria-label="Change status"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  setStatusMenuOpen((open) => !open);
-                }}
-              >
-                <StatusGlyph status={auth.user.effective_status || "offline"} />
-              </button>
-            </span>
+            <AvatarWithStatus
+              user={auth.user}
+              className="sidebarProfileAvatarWrap"
+              alt="Profile avatar"
+              clickableStatus
+              onStatusClick={(event) => {
+                event.stopPropagation();
+                setStatusMenuOpen((open) => !open);
+              }}
+            />
 
             <span className="sidebarProfileText">
               <strong className="nameWithBadge">
@@ -1987,7 +2091,17 @@ function WebApp() {
             className="profileSettingsButton"
             type="button"
             aria-label="Settings"
-            onClick={() => setSettingsOpen(true)}
+            onClick={() => {
+              setProfileForm({
+                username: auth.user.username || "",
+                display_name: auth.user.display_name || "",
+                pronouns: auth.user.pronouns || "",
+                bio: auth.user.bio || "",
+                avatar_url: auth.user.avatar_url || null
+              });
+              setProfileFormInitialized(true);
+              setSettingsOpen(true);
+            }}
           >
             <Settings size={16} />
           </button>
@@ -2058,7 +2172,11 @@ function WebApp() {
 
                       return (
                         <div className="socialRow" key={user.id}>
-                          <img className="socialAvatar" src={getAvatar(user)} alt="User avatar" />
+                          <AvatarWithStatus
+                          user={user}
+                          className="socialAvatarWrap"
+                          alt="User avatar"
+                        />
                           <div className="socialIdentity">
                             <strong className="nameWithBadge">
                               {user.display_name || user.username}
@@ -2095,7 +2213,11 @@ function WebApp() {
                   <div className="socialList">
                     {incoming.map((request) => (
                       <div className="socialRow" key={request.id}>
-                        <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
+                        <AvatarWithStatus
+                          user={request}
+                          className="socialAvatarWrap"
+                          alt="User avatar"
+                        />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
@@ -2127,7 +2249,11 @@ function WebApp() {
 
                     {outgoing.map((request) => (
                       <div className="socialRow" key={request.id}>
-                        <img className="socialAvatar" src={getAvatar(request)} alt="User avatar" />
+                        <AvatarWithStatus
+                          user={request}
+                          className="socialAvatarWrap"
+                          alt="User avatar"
+                        />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
@@ -2157,7 +2283,11 @@ function WebApp() {
                     )}
                     {friends.map((friend) => (
                       <div className="socialRow" key={friend.id}>
-                        <img className="socialAvatar" src={getAvatar(friend)} alt="Friend avatar" />
+                        <AvatarWithStatus
+                          user={friend}
+                          className="socialAvatarWrap"
+                          alt="User avatar"
+                        />
                         <div className="socialIdentity">
                           <strong className="nameWithBadge">
                             <span className="displayNameText">
@@ -2191,7 +2321,11 @@ function WebApp() {
             <div className="appMessages">
               {messages.length === 0 && (
                 <div className="chatStart">
-                  <img className="chatStartAvatar" src={getAvatar(activeChat?.other_user)} alt="Chat avatar" />
+                  <AvatarWithStatus
+                    user={activeChat?.other_user}
+                    className="chatStartAvatarWrap"
+                    alt="Chat avatar"
+                  />
                   <h2>{activeTitle}</h2>
                   <p>This is the beginning of your direct chat.</p>
                 </div>
@@ -2334,6 +2468,7 @@ function WebApp() {
                   type="button"
                   onClick={() => setSettingsTab("account")}
                 >
+                  <SettingsNavIcon type="account" />
                   My Account
                 </button>
                 <button
@@ -2341,14 +2476,27 @@ function WebApp() {
                   type="button"
                   onClick={() => setSettingsTab("profile")}
                 >
-                  Profiles
+                  <SettingsNavIcon type="profile" />
+                  My Profile
                 </button>
                 <button
                   className={settingsTab === "notifications" ? "active" : ""}
                   type="button"
                   onClick={() => setSettingsTab("notifications")}
                 >
+                  <SettingsNavIcon type="notifications" />
                   Notifications
+                </button>
+                <button
+                  className={settingsTab === "sessions" ? "active" : ""}
+                  type="button"
+                  onClick={() => {
+                    setSettingsTab("sessions");
+                    loadSessions();
+                  }}
+                >
+                  <SettingsNavIcon type="sessions" />
+                  Active Sessions
                 </button>
                 <div className="settingsNavDivider" />
                 <button type="button" className="danger" onClick={logout}>
@@ -2390,7 +2538,63 @@ function WebApp() {
 
                 {settingsTab === "profile" && (
                   <form className="profileSettingsForm" onSubmit={saveProfileSettings}>
-                    <h1>Profiles</h1>
+                    <h1>My Profile</h1>
+
+                    <div className="settingsAvatarEditor">
+                      <AvatarWithStatus
+                        user={{
+                          avatar_url:
+                            profileForm.avatar_url || "/default-avatar.png",
+                          effective_status:
+                            auth.user.effective_status || "offline"
+                        }}
+                        className="settingsAvatarPreview"
+                        alt="Profile avatar"
+                      />
+                      <label>
+                        <span>Avatar URL</span>
+                        <input
+                          value={profileForm.avatar_url || ""}
+                          onChange={(event) =>
+                            setProfileForm((current) => ({
+                              ...current,
+                              avatar_url: event.target.value || null
+                            }))
+                          }
+                          placeholder="Keep empty for default avatar"
+                        />
+                      </label>
+                    </div>
+
+                    <label>
+                      <span>Username</span>
+                      <input
+                        value={profileForm.username}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            username: event.target.value
+                          }))
+                        }
+                        maxLength={16}
+                        placeholder="username"
+                      />
+                    </label>
+
+                    <label>
+                      <span>Display Name</span>
+                      <input
+                        value={profileForm.display_name}
+                        onChange={(event) =>
+                          setProfileForm((current) => ({
+                            ...current,
+                            display_name: event.target.value
+                          }))
+                        }
+                        maxLength={16}
+                        placeholder="Display name"
+                      />
+                    </label>
 
                     <label>
                       <span>Pronouns</span>
@@ -2428,6 +2632,61 @@ function WebApp() {
                       {savingSettings ? "Saving..." : "Save Changes"}
                     </button>
                   </form>
+                )}
+
+                {settingsTab === "sessions" && (
+                  <>
+                    <div className="sessionsHeader">
+                      <div>
+                        <h1>Active Sessions</h1>
+                        <p>Devices currently signed in to your Vodkach account.</p>
+                      </div>
+                      <button type="button" onClick={revokeOtherSessions}>
+                        Log Out All Other Sessions
+                      </button>
+                    </div>
+
+                    <div className="sessionsList">
+                      {loadingSessions && (
+                        <div className="settingsEmptyState">Loading sessions...</div>
+                      )}
+
+                      {!loadingSessions && sessions.length === 0 && (
+                        <div className="settingsEmptyState">No active sessions.</div>
+                      )}
+
+                      {sessions.map((session) => (
+                        <article className="sessionCard" key={session.id}>
+                          <div className="sessionDeviceIcon">
+                            <SettingsNavIcon type="sessions" />
+                          </div>
+                          <div className="sessionDetails">
+                            <strong>
+                              {session.device_name || "Unknown Browser"}
+                              {session.current ? (
+                                <span className="currentSessionLabel">Current</span>
+                              ) : null}
+                            </strong>
+                            <span>
+                              {session.country || "Unknown location"} ·{" "}
+                              {session.last_seen_at
+                                ? `Active ${formatLocalDate(session.last_seen_at)} ${formatLocalTime(session.last_seen_at)}`
+                                : "Last activity unknown"}
+                            </span>
+                            <small>{session.user_agent || "Unknown device"}</small>
+                          </div>
+                          {!session.current && (
+                            <button
+                              type="button"
+                              onClick={() => revokeSession(session.id)}
+                            >
+                              Log Out
+                            </button>
+                          )}
+                        </article>
+                      ))}
+                    </div>
+                  </>
                 )}
 
                 {settingsTab === "notifications" && (
@@ -2472,9 +2731,9 @@ function WebApp() {
           <>
             <div className="profileBanner" />
             <div className="memberProfileBody">
-              <img
-                className="memberProfileAvatar"
-                src={getAvatar(activeChat.other_user)}
+              <AvatarWithStatus
+                user={activeChat.other_user}
+                className="memberProfileAvatarWrap"
                 alt="Profile avatar"
               />
               <h2 className="nameWithBadge">
@@ -2551,9 +2810,15 @@ function AdminApp() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [statusMenuOpen, setStatusMenuOpen] = useState(false);
   const [profileForm, setProfileForm] = useState({
+    username: "",
+    display_name: "",
     pronouns: "",
-    bio: ""
+    bio: "",
+    avatar_url: null
   });
+  const [sessions, setSessions] = useState([]);
+  const [loadingSessions, setLoadingSessions] = useState(false);
+  const [profileFormInitialized, setProfileFormInitialized] = useState(false);
   const [savingSettings, setSavingSettings] = useState(false);
 
   async function api(path, options = {}) {
@@ -2898,11 +3163,13 @@ function AppMessage({
       onContextMenu={onContextMenu}
     >
       {!grouped && (
-        <img
-          className="messageAvatarImage"
-          src={avatarUrl || "/default-avatar.png"}
+        <AvatarWithStatus
+          user={{
+            avatar_url: avatarUrl || "/default-avatar.png",
+            effective_status: message.sender?.effective_status || "offline"
+          }}
+          className="messageAvatarWrap"
           alt="User avatar"
-          draggable="false"
         />
       )}
 

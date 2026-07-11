@@ -3186,3 +3186,264 @@ h1 {
     padding: 48px 18px;
   }
 }
+
+
+/* Patch 048: stable profile forms, status badges everywhere, active sessions */
+
+.avatarWithStatus {
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  line-height: 0;
+}
+
+.avatarWithStatus > img {
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
+}
+
+.avatarStatusBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 16px;
+  height: 16px;
+  padding: 0;
+  border: 3px solid #151619;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: #151619;
+  z-index: 5;
+}
+
+.avatarStatusBadge.clickable {
+  cursor: pointer;
+}
+
+.sidebarProfileAvatarWrap {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+}
+
+.sidebarProfileAvatarWrap .avatarStatusBadge {
+  border-color: #101114;
+  background: #101114;
+}
+
+.chatListAvatarWrap {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+
+.chatListAvatarWrap .avatarStatusBadge {
+  width: 14px;
+  height: 14px;
+  right: -4px;
+  bottom: -4px;
+}
+
+.socialAvatarWrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+}
+
+.chatStartAvatarWrap {
+  width: 64px;
+  height: 64px;
+  border-radius: 14px;
+}
+
+.memberProfileAvatarWrap {
+  position: absolute;
+  left: 16px;
+  top: -42px;
+  width: 84px;
+  height: 84px;
+  border: 6px solid #121316;
+  border-radius: 18px;
+  background: #121316;
+}
+
+.memberProfileAvatarWrap .avatarStatusBadge {
+  right: -2px;
+  bottom: -2px;
+  width: 20px;
+  height: 20px;
+  border-color: #121316;
+  background: #121316;
+}
+
+.messageAvatarWrap {
+  width: 40px;
+  height: 40px;
+  border-radius: 11px;
+}
+
+.messageAvatarWrap .avatarStatusBadge {
+  width: 14px;
+  height: 14px;
+  right: -4px;
+  bottom: -4px;
+}
+
+.settingsAvatarPreview {
+  width: 76px;
+  height: 76px;
+  border-radius: 18px;
+}
+
+.settingsAvatarEditor {
+  margin-bottom: 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.settingsAvatarEditor > label {
+  flex: 1;
+  margin: 0;
+}
+
+.settingsModalNav > button {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.settingsNavIcon {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.sessionsHeader {
+  max-width: 760px;
+  margin-bottom: 18px;
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.sessionsHeader h1 {
+  margin: 0 0 5px;
+  color: #fff;
+  font-size: 1.45rem;
+}
+
+.sessionsHeader p {
+  margin: 0;
+  color: #8e949c;
+  font-size: .82rem;
+}
+
+.sessionsHeader > button {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  background: #b3261e;
+  font-weight: 760;
+}
+
+.sessionsList {
+  max-width: 760px;
+  display: grid;
+  gap: 9px;
+}
+
+.sessionCard {
+  min-height: 78px;
+  padding: 12px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}
+
+.sessionDeviceIcon {
+  width: 42px;
+  height: 42px;
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  color: #c8ccd2;
+  background: #25272c;
+}
+
+.sessionDeviceIcon .settingsNavIcon {
+  width: 22px;
+  height: 22px;
+}
+
+.sessionDetails {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 3px;
+}
+
+.sessionDetails strong {
+  color: #fff;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.sessionDetails span,
+.sessionDetails small {
+  overflow: hidden;
+  color: #8e949c;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sessionDetails span {
+  font-size: .76rem;
+}
+
+.sessionDetails small {
+  font-size: .68rem;
+}
+
+.currentSessionLabel {
+  padding: 2px 5px;
+  border-radius: 4px;
+  color: #69d58a;
+  background: rgba(35,165,89,.12);
+  font-size: .62rem;
+  text-transform: uppercase;
+}
+
+.sessionCard > button {
+  min-height: 32px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 5px;
+  color: #fff;
+  background: #b3261e;
+  font-size: .72rem;
+  font-weight: 760;
+}
+
+.settingsEmptyState {
+  padding: 22px;
+  border-radius: 8px;
+  color: #777d86;
+  background: #1b1c20;
+  border: 1px solid rgba(255,255,255,.055);
+}

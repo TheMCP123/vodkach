@@ -20,7 +20,7 @@ export async function onRequestGet(context) {
       CASE
         WHEN other_users.status_preference = 'offline' THEN 'offline'
         WHEN other_users.last_seen_at IS NOT NULL
-          AND datetime(other_users.last_seen_at) >= datetime('now', '-70 seconds')
+          AND datetime(other_users.last_seen_at) >= datetime('now', '-35 seconds')
           THEN other_users.status_preference
         ELSE 'offline'
       END AS effective_status,

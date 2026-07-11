@@ -132,8 +132,14 @@ export async function onRequestGet(context) {
        SET google_sub = ?,
            email = ?,
            email_verified = ?,
-           display_name = ?,
-           avatar_url = ?,
+           display_name = CASE
+             WHEN username IS NULL OR username = '' THEN ?
+             ELSE display_name
+           END,
+           avatar_url = CASE
+             WHEN username IS NULL OR username = '' THEN ?
+             ELSE avatar_url
+           END,
            access_status = ?,
            requested_at = CASE
              WHEN ? = 'pending' AND access_status = 'rejected' THEN datetime('now')
@@ -196,16 +202,22 @@ export async function onRequestGet(context) {
 
   const expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
 
+  const userAgent = request.headers.get("User-Agent") || "Unknown device";
+  const country = request.headers.get("CF-IPCountry") || null;
+
   await env.DB.prepare(
     `INSERT INTO sessions (
       id,
       user_id,
       refresh_token_hash,
+      user_agent,
+      country,
+      last_seen_at,
       created_at,
       expires_at
-    ) VALUES (?, ?, ?, datetime('now'), ?)`
+    ) VALUES (?, ?, ?, ?, ?, datetime('now'), datetime('now'), ?)`
   )
-    .bind(sessionId, userId, sessionHash, expiresAt)
+    .bind(sessionId, userId, sessionHash, userAgent.slice(0, 500), country, expiresAt)
     .run();
 
   const returnToCookie = getCookie(request, "vodkach_return_to");

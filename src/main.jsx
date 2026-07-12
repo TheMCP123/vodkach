@@ -3023,6 +3023,8 @@ function WebApp() {
               </div>
             </header>
 
+            <div id="vodkach-call-slot" className="vodkachCallSlot" />
+
             <div className="appMessages" ref={messagesViewportRef}>
               {messages.length === 0 && (
                 <div className="chatStart redesigned">

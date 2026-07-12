@@ -7769,3 +7769,414 @@ html.vodkachWebHost .refinedCreateCard {
     min-width: 92px;
   }
 }
+
+
+/* Patch 069: call stage embedded into the chat like Discord */
+
+.vodkachCallOverlay,
+.discordVoiceWindow,
+.discordCallCard {
+  display: none !important;
+}
+
+.appChat {
+  position: relative !important;
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+
+.inlineDiscordCall {
+  order: -5;
+  position: relative;
+  flex: 0 0 300px;
+  width: 100%;
+  min-height: 300px;
+  max-height: 390px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: grid;
+  grid-template-rows: 46px minmax(0, 1fr);
+  overflow: hidden;
+  color: #f3f4f5;
+  background: #050607;
+  box-sizing: border-box;
+}
+
+.inlineDiscordCallTopbar {
+  padding: 0 15px;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #0c0d0f;
+}
+
+.inlineCallIdentity {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inlineCallIdentity > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inlineCallIdentity strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: .9rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlineCallIdentity span {
+  color: #8f949c;
+  font-size: .7rem;
+}
+
+.inlineVoiceBars {
+  width: 24px;
+  height: 22px;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 2px;
+}
+
+.inlineVoiceBars span {
+  width: 3px;
+  border-radius: 3px;
+  background: #23a55a;
+  animation: inlineVoicePulse 1.05s ease-in-out infinite;
+}
+
+.inlineVoiceBars span:nth-child(1) { height: 8px; }
+.inlineVoiceBars span:nth-child(2) {
+  height: 16px;
+  animation-delay: .12s;
+}
+.inlineVoiceBars span:nth-child(3) {
+  height: 11px;
+  animation-delay: .24s;
+}
+
+@keyframes inlineVoicePulse {
+  0%, 100% {
+    opacity: .4;
+    transform: scaleY(.72);
+  }
+  50% {
+    opacity: 1;
+    transform: scaleY(1);
+  }
+}
+
+.inlineCallStats {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.inlineCallStats span {
+  min-width: 44px;
+  padding: 4px 7px;
+  border-radius: 5px;
+  color: #a9adb4;
+  background: #16171a;
+  font-size: .65rem;
+  text-align: center;
+}
+
+.inlineDiscordStage {
+  position: relative;
+  min-height: 0;
+  padding: 16px 18px 66px;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 30%, rgba(255,255,255,.03), transparent 48%),
+    #050607;
+}
+
+.inlineParticipantCanvas {
+  width: min(470px, 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 30px;
+}
+
+.inlineParticipantCard {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+}
+
+.inlineAvatarWrap {
+  position: relative;
+  width: 104px;
+  height: 104px;
+}
+
+.inlineAvatarWrap > img {
+  width: 104px;
+  height: 104px;
+  border-radius: 23px;
+  object-fit: cover;
+  background: #1e2024;
+}
+
+.inlineMicBadge,
+.inlinePresenceBadge {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 27px;
+  height: 27px;
+  border: 4px solid #050607;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  color: #fff;
+  background: #2b2d31;
+}
+
+.inlineMicBadge.muted {
+  background: #da373c;
+}
+
+.inlineMicBadge .vodkachFeatureIcon {
+  width: 13px;
+  height: 13px;
+}
+
+.inlinePresenceBadge {
+  background: #747982;
+}
+
+.inlinePresenceBadge.online {
+  background: #23a55a;
+}
+
+.inlineParticipantCard > strong {
+  max-width: 150px;
+  overflow: hidden;
+  color: #fff;
+  font-size: .82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlineParticipantCard > span {
+  color: #8d929a;
+  font-size: .67rem;
+}
+
+.inlineDiscordControls {
+  position: absolute;
+  left: 50%;
+  bottom: 15px;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  z-index: 3;
+}
+
+.inlineControlGroup {
+  height: 43px;
+  padding: 4px;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: #17181c;
+  box-shadow: 0 8px 24px rgba(0,0,0,.38);
+}
+
+.inlineCallButton {
+  width: 35px;
+  height: 35px;
+  padding: 0;
+  border: 0;
+  border-radius: 8px;
+  display: grid;
+  place-items: center;
+  color: #eef0f2;
+  background: transparent;
+}
+
+.inlineCallButton:hover:not(:disabled) {
+  background: #2c2f34;
+}
+
+.inlineCallButton.active {
+  background: #237a49;
+}
+
+.inlineCallButton.dangerActive,
+.inlineCallButton.disconnect {
+  color: #fff;
+  background: #da373c;
+}
+
+.inlineCallButton.disconnect {
+  width: 52px;
+  height: 43px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(0,0,0,.38);
+}
+
+.inlineCallButton .vodkachFeatureIcon {
+  width: 19px;
+  height: 19px;
+}
+
+.inlineCallButton.disconnect .vodkachFeatureIcon {
+  width: 21px;
+  height: 21px;
+  transform: none !important;
+}
+
+.inlineCallButton:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.inlineDiscordCall.sharing {
+  flex-basis: 360px;
+  max-height: 460px;
+}
+
+.inlineScreenShareStage {
+  width: 100%;
+  height: 100%;
+  min-height: 220px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 132px;
+  gap: 12px;
+}
+
+.screenSharePlaceholder {
+  min-width: 0;
+  border: 1px solid rgba(255,255,255,.06);
+  border-radius: 10px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  background: #111215;
+}
+
+.screenSharePlaceholder .vodkachFeatureIcon {
+  width: 34px;
+  height: 34px;
+  color: #23a55a;
+}
+
+.screenSharePlaceholder strong {
+  color: #fff;
+  font-size: .84rem;
+}
+
+.screenSharePlaceholder span {
+  color: #8f949c;
+  font-size: .67rem;
+}
+
+.inlineParticipantRail {
+  display: grid;
+  grid-template-rows: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.inlineParticipantMini {
+  min-height: 0;
+  padding: 9px;
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  background: #16171a;
+}
+
+.inlineParticipantMini img {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+}
+
+.inlineParticipantMini span {
+  max-width: 100%;
+  overflow: hidden;
+  color: #fff;
+  font-size: .7rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlineParticipantMini small {
+  color: #878c94;
+  font-size: .61rem;
+}
+
+/* Message history stays directly below the call area */
+.appMessages {
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+}
+
+.inlinePollFeed .chatPollCard {
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+@media (max-width: 720px) {
+  .inlineDiscordCall {
+    flex-basis: 260px;
+    min-height: 260px;
+  }
+
+  .inlineCallStats span:nth-child(3) {
+    display: none;
+  }
+
+  .inlineParticipantCanvas {
+    gap: 18px;
+  }
+
+  .inlineAvatarWrap,
+  .inlineAvatarWrap > img {
+    width: 82px;
+    height: 82px;
+  }
+
+  .inlineAvatarWrap > img {
+    border-radius: 19px;
+  }
+
+  .inlineScreenShareStage {
+    grid-template-columns: 1fr;
+  }
+
+  .inlineParticipantRail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+  }
+
+  .inlineParticipantMini {
+    min-height: 86px;
+  }
+}

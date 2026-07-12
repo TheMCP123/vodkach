@@ -547,12 +547,12 @@ export const CallSystem = forwardRef(function CallSystem(
         </div>
       )}
 
-      {call && (
-        <div className="vodkachCallOverlay">
-          <section className="discordVoiceWindow">
-            <header className="discordVoiceTopbar">
-              <div className="discordVoiceTitle">
-                <span className="voiceConnectedIcon">
+      {call &&
+        createPortal(
+          <div className={screenSharing ? "inlineDiscordCall sharing" : "inlineDiscordCall"}>
+            <header className="inlineDiscordCallTopbar">
+              <div className="inlineCallIdentity">
+                <span className="inlineVoiceBars">
                   <span />
                   <span />
                   <span />
@@ -573,127 +573,135 @@ export const CallSystem = forwardRef(function CallSystem(
                 </div>
               </div>
 
-              <div className="discordVoiceTopMeta">
+              <div className="inlineCallStats">
                 <span>{formatDuration(elapsedSeconds)}</span>
-                <span className={phase === "connected" ? "voiceLiveBadge active" : "voiceLiveBadge"}>
-                  {phase === "connected" ? "LIVE" : "WAITING"}
-                </span>
+                <span>{networkPing == null ? "-" : `${networkPing} ms`}</span>
+                <span>{connectionQuality()}</span>
               </div>
             </header>
 
-            <div className={screenSharing ? "discordVoiceStage sharing" : "discordVoiceStage"}>
-              {screenSharing && (
-                <div className="screenShareBanner">
-                  <ScreenShareIcon active />
-                  <div>
-                    <strong>You are sharing your screen</strong>
-                    <span>Screen share is active</span>
+            <section className="inlineDiscordStage">
+              {screenSharing ? (
+                <div className="inlineScreenShareStage">
+                  <div className="screenSharePlaceholder">
+                    <ScreenShareIcon active />
+                    <strong>Screen sharing is active</strong>
+                    <span>Your shared screen is being broadcast</span>
                   </div>
+
+                  <div className="inlineParticipantRail">
+                    <article className="inlineParticipantMini">
+                      <img
+                        src={user?.avatar_url || "/default-avatar.png"}
+                        alt=""
+                      />
+                      <span>{user?.display_name || user?.username || "You"}</span>
+                      <small>{muted ? "Muted" : "You"}</small>
+                    </article>
+
+                    <article className="inlineParticipantMini">
+                      <img
+                        src={call.other_avatar_url || "/default-avatar.png"}
+                        alt=""
+                      />
+                      <span>
+                        {call.other_display_name ||
+                          call.other_username ||
+                          "Participant"}
+                      </span>
+                      <small>
+                        {phase === "connected" ? "Connected" : "Waiting"}
+                      </small>
+                    </article>
+                  </div>
+                </div>
+              ) : (
+                <div className="inlineParticipantCanvas">
+                  <article className="inlineParticipantCard">
+                    <div className="inlineAvatarWrap">
+                      <img
+                        src={user?.avatar_url || "/default-avatar.png"}
+                        alt=""
+                      />
+                      <span className={muted ? "inlineMicBadge muted" : "inlineMicBadge"}>
+                        <MicrophoneIcon muted={muted} />
+                      </span>
+                    </div>
+                    <strong>{user?.display_name || user?.username || "You"}</strong>
+                    <span>{muted ? "Muted" : "Connected"}</span>
+                  </article>
+
+                  <article className="inlineParticipantCard">
+                    <div className="inlineAvatarWrap">
+                      <img
+                        src={call.other_avatar_url || "/default-avatar.png"}
+                        alt=""
+                      />
+                      <span
+                        className={
+                          phase === "connected"
+                            ? "inlinePresenceBadge online"
+                            : "inlinePresenceBadge"
+                        }
+                      />
+                    </div>
+                    <strong>
+                      {call.other_display_name ||
+                        call.other_username ||
+                        "Participant"}
+                    </strong>
+                    <span>
+                      {phase === "connected" ? "Connected" : "Waiting for answer"}
+                    </span>
+                  </article>
                 </div>
               )}
 
-              <div className="discordParticipantGrid">
-                <article className="discordParticipantCard local">
-                  <div className="discordAvatarFrame">
-                    <img
-                      src={user?.avatar_url || "/default-avatar.png"}
-                      alt=""
-                    />
-                    <span className={muted ? "participantMic muted" : "participantMic"}>
-                      <MicrophoneIcon muted={muted} />
-                    </span>
-                  </div>
-                  <strong>{user?.display_name || user?.username || "You"}</strong>
-                  <span>{muted ? "Muted" : "Speaking available"}</span>
-                </article>
+              <div className="inlineDiscordControls">
+                <div className="inlineControlGroup">
+                  <button
+                    className={muted ? "inlineCallButton dangerActive" : "inlineCallButton"}
+                    type="button"
+                    title={muted ? "Unmute" : "Mute"}
+                    disabled={mediaBusy || phase !== "connected"}
+                    onClick={toggleMicrophone}
+                  >
+                    <MicrophoneIcon muted={muted} />
+                  </button>
 
-                <article className="discordParticipantCard remote">
-                  <div className="discordAvatarFrame">
-                    <img
-                      src={call.other_avatar_url || "/default-avatar.png"}
-                      alt=""
-                    />
-                    <span className={phase === "connected" ? "participantStatus online" : "participantStatus"} />
-                  </div>
-                  <strong>
-                    {call.other_display_name ||
-                      call.other_username ||
-                      "Participant"}
-                  </strong>
-                  <span>
-                    {phase === "connected" ? "Connected" : "Waiting for answer"}
-                  </span>
-                </article>
-              </div>
-            </div>
+                  <button
+                    className={videoEnabled ? "inlineCallButton active" : "inlineCallButton"}
+                    type="button"
+                    title={videoEnabled ? "Turn camera off" : "Turn camera on"}
+                    disabled={mediaBusy || phase !== "connected"}
+                    onClick={toggleVideo}
+                  >
+                    <CameraIcon disabled={!videoEnabled} />
+                  </button>
+                </div>
 
-            <aside className="discordCallInfo">
-              <div>
-                <span>Ping</span>
-                <strong>{networkPing == null ? "-" : `${networkPing} ms`}</strong>
-              </div>
-              <div>
-                <span>Connection</span>
-                <strong>{connectionQuality()}</strong>
-              </div>
-              <div>
-                <span>Network</span>
-                <strong>{connectionType}</strong>
-              </div>
-              <div>
-                <span>Transport</span>
-                <strong>WebRTC</strong>
-              </div>
-              <div>
-                <span>Security</span>
-                <strong>Encrypted</strong>
-              </div>
-            </aside>
+                <div className="inlineControlGroup">
+                  <button
+                    className={screenSharing ? "inlineCallButton active" : "inlineCallButton"}
+                    type="button"
+                    title={screenSharing ? "Stop sharing" : "Share screen"}
+                    disabled={mediaBusy || phase !== "connected"}
+                    onClick={toggleScreenShare}
+                  >
+                    <ScreenShareIcon active={screenSharing} />
+                  </button>
+                </div>
 
-            <footer className="discordVoiceControls">
-              <button
-                className={muted ? "discordControlButton dangerActive" : "discordControlButton"}
-                type="button"
-                title={muted ? "Unmute" : "Mute"}
-                disabled={mediaBusy || phase !== "connected"}
-                onClick={toggleMicrophone}
-              >
-                <MicrophoneIcon muted={muted} />
-                <span>{muted ? "Unmute" : "Mute"}</span>
-              </button>
-
-              <button
-                className={videoEnabled ? "discordControlButton active" : "discordControlButton"}
-                type="button"
-                title={videoEnabled ? "Turn camera off" : "Turn camera on"}
-                disabled={mediaBusy || phase !== "connected"}
-                onClick={toggleVideo}
-              >
-                <CameraIcon disabled={!videoEnabled} />
-                <span>Camera</span>
-              </button>
-
-              <button
-                className={screenSharing ? "discordControlButton active" : "discordControlButton"}
-                type="button"
-                title={screenSharing ? "Stop sharing" : "Share screen"}
-                disabled={mediaBusy || phase !== "connected"}
-                onClick={toggleScreenShare}
-              >
-                <ScreenShareIcon active={screenSharing} />
-                <span>{screenSharing ? "Stop Share" : "Share Screen"}</span>
-              </button>
-
-              <button
-                className="discordControlButton disconnect"
-                type="button"
-                title="Disconnect"
-                onClick={endCall}
-              >
-                <HangupIcon />
-                <span>Disconnect</span>
-              </button>
-            </footer>
+                <button
+                  className="inlineCallButton disconnect"
+                  type="button"
+                  title="Disconnect"
+                  onClick={endCall}
+                >
+                  <HangupIcon />
+                </button>
+              </div>
+            </section>
 
             <div className="hiddenRealtimeMeeting" aria-hidden="true">
               {React.createElement("rtk-meeting", {
@@ -702,9 +710,9 @@ export const CallSystem = forwardRef(function CallSystem(
                 "show-setup-screen": "false"
               })}
             </div>
-          </section>
-        </div>
-      )}
+          </div>,
+          document.querySelector(".appChat") || document.body
+        )}
 
       {error && (
         <button

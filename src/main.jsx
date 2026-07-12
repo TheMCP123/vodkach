@@ -20,7 +20,7 @@ import {
   ChatPollFeed,
   ChatPollSystem
 } from "./realtimeFeatures.jsx";
-import "./styles.css";
+import "./styles.css?vodkach=074";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");

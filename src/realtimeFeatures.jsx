@@ -31,8 +31,9 @@ export function CallIcon() {
 function HangupIcon() {
   return (
     <IconBase>
-      <path d="M3.2 15.8c2.2-2.35 5.1-3.55 8.8-3.55s6.6 1.2 8.8 3.55" />
-      <path d="m7.2 14.1-1 3.7M16.8 14.1l1 3.7" />
+      <path d="M4.1 15.6c2.25-2.15 4.9-3.2 7.9-3.2s5.65 1.05 7.9 3.2" />
+      <path d="m6.9 14.2-1.1 4.1M17.1 14.2l1.1 4.1" />
+      <path d="M9.2 12.9v3.4M14.8 12.9v3.4" />
     </IconBase>
   );
 }
@@ -156,6 +157,10 @@ export const CallSystem = forwardRef(function CallSystem(
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
   const [mediaBusy, setMediaBusy] = useState(false);
+  const [networkPing, setNetworkPing] = useState(null);
+  const [connectionType, setConnectionType] = useState("Unknown");
+  const [callStartedAt, setCallStartedAt] = useState(null);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const meetingRef = useRef(null);
   const meetingElementRef = useRef(null);
 
@@ -195,6 +200,8 @@ export const CallSystem = forwardRef(function CallSystem(
       setMuted(false);
       setVideoEnabled(false);
       setScreenSharing(false);
+      setCallStartedAt(Date.now());
+      setElapsedSeconds(0);
       setPhase("connected");
     } catch (connectError) {
       setError(connectError.message || "Could not connect to the call");
@@ -304,6 +311,9 @@ export const CallSystem = forwardRef(function CallSystem(
     setVideoEnabled(false);
     setScreenSharing(false);
     setMediaBusy(false);
+    setCallStartedAt(null);
+    setElapsedSeconds(0);
+    setNetworkPing(null);
     setPhase("idle");
   }
 
@@ -371,6 +381,95 @@ export const CallSystem = forwardRef(function CallSystem(
     } finally {
       setMediaBusy(false);
     }
+  }
+
+  useEffect(() => {
+    if (!callStartedAt || phase !== "connected") return undefined;
+
+    const updateElapsed = () => {
+      setElapsedSeconds(
+        Math.max(0, Math.floor((Date.now() - callStartedAt) / 1000))
+      );
+    };
+
+    updateElapsed();
+    const timer = window.setInterval(updateElapsed, 1000);
+    return () => window.clearInterval(timer);
+  }, [callStartedAt, phase]);
+
+  useEffect(() => {
+    const connection =
+      navigator.connection ||
+      navigator.mozConnection ||
+      navigator.webkitConnection;
+
+    function updateConnectionType() {
+      const effectiveType = connection?.effectiveType;
+      const type = connection?.type;
+      setConnectionType(
+        effectiveType
+          ? String(effectiveType).toUpperCase()
+          : type
+            ? String(type)
+            : "Unknown"
+      );
+    }
+
+    updateConnectionType();
+    connection?.addEventListener?.("change", updateConnectionType);
+
+    return () => {
+      connection?.removeEventListener?.("change", updateConnectionType);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!call || phase !== "connected") return undefined;
+
+    let stopped = false;
+
+    async function measurePing() {
+      const startedAt = performance.now();
+
+      try {
+        await api("/api/calls/status");
+        if (!stopped) {
+          setNetworkPing(Math.max(1, Math.round(performance.now() - startedAt)));
+        }
+      } catch {
+        if (!stopped) setNetworkPing(null);
+      }
+    }
+
+    measurePing();
+    const timer = window.setInterval(measurePing, 5000);
+
+    return () => {
+      stopped = true;
+      window.clearInterval(timer);
+    };
+  }, [call?.id, phase]);
+
+  function formatDuration(totalSeconds) {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+
+    if (hours > 0) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(
+        seconds
+      ).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(seconds).padStart(2, "0")}`;
+  }
+
+  function connectionQuality() {
+    if (networkPing == null) return "Checking";
+    if (networkPing < 90) return "Excellent";
+    if (networkPing < 180) return "Good";
+    if (networkPing < 300) return "Fair";
+    return "Poor";
   }
 
   useEffect(() => {
@@ -450,97 +549,151 @@ export const CallSystem = forwardRef(function CallSystem(
 
       {call && (
         <div className="vodkachCallOverlay">
-          <section className="discordCallCard">
-            <header className="discordCallHeader">
-              <div>
-                <strong>
-                  {call.other_display_name ||
-                    call.other_username ||
-                    "Vodkach Call"}
-                </strong>
-                <span>
-                  {phase === "connected"
-                    ? "Voice Connected"
-                    : phase === "connecting"
-                      ? "Connecting..."
-                      : "Calling..."}
+          <section className="discordVoiceWindow">
+            <header className="discordVoiceTopbar">
+              <div className="discordVoiceTitle">
+                <span className="voiceConnectedIcon">
+                  <span />
+                  <span />
+                  <span />
+                </span>
+                <div>
+                  <strong>
+                    {call.other_display_name ||
+                      call.other_username ||
+                      "Vodkach Call"}
+                  </strong>
+                  <span>
+                    {phase === "connected"
+                      ? "Voice Connected"
+                      : phase === "connecting"
+                        ? "Connecting..."
+                        : "Calling..."}
+                  </span>
+                </div>
+              </div>
+
+              <div className="discordVoiceTopMeta">
+                <span>{formatDuration(elapsedSeconds)}</span>
+                <span className={phase === "connected" ? "voiceLiveBadge active" : "voiceLiveBadge"}>
+                  {phase === "connected" ? "LIVE" : "WAITING"}
                 </span>
               </div>
-              <span className={phase === "connected" ? "callLiveDot active" : "callLiveDot"} />
             </header>
 
-            <div className="discordCallStage">
-              <div className="callParticipantTile localParticipantTile">
-                <img
-                  src={user?.avatar_url || "/default-avatar.png"}
-                  alt=""
-                />
-                <span>{user?.display_name || user?.username || "You"}</span>
-                {muted ? <small>Muted</small> : null}
-              </div>
+            <div className={screenSharing ? "discordVoiceStage sharing" : "discordVoiceStage"}>
+              {screenSharing && (
+                <div className="screenShareBanner">
+                  <ScreenShareIcon active />
+                  <div>
+                    <strong>You are sharing your screen</strong>
+                    <span>Screen share is active</span>
+                  </div>
+                </div>
+              )}
 
-              <div className="callConnectionLine">
-                <span />
-                <span />
-                <span />
-              </div>
+              <div className="discordParticipantGrid">
+                <article className="discordParticipantCard local">
+                  <div className="discordAvatarFrame">
+                    <img
+                      src={user?.avatar_url || "/default-avatar.png"}
+                      alt=""
+                    />
+                    <span className={muted ? "participantMic muted" : "participantMic"}>
+                      <MicrophoneIcon muted={muted} />
+                    </span>
+                  </div>
+                  <strong>{user?.display_name || user?.username || "You"}</strong>
+                  <span>{muted ? "Muted" : "Speaking available"}</span>
+                </article>
 
-              <div className="callParticipantTile remoteParticipantTile">
-                <img
-                  src={call.other_avatar_url || "/default-avatar.png"}
-                  alt=""
-                />
-                <span>
-                  {call.other_display_name ||
-                    call.other_username ||
-                    "Participant"}
-                </span>
-                <small>
-                  {phase === "connected" ? "Connected" : "Waiting..."}
-                </small>
+                <article className="discordParticipantCard remote">
+                  <div className="discordAvatarFrame">
+                    <img
+                      src={call.other_avatar_url || "/default-avatar.png"}
+                      alt=""
+                    />
+                    <span className={phase === "connected" ? "participantStatus online" : "participantStatus"} />
+                  </div>
+                  <strong>
+                    {call.other_display_name ||
+                      call.other_username ||
+                      "Participant"}
+                  </strong>
+                  <span>
+                    {phase === "connected" ? "Connected" : "Waiting for answer"}
+                  </span>
+                </article>
               </div>
             </div>
 
-            <div className="discordCallControls">
+            <aside className="discordCallInfo">
+              <div>
+                <span>Ping</span>
+                <strong>{networkPing == null ? "-" : `${networkPing} ms`}</strong>
+              </div>
+              <div>
+                <span>Connection</span>
+                <strong>{connectionQuality()}</strong>
+              </div>
+              <div>
+                <span>Network</span>
+                <strong>{connectionType}</strong>
+              </div>
+              <div>
+                <span>Transport</span>
+                <strong>WebRTC</strong>
+              </div>
+              <div>
+                <span>Security</span>
+                <strong>Encrypted</strong>
+              </div>
+            </aside>
+
+            <footer className="discordVoiceControls">
               <button
-                className={muted ? "callControlButton activeDanger" : "callControlButton"}
+                className={muted ? "discordControlButton dangerActive" : "discordControlButton"}
                 type="button"
                 title={muted ? "Unmute" : "Mute"}
                 disabled={mediaBusy || phase !== "connected"}
                 onClick={toggleMicrophone}
               >
                 <MicrophoneIcon muted={muted} />
+                <span>{muted ? "Unmute" : "Mute"}</span>
               </button>
 
               <button
-                className={videoEnabled ? "callControlButton active" : "callControlButton"}
+                className={videoEnabled ? "discordControlButton active" : "discordControlButton"}
                 type="button"
                 title={videoEnabled ? "Turn camera off" : "Turn camera on"}
                 disabled={mediaBusy || phase !== "connected"}
                 onClick={toggleVideo}
               >
                 <CameraIcon disabled={!videoEnabled} />
+                <span>Camera</span>
               </button>
 
               <button
-                className={screenSharing ? "callControlButton active" : "callControlButton"}
+                className={screenSharing ? "discordControlButton active" : "discordControlButton"}
                 type="button"
                 title={screenSharing ? "Stop sharing" : "Share screen"}
                 disabled={mediaBusy || phase !== "connected"}
                 onClick={toggleScreenShare}
               >
                 <ScreenShareIcon active={screenSharing} />
+                <span>{screenSharing ? "Stop Share" : "Share Screen"}</span>
               </button>
 
               <button
-                className="callControlButton hangup"
+                className="discordControlButton disconnect"
                 type="button"
                 title="Disconnect"
                 onClick={endCall}
               >
                 <HangupIcon />
+                <span>Disconnect</span>
               </button>
-            </div>
+            </footer>
 
             <div className="hiddenRealtimeMeeting" aria-hidden="true">
               {React.createElement("rtk-meeting", {

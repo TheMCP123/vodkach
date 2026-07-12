@@ -73,9 +73,128 @@ export function requireRealtimeConfig(env) {
   return { accountId, appId, token };
 }
 
-export async function realtimeRequest(env, path, options = {}) {
-  const { accountId, appId, token } = requireRealtimeConfig(env);
+let cachedResolvedAppId = null;
+
+function extractApiMessage(data, rawText = "") {
+  const candidates = [
+    ...(Array.isArray(data?.errors) ? data.errors : []),
+    data?.error,
+    data?.message
+  ].filter(Boolean);
+
+  const parts = [];
+
+  for (const item of candidates) {
+    if (typeof item === "string") {
+      parts.push(item);
+      continue;
+    }
+
+    if (item && typeof item === "object") {
+      if (typeof item.message === "string") {
+        parts.push(item.message);
+      } else if (typeof item.detail === "string") {
+        parts.push(item.detail);
+      } else {
+        try {
+          parts.push(JSON.stringify(item));
+        } catch {
+          // Ignore unserializable API error values.
+        }
+      }
+    }
+  }
+
+  return parts.filter(Boolean).join("; ") || rawText || "Unknown RealtimeKit error";
+}
+
+async function parseCloudflareResponse(response) {
+  const rawText = await response.text();
+  let data = {};
+
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    data = { error: rawText };
+  }
+
+  return { response, data, rawText };
+}
+
+async function fetchRealtimeApps(accountId, token) {
   const response = await fetch(
+    `https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/apps?per_page=100`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`
+      }
+    }
+  );
+
+  const parsed = await parseCloudflareResponse(response);
+
+  if (!response.ok || parsed.data.success === false) {
+    throw new Error(
+      `Could not resolve RealtimeKit App ID: ${extractApiMessage(
+        parsed.data,
+        parsed.rawText
+      )} (HTTP ${response.status})`
+    );
+  }
+
+  const apps =
+    parsed.data.result ||
+    parsed.data.data ||
+    [];
+
+  return Array.isArray(apps) ? apps : [];
+}
+
+async function resolveRealtimeAppId(accountId, configuredAppId, token) {
+  if (cachedResolvedAppId) return cachedResolvedAppId;
+
+  const apps = await fetchRealtimeApps(accountId, token);
+
+  const exactId = apps.find((app) => app?.id === configuredAppId);
+  if (exactId?.id) {
+    cachedResolvedAppId = exactId.id;
+    return cachedResolvedAppId;
+  }
+
+  const vodkachApp = apps.find(
+    (app) => String(app?.name || "").trim().toLowerCase() === "vodkach"
+  );
+
+  if (vodkachApp?.id) {
+    cachedResolvedAppId = vodkachApp.id;
+    return cachedResolvedAppId;
+  }
+
+  if (apps.length === 1 && apps[0]?.id) {
+    cachedResolvedAppId = apps[0].id;
+    return cachedResolvedAppId;
+  }
+
+  const names = apps
+    .map((app) => app?.name)
+    .filter(Boolean)
+    .join(", ");
+
+  throw new Error(
+    names
+      ? `RealtimeKit App ID is incorrect. Available apps: ${names}`
+      : "No RealtimeKit apps were found in this Cloudflare account."
+  );
+}
+
+async function performRealtimeRequest(
+  accountId,
+  appId,
+  token,
+  path,
+  options
+) {
+  return fetch(
     `https://api.cloudflare.com/client/v4/accounts/${accountId}/realtime/kit/${appId}${path}`,
     {
       ...options,
@@ -86,27 +205,48 @@ export async function realtimeRequest(env, path, options = {}) {
       }
     }
   );
+}
 
-  const rawText = await response.text();
-  let data = {};
+export async function realtimeRequest(env, path, options = {}) {
+  const {
+    accountId,
+    appId: configuredAppId,
+    token
+  } = requireRealtimeConfig(env);
 
-  try {
-    data = rawText ? JSON.parse(rawText) : {};
-  } catch {
-    data = { error: rawText };
+  let appId = cachedResolvedAppId || configuredAppId;
+  let response = await performRealtimeRequest(
+    accountId,
+    appId,
+    token,
+    path,
+    options
+  );
+
+  if (response.status === 404) {
+    appId = await resolveRealtimeAppId(
+      accountId,
+      configuredAppId,
+      token
+    );
+
+    response = await performRealtimeRequest(
+      accountId,
+      appId,
+      token,
+      path,
+      options
+    );
   }
 
+  const { data, rawText } = await parseCloudflareResponse(response);
+
   if (!response.ok || data.success === false) {
-    const apiMessage =
-      data.errors?.map((item) => item?.message).filter(Boolean).join("; ") ||
-      data.message ||
-      data.error ||
-      rawText ||
-      "Unknown RealtimeKit error";
+    const apiMessage = extractApiMessage(data, rawText);
 
     if (response.status === 400 && /auth/i.test(apiMessage)) {
       throw new Error(
-        "RealtimeKit authentication failed. Recreate the API Token with Account - Realtime - Realtime Admin, then replace CLOUDFLARE_REALTIME_API_TOKEN in the Production environment."
+        "RealtimeKit authentication failed. Check the Production API Token."
       );
     }
 

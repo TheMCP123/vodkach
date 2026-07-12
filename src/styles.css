@@ -5398,3 +5398,113 @@ html.vodkachWebHost .refinedCreateCard {
 .composerInputRow > button {
   margin-bottom: 1px;
 }
+
+
+/* Patch 059: profile avatar position, composer scrollbar, text formatting UI */
+
+.profileBanner {
+  position: relative !important;
+  height: 112px !important;
+  min-height: 112px !important;
+}
+
+.memberProfileBody {
+  position: relative !important;
+  padding: 58px 18px 22px !important;
+}
+
+.memberProfileAvatarWrap {
+  position: absolute !important;
+  left: 18px !important;
+  top: -50px !important;
+  width: 86px !important;
+  height: 86px !important;
+  margin: 0 !important;
+  border: 6px solid #121316 !important;
+  border-radius: 20px !important;
+  background: #121316 !important;
+  z-index: 3 !important;
+}
+
+.memberProfileAvatarWrap > img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 14px !important;
+  object-fit: cover !important;
+}
+
+.memberProfileBody h2.nameWithBadge {
+  margin-top: 0 !important;
+}
+
+.composerInputRow textarea {
+  scrollbar-width: thin;
+  scrollbar-color: #41454c transparent;
+}
+
+.composerInputRow textarea::-webkit-scrollbar {
+  width: 8px;
+}
+
+.composerInputRow textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.composerInputRow textarea::-webkit-scrollbar-thumb {
+  min-height: 28px;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #41454c;
+  background-clip: padding-box;
+}
+
+.composerInputRow textarea::-webkit-scrollbar-thumb:hover {
+  background: #545961;
+  background-clip: padding-box;
+}
+
+.textFormatMenu {
+  position: fixed;
+  z-index: 2600;
+  height: 42px;
+  padding: 4px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #111216;
+  border: 1px solid rgba(255,255,255,.08);
+  box-shadow: 0 16px 42px rgba(0,0,0,.5);
+}
+
+.textFormatMenu button {
+  width: 38px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  display: grid;
+  place-items: center;
+  color: #b8bdc5;
+  background: transparent;
+}
+
+.textFormatMenu button:hover {
+  color: #fff;
+  background: #2b2d31;
+}
+
+.formatIcon {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.textFormatMenu button:first-child .formatIcon {
+  fill: currentColor;
+  stroke: none;
+}

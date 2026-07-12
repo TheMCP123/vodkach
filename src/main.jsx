@@ -439,6 +439,53 @@ function AvatarWithStatus({
   );
 }
 
+
+function BoldFormatIcon() {
+  return (
+    <svg className="formatIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 4h6.5a4 4 0 0 1 0 8H7z" />
+      <path d="M7 12h7a4 4 0 0 1 0 8H7z" />
+    </svg>
+  );
+}
+
+function ItalicFormatIcon() {
+  return (
+    <svg className="formatIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M10 4h8M6 20h8M14 4 10 20" />
+    </svg>
+  );
+}
+
+function StrikeFormatIcon() {
+  return (
+    <svg className="formatIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 7.5c.8-2 2.6-3.1 5.2-3.1 2.2 0 4 .8 5.2 2.3" />
+      <path d="M8.2 16.4c1 2.1 2.7 3.2 5.2 3.2 2.4 0 4.1-.9 5.1-2.7" />
+      <path d="M4 12h16" />
+    </svg>
+  );
+}
+
+function UnderlineFormatIcon() {
+  return (
+    <svg className="formatIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M7 4v7a5 5 0 0 0 10 0V4" />
+      <path d="M5 21h14" />
+    </svg>
+  );
+}
+
+function SpoilerFormatIcon() {
+  return (
+    <svg className="formatIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M2.8 12s3.1-5.5 9.2-5.5S21.2 12 21.2 12 18.1 17.5 12 17.5 2.8 12 2.8 12Z" />
+      <circle cx="12" cy="12" r="2.4" />
+      <path d="m4 4 16 16" />
+    </svg>
+  );
+}
+
 function VerifiedBadge({ className = "" }) {
   return (
     <span
@@ -528,6 +575,7 @@ function WebApp() {
   const [userMenu, setUserMenu] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [chatActionsOpen, setChatActionsOpen] = useState(false);
+  const [textFormatMenu, setTextFormatMenu] = useState(null);
   const [saveCooldownUntil, setSaveCooldownUntil] = useState(0);
   const [clientLocation, setClientLocation] = useState({
     country: "",
@@ -1152,6 +1200,7 @@ function WebApp() {
       setUserMenu(null);
       setChatActionsOpen(false);
       setStatusMenuOpen(false);
+      setTextFormatMenu(null);
     }
 
     window.addEventListener("click", closeMenu);
@@ -1842,6 +1891,53 @@ function WebApp() {
     setChatText(message.body_ciphertext || "");
     requestAnimationFrame(() => {
       document.querySelector(".composerForm textarea")?.focus();
+    });
+  }
+
+  function applyTextFormatting(type) {
+    const textarea = document.querySelector(".composerForm textarea");
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = chatText.slice(start, end);
+
+    if (!selected) {
+      setTextFormatMenu(null);
+      return;
+    }
+
+    const wrappers = {
+      bold: ["**", "**"],
+      italic: ["*", "*"],
+      strike: ["~~", "~~"],
+      underline: ["__", "__"],
+      spoiler: ["||", "||"]
+    };
+
+    const [before, after] = wrappers[type] || ["", ""];
+    const nextText =
+      chatText.slice(0, start) +
+      before +
+      selected +
+      after +
+      chatText.slice(end);
+
+    if (Array.from(nextText).length > 2000) {
+      setUiError("Formatted message would exceed the 2000 character limit.");
+      setTextFormatMenu(null);
+      return;
+    }
+
+    setChatText(nextText);
+    setTextFormatMenu(null);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        end + before.length
+      );
     });
   }
 
@@ -2907,6 +3003,21 @@ function WebApp() {
                       event.currentTarget.form?.requestSubmit();
                     }
                   }}
+                  onContextMenu={(event) => {
+                    const element = event.currentTarget;
+                    const start = element.selectionStart;
+                    const end = element.selectionEnd;
+
+                    if (start === end) return;
+
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    setTextFormatMenu({
+                      x: Math.min(event.clientX, window.innerWidth - 250),
+                      y: Math.min(event.clientY, window.innerHeight - 70)
+                    });
+                  }}
                   placeholder={
                     editingMessage ? "Edit message" : `Message ${activeTitle}`
                   }
@@ -2919,6 +3030,33 @@ function WebApp() {
               </div>
             </form>
           </>
+        )}
+
+        {textFormatMenu && (
+          <div
+            className="textFormatMenu"
+            style={{
+              left: textFormatMenu.x,
+              top: textFormatMenu.y
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" title="Bold" onClick={() => applyTextFormatting("bold")}>
+              <BoldFormatIcon />
+            </button>
+            <button type="button" title="Italic" onClick={() => applyTextFormatting("italic")}>
+              <ItalicFormatIcon />
+            </button>
+            <button type="button" title="Strikethrough" onClick={() => applyTextFormatting("strike")}>
+              <StrikeFormatIcon />
+            </button>
+            <button type="button" title="Underline" onClick={() => applyTextFormatting("underline")}>
+              <UnderlineFormatIcon />
+            </button>
+            <button type="button" title="Spoiler" onClick={() => applyTextFormatting("spoiler")}>
+              <SpoilerFormatIcon />
+            </button>
+          </div>
         )}
 
         {messageMenu && (
@@ -3633,6 +3771,7 @@ function AdminApp() {
   const [userMenu, setUserMenu] = useState(null);
   const [confirmDialog, setConfirmDialog] = useState(null);
   const [chatActionsOpen, setChatActionsOpen] = useState(false);
+  const [textFormatMenu, setTextFormatMenu] = useState(null);
   const [saveCooldownUntil, setSaveCooldownUntil] = useState(0);
   const [clientLocation, setClientLocation] = useState({
     country: "",

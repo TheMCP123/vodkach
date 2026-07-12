@@ -528,6 +528,108 @@ function splitTextWithLinks(text) {
   return parts;
 }
 
+
+function SpoilerText({ children }) {
+  const [revealed, setRevealed] = useState(false);
+
+  return (
+    <button
+      className={revealed ? "spoilerText revealed" : "spoilerText"}
+      type="button"
+      onClick={() => setRevealed((value) => !value)}
+    >
+      {children}
+    </button>
+  );
+}
+
+function renderFormattedText(text, onOpenLink, keyPrefix = "part") {
+  const value = String(text || "");
+
+  const patterns = [
+    { type: "spoiler", regex: /\|\|([^|\n]+)\|\|/ },
+    { type: "bold", regex: /\*\*([^*\n]+)\*\*/ },
+    { type: "strike", regex: /~~([^~\n]+)~~/ },
+    { type: "underline", regex: /__([^_\n]+)__/ },
+    { type: "italic", regex: /\*([^*\n]+)\*/ },
+    {
+      type: "link",
+      regex: /((?:https?:\/\/)?(?:[a-z0-9-]+\.)+[a-z]{2,}(?:\/[^\s]*)?)/i
+    }
+  ];
+
+  let winner = null;
+
+  for (const pattern of patterns) {
+    const match = pattern.regex.exec(value);
+    if (!match) continue;
+
+    if (
+      !winner ||
+      match.index < winner.match.index ||
+      (match.index === winner.match.index &&
+        match[0].length > winner.match[0].length)
+    ) {
+      winner = { ...pattern, match };
+    }
+  }
+
+  if (!winner) return [value];
+
+  const before = value.slice(0, winner.match.index);
+  const after = value.slice(
+    winner.match.index + winner.match[0].length
+  );
+  const content = winner.match[1];
+  const nodes = [];
+
+  if (before) {
+    nodes.push(
+      ...renderFormattedText(before, onOpenLink, `${keyPrefix}_before`)
+    );
+  }
+
+  const key = `${keyPrefix}_${winner.match.index}_${winner.type}`;
+
+  if (winner.type === "bold") {
+    nodes.push(<strong key={key} className="formattedBold">{content}</strong>);
+  } else if (winner.type === "italic") {
+    nodes.push(<em key={key}>{content}</em>);
+  } else if (winner.type === "strike") {
+    nodes.push(<s key={key}>{content}</s>);
+  } else if (winner.type === "underline") {
+    nodes.push(<u key={key}>{content}</u>);
+  } else if (winner.type === "spoiler") {
+    nodes.push(<SpoilerText key={key}>{content}</SpoilerText>);
+  } else if (winner.type === "link") {
+    const href = /^https?:\/\//i.test(content)
+      ? content
+      : `https://${content}`;
+
+    nodes.push(
+      <button
+        key={key}
+        className="messageLink"
+        type="button"
+        onClick={(event) => {
+          event.stopPropagation();
+          onOpenLink({ href, label: content });
+        }}
+      >
+        {content}
+      </button>
+    );
+  }
+
+  if (after) {
+    nodes.push(
+      ...renderFormattedText(after, onOpenLink, `${keyPrefix}_after`)
+    );
+  }
+
+  return nodes;
+}
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -1894,12 +1996,37 @@ function WebApp() {
     });
   }
 
+  function updateTextSelectionMenu(event) {
+    const textarea = event.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    if (start === end) {
+      setTextFormatMenu(null);
+      return;
+    }
+
+    const rect = textarea.getBoundingClientRect();
+    const estimatedX = Math.min(
+      rect.left + rect.width / 2 - 105,
+      window.innerWidth - 230
+    );
+    const estimatedY = Math.max(12, rect.top - 50);
+
+    setTextFormatMenu({
+      x: estimatedX,
+      y: estimatedY,
+      start,
+      end
+    });
+  }
+
   function applyTextFormatting(type) {
     const textarea = document.querySelector(".composerForm textarea");
     if (!textarea) return;
 
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
+    const start = textFormatMenu?.start ?? textarea.selectionStart;
+    const end = textFormatMenu?.end ?? textarea.selectionEnd;
     const selected = chatText.slice(start, end);
 
     if (!selected) {
@@ -2413,7 +2540,13 @@ function WebApp() {
     "Select a chat";
 
   return (
-    <main className="appShell">
+    <main
+      className={`appShell ${
+        view === "chat" && activeChat?.other_user
+          ? "withProfile"
+          : "withoutProfile"
+      }`}
+    >
       <aside className="appServers">
         <button className="serverButton homeButton" title="Home">
           <Home size={18} />
@@ -2526,7 +2659,11 @@ function WebApp() {
           {statusMenuOpen && (
             <div
               className="statusPicker"
-              onClick={(event) => event.stopPropagation()}
+              onMouseDown={(event) => {
+              event.preventDefault();
+              event.stopPropagation();
+            }}
+            onClick={(event) => event.stopPropagation()}
             >
               {[
                 ["online", "Online"],
@@ -3002,21 +3139,20 @@ function WebApp() {
                       event.preventDefault();
                       event.currentTarget.form?.requestSubmit();
                     }
+                  }}                  onSelect={updateTextSelectionMenu}
+                  onMouseUp={updateTextSelectionMenu}
+                  onKeyUp={(event) => {
+                    if (event.key !== "Enter") {
+                      updateTextSelectionMenu(event);
+                    }
                   }}
-                  onContextMenu={(event) => {
-                    const element = event.currentTarget;
-                    const start = element.selectionStart;
-                    const end = element.selectionEnd;
-
-                    if (start === end) return;
-
-                    event.preventDefault();
-                    event.stopPropagation();
-
-                    setTextFormatMenu({
-                      x: Math.min(event.clientX, window.innerWidth - 250),
-                      y: Math.min(event.clientY, window.innerHeight - 70)
-                    });
+                  onBlur={() => {
+                    window.setTimeout(() => {
+                      const active = document.activeElement;
+                      if (!active?.closest?.(".textFormatMenu")) {
+                        setTextFormatMenu(null);
+                      }
+                    }, 80);
                   }}
                   placeholder={
                     editingMessage ? "Edit message" : `Message ${activeTitle}`
@@ -3659,6 +3795,7 @@ function WebApp() {
         )}
       </section>
 
+      {view === "chat" && activeChat?.other_user && (
       <aside className="memberProfilePanel">
         {activeChat?.other_user ? (
           <>
@@ -3732,6 +3869,7 @@ function WebApp() {
           <div className="profilePanelEmpty">Open a chat to view profile</div>
         )}
       </aside>
+      )}
     </main>
   );
 }
@@ -4345,26 +4483,7 @@ function AppMessage({
             message.optimistic ? "pendingMessageText" : "sentMessageText"
           }
         >
-          {splitTextWithLinks(text).map((part, index) =>
-            part.type === "link" ? (
-              <button
-                key={`${part.value}_${index}`}
-                className="messageLink"
-                type="button"
-                onClick={(event) => {
-                  event.stopPropagation();
-                  onOpenLink({
-                    href: part.href,
-                    label: part.value
-                  });
-                }}
-              >
-                {part.value}
-              </button>
-            ) : (
-              <span key={`${part.value}_${index}`}>{part.value}</span>
-            )
-          )}
+          {renderFormattedText(text, onOpenLink)}
           {message.edited_at && (
             <span className="editedLabel">Edited</span>
           )}

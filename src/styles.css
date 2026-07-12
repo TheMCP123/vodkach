@@ -5508,3 +5508,206 @@ html.vodkachWebHost .refinedCreateCard {
   fill: currentColor;
   stroke: none;
 }
+
+
+/* Patch 060: automatic formatting toolbar, fixed status picker and profiles */
+
+/* Grid only reserves right profile while a direct chat is open */
+.appShell.withProfile {
+  grid-template-columns: 64px 232px minmax(0, 1fr) 260px !important;
+}
+
+.appShell.withoutProfile {
+  grid-template-columns: 64px 232px minmax(0, 1fr) !important;
+}
+
+.appShell.withoutProfile .appChat {
+  grid-column: 3 !important;
+}
+
+/* Automatic formatting toolbar */
+.textFormatMenu {
+  transform-origin: bottom center;
+  animation: formatToolbarIn .1s ease-out;
+}
+
+@keyframes formatToolbarIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.formattedBold {
+  font-weight: 800;
+}
+
+.spoilerText {
+  display: inline;
+  padding: 1px 3px;
+  border: 0;
+  border-radius: 3px;
+  color: transparent;
+  background: #202225;
+  font: inherit;
+  line-height: inherit;
+  vertical-align: baseline;
+}
+
+.spoilerText:hover,
+.spoilerText.revealed {
+  color: inherit;
+  background: #303339;
+}
+
+/* Status picker gets fixed icon geometry independent from avatar statuses */
+.statusPicker {
+  width: 220px !important;
+  padding: 7px !important;
+  border-radius: 9px !important;
+  gap: 2px !important;
+}
+
+.statusPicker button {
+  min-height: 40px !important;
+  padding: 0 10px !important;
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 10px !important;
+}
+
+.statusPicker button > span:last-child {
+  font-size: .8rem !important;
+  line-height: 1.1 !important;
+  text-align: left !important;
+}
+
+.statusPicker .statusDot,
+.statusPicker .statusMoon,
+.statusPicker .statusDnd {
+  position: relative !important;
+  width: 14px !important;
+  height: 14px !important;
+  min-width: 14px !important;
+  min-height: 14px !important;
+  margin: 0 !important;
+  display: block !important;
+  border-radius: 50% !important;
+  box-shadow: none !important;
+}
+
+.statusPicker .statusMoon::after {
+  width: 13px !important;
+  height: 13px !important;
+  left: 6px !important;
+  top: -4px !important;
+  background: #111216 !important;
+}
+
+.statusPicker .statusDnd > span {
+  left: 3px !important;
+  right: 3px !important;
+  top: 6px !important;
+  height: 2px !important;
+}
+
+/* Right profile rebuilt */
+.memberProfilePanel {
+  grid-column: 4 !important;
+  position: relative !important;
+  height: 100vh !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  background: #121316 !important;
+}
+
+.profileBanner {
+  height: 108px !important;
+  min-height: 108px !important;
+}
+
+.memberProfileBody {
+  position: relative !important;
+  padding: 58px 18px 22px !important;
+}
+
+.memberProfileAvatarWrap {
+  position: absolute !important;
+  left: 18px !important;
+  top: -48px !important;
+  width: 88px !important;
+  height: 88px !important;
+  border: 6px solid #121316 !important;
+  border-radius: 20px !important;
+  background: #121316 !important;
+}
+
+.memberProfileAvatarWrap > img {
+  border-radius: 14px !important;
+}
+
+.memberProfileBody h2.nameWithBadge {
+  margin: 0 0 4px !important;
+  color: #fff !important;
+  font-size: 1.28rem !important;
+}
+
+/* Clicked user profile modal rebuilt */
+.profileModal {
+  width: min(430px, calc(100vw - 32px)) !important;
+  max-height: calc(100vh - 32px) !important;
+  overflow-y: auto !important;
+  border-radius: 12px !important;
+}
+
+.profileModalBanner {
+  height: 116px !important;
+  min-height: 116px !important;
+}
+
+.profileModalBody {
+  position: relative !important;
+  padding: 62px 22px 22px !important;
+}
+
+.profileModalAvatar {
+  position: absolute !important;
+  left: 22px !important;
+  top: -52px !important;
+  width: 96px !important;
+  height: 96px !important;
+  border: 7px solid #17181c !important;
+  border-radius: 22px !important;
+  background: #17181c !important;
+}
+
+.profileModalAvatar > img {
+  border-radius: 15px !important;
+}
+
+.profileModalBody h2.nameWithBadge {
+  margin: 0 0 4px !important;
+  color: #fff !important;
+  font-size: 1.45rem !important;
+}
+
+.profileModal .memberHandleLine {
+  margin-bottom: 16px !important;
+}
+
+.profileModalSection {
+  margin-top: 18px !important;
+}
+
+/* Larger chat names */
+.messageMeta .messageNameButton,
+.messageMeta .nameWithBadge {
+  color: #fff !important;
+  font-size: 1.22rem !important;
+  font-weight: 760 !important;
+}

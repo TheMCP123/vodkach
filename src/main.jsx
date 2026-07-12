@@ -12,6 +12,7 @@ import {
   Plus,
   Search,
   Settings,
+  ShoppingBag,
   ShieldCheck,
   UserRound
 } from "lucide-react";
@@ -644,6 +645,94 @@ function renderFormattedText(text, onOpenLink, keyPrefix = "part") {
   return nodes;
 }
 
+
+function hasLiveFormatting(text) {
+  return /(\*\*[^*\n]+\*\*|\*[^*\n]+\*|~~[^~\n]+~~|__[^_\n]+__|\|\|[^|\n]+\|\|)/.test(
+    String(text || "")
+  );
+}
+
+function renderLiveFormatting(text, keyPrefix = "preview") {
+  const value = String(text || "");
+  const patterns = [
+    { type: "spoiler", regex: /\|\|([^|\n]+)\|\|/ },
+    { type: "bold", regex: /\*\*([^*\n]+)\*\*/ },
+    { type: "strike", regex: /~~([^~\n]+)~~/ },
+    { type: "underline", regex: /__([^_\n]+)__/ },
+    { type: "italic", regex: /\*([^*\n]+)\*/ }
+  ];
+
+  let winner = null;
+
+  for (const pattern of patterns) {
+    const match = pattern.regex.exec(value);
+    if (!match) continue;
+
+    if (
+      !winner ||
+      match.index < winner.match.index ||
+      (match.index === winner.match.index &&
+        match[0].length > winner.match[0].length)
+    ) {
+      winner = { ...pattern, match };
+    }
+  }
+
+  if (!winner) return [value];
+
+  const before = value.slice(0, winner.match.index);
+  const after = value.slice(winner.match.index + winner.match[0].length);
+  const content = winner.match[1];
+  const markers = {
+    bold: "**",
+    italic: "*",
+    strike: "~~",
+    underline: "__",
+    spoiler: "||"
+  };
+  const marker = markers[winner.type];
+  const key = `${keyPrefix}_${winner.match.index}_${winner.type}`;
+  const nodes = [];
+
+  if (before) {
+    nodes.push(...renderLiveFormatting(before, `${keyPrefix}_before`));
+  }
+
+  nodes.push(
+    <span key={`${key}_open`} className="liveFormatMarker">
+      {marker}
+    </span>
+  );
+
+  if (winner.type === "bold") {
+    nodes.push(<strong key={key}>{content}</strong>);
+  } else if (winner.type === "italic") {
+    nodes.push(<em key={key}>{content}</em>);
+  } else if (winner.type === "strike") {
+    nodes.push(<s key={key}>{content}</s>);
+  } else if (winner.type === "underline") {
+    nodes.push(<u key={key}>{content}</u>);
+  } else {
+    nodes.push(
+      <span key={key} className="livePreviewSpoiler">
+        {content}
+      </span>
+    );
+  }
+
+  nodes.push(
+    <span key={`${key}_close`} className="liveFormatMarker">
+      {marker}
+    </span>
+  );
+
+  if (after) {
+    nodes.push(...renderLiveFormatting(after, `${keyPrefix}_after`));
+  }
+
+  return nodes;
+}
+
 function WebApp() {
   const [auth, setAuth] = useState({ loading: true, authenticated: false, user: null });
   const [username, setUsername] = useState("");
@@ -663,6 +752,9 @@ function WebApp() {
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
   const [loadingNotes, setLoadingNotes] = useState(false);
+  const [noteMenu, setNoteMenu] = useState(null);
+  const [noteFormatMenu, setNoteFormatMenu] = useState(null);
+  const [replyingToPoll, setReplyingToPoll] = useState(null);
   const [pinnedMessages, setPinnedMessages] = useState([]);
   const [pinsOpen, setPinsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -1300,7 +1392,110 @@ function WebApp() {
     }
   }
 
+
+  async function toggleNotePin(note) {
+    setNoteMenu(null);
+
+    try {
+      const data = await api("/api/notes/pin", {
+        method: "POST",
+        body: JSON.stringify({
+          note_id: note.id,
+          pinned: !note.pinned_at
+        })
+      });
+
+      setNotes((current) =>
+        current
+          .map((item) =>
+            item.id === note.id
+              ? { ...item, pinned_at: data.pinned_at || null }
+              : item
+          )
+          .sort((left, right) => {
+            if (Boolean(left.pinned_at) !== Boolean(right.pinned_at)) {
+              return left.pinned_at ? -1 : 1;
+            }
+
+            return new Date(left.created_at) - new Date(right.created_at);
+          })
+      );
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  function openNoteFormatMenu(event) {
+    const textarea = event.currentTarget;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+
+    if (start === end) {
+      setNoteFormatMenu(null);
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    setNoteFormatMenu({
+      x: Math.min(event.clientX, window.innerWidth - 220),
+      y: Math.min(event.clientY, window.innerHeight - 54),
+      start,
+      end
+    });
+  }
+
+  function applyNoteFormatting(type) {
+    const textarea = document.querySelector(".notesComposer textarea");
+    if (!textarea) return;
+
+    const start = noteFormatMenu?.start ?? textarea.selectionStart;
+    const end = noteFormatMenu?.end ?? textarea.selectionEnd;
+    const selected = noteText.slice(start, end);
+
+    if (!selected) {
+      setNoteFormatMenu(null);
+      return;
+    }
+
+    const wrappers = {
+      bold: ["**", "**"],
+      italic: ["*", "*"],
+      strike: ["~~", "~~"],
+      underline: ["__", "__"],
+      spoiler: ["||", "||"]
+    };
+
+    const [before, after] = wrappers[type] || ["", ""];
+    const next =
+      noteText.slice(0, start) +
+      before +
+      selected +
+      after +
+      noteText.slice(end);
+
+    if (Array.from(next).length > 4000) {
+      setUiError("Formatted note would exceed 4000 characters.");
+      setNoteFormatMenu(null);
+      return;
+    }
+
+    setNoteText(next);
+    setNoteFormatMenu(null);
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      textarea.setSelectionRange(
+        start + before.length,
+        end + before.length
+      );
+    });
+  }
+
   async function deleteNote(noteId) {
+    setNoteMenu(null);
+
     try {
       await api("/api/notes/delete", {
         method: "POST",
@@ -1650,6 +1845,27 @@ function WebApp() {
 
     return () => window.clearInterval(timer);
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
+
+  useEffect(() => {
+    function handlePollReply(event) {
+      const poll = event.detail?.poll;
+      if (!poll) return;
+
+      setEditingMessage(null);
+      setReplyingTo(null);
+      setReplyingToPoll(poll);
+
+      requestAnimationFrame(() => {
+        document.querySelector(".composerForm textarea")?.focus();
+      });
+    }
+
+    window.addEventListener("vodkach:poll-reply", handlePollReply);
+
+    return () => {
+      window.removeEventListener("vodkach:poll-reply", handlePollReply);
+    };
+  }, []);
 
   useEffect(() => {
     if (!activeChat?.id) {
@@ -2186,7 +2402,11 @@ function WebApp() {
   async function sendMessage(event) {
     event.preventDefault();
 
-    const text = chatText.trim();
+    const rawText = chatText.trim();
+    const pollPrefix = replyingToPoll
+      ? `> Poll: ${replyingToPoll.question}\n`
+      : "";
+    const text = `${pollPrefix}${rawText}`.trim();
     const chatId = activeChat?.id;
 
     if (editingMessage) {
@@ -2231,6 +2451,7 @@ function WebApp() {
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
     setReplyingTo(null);
+    setReplyingToPoll(null);
     requestAnimationFrame(() => {
       const textarea = document.querySelector(".composerForm textarea");
       if (textarea) {
@@ -2277,7 +2498,7 @@ function WebApp() {
       setMessages((current) =>
         current.filter((message) => message.id !== optimisticId)
       );
-      setChatText((current) => current || text);
+      setChatText((current) => current || rawText);
       setUiError(error.message);
     } finally {
       sendingMessageRef.current = false;
@@ -2309,7 +2530,10 @@ function WebApp() {
           </div>
           <h1>Welcome back</h1>
           <p>Sign in with Google to access the private messenger.</p>
-          <a className="discordPrimaryButton" href="/api/auth/google/start">
+          <a
+            className="discordPrimaryButton authGoogleButton"
+            href="/api/auth/google/start"
+          >
             Continue with Google
           </a>
         </div>
@@ -2688,7 +2912,7 @@ function WebApp() {
           </button>
 
           <button className="sidebarNavButton" type="button">
-            <FileText size={16} />
+            <ShoppingBag size={16} />
             Shop
           </button>
 
@@ -2701,7 +2925,7 @@ function WebApp() {
               setView("notes");
             }}
           >
-            <MessageCircle size={16} />
+            <FileText size={16} />
             Notes
           </button>
         </div>
@@ -3070,7 +3294,20 @@ function WebApp() {
               )}
 
               {notes.map((note) => (
-                <article key={note.id} className="noteMessage">
+                <article
+                  key={note.id}
+                  className={note.pinned_at ? "noteMessage pinned" : "noteMessage"}
+                  onContextMenu={(event) => {
+                    event.preventDefault();
+                    event.stopPropagation();
+
+                    setNoteMenu({
+                      note,
+                      x: Math.min(event.clientX, window.innerWidth - 210),
+                      y: Math.min(event.clientY, window.innerHeight - 110)
+                    });
+                  }}
+                >
                   <img
                     src={getAvatar(auth.user)}
                     alt=""
@@ -3080,21 +3317,26 @@ function WebApp() {
                     <header>
                       <strong>{currentDisplayName}</strong>
                       <span>{formatLocalTime(note.created_at)}</span>
+                      {note.pinned_at ? (
+                        <span className="notePinnedLabel">
+                          <Pin size={11} />
+                          Pinned
+                        </span>
+                      ) : null}
                     </header>
-                    <p>{note.body}</p>
+                    <p>{renderFormattedText(note.body, (link) => setLinkWarning(link))}</p>
                   </div>
-                  <button
-                    type="button"
-                    title="Delete note"
-                    onClick={() => deleteNote(note.id)}
-                  >
-                    ×
-                  </button>
                 </article>
               ))}
             </div>
 
             <form className="notesComposer" onSubmit={createNote}>
+              {hasLiveFormatting(noteText) ? (
+                <div className="composerLivePreview notesLivePreview">
+                  {renderLiveFormatting(noteText, "note_preview")}
+                </div>
+              ) : null}
+
               <textarea
                 value={noteText}
                 maxLength={4000}
@@ -3116,6 +3358,15 @@ function WebApp() {
                     event.currentTarget.form?.requestSubmit();
                   }
                 }}
+                onContextMenu={openNoteFormatMenu}
+                onBlur={() => {
+                  window.setTimeout(() => {
+                    const active = document.activeElement;
+                    if (!active?.closest?.(".noteFormatMenu")) {
+                      setNoteFormatMenu(null);
+                    }
+                  }, 80);
+                }}
               />
               <button type="submit" disabled={!noteText.trim()}>
                 Save
@@ -3134,6 +3385,16 @@ function WebApp() {
               </div>
               <div className="chatHeaderActions">
                 <button
+                  className="chatCallButton"
+                  type="button"
+                  aria-label="Start call"
+                  title="Start call"
+                  onClick={() => callSystemRef.current?.start()}
+                >
+                  <CallIcon />
+                </button>
+
+                <button
                   className={pinsOpen ? "chatPinButton active" : "chatPinButton"}
                   type="button"
                   aria-label="Pinned messages"
@@ -3144,16 +3405,6 @@ function WebApp() {
                   {pinnedMessages.length > 0 ? (
                     <span>{pinnedMessages.length}</span>
                   ) : null}
-                </button>
-
-                <button
-                  className="chatCallButton"
-                  type="button"
-                  aria-label="Start call"
-                  title="Start call"
-                  onClick={() => callSystemRef.current?.start()}
-                >
-                  <CallIcon />
                 </button>
                 <button
                   type="button"
@@ -3362,20 +3613,23 @@ function WebApp() {
             </div>
 
             <form className="messageComposer composerForm" onSubmit={sendMessage}>
-              {(replyingTo || editingMessage) && (
+              {(replyingTo || replyingToPoll || editingMessage) && (
                 <div className="composerContext">
                   <div>
                     <strong>
                       {editingMessage
                         ? "Editing message"
-                        : `Replying to ${
-                            replyingTo.sender?.display_name ||
-                            replyingTo.sender?.username ||
-                            "User"
-                          }`}
+                        : replyingToPoll
+                          ? "Replying to Poll"
+                          : `Replying to ${
+                              replyingTo.sender?.display_name ||
+                              replyingTo.sender?.username ||
+                              "User"
+                            }`}
                     </strong>
                     <span>
                       {(editingMessage?.body_ciphertext ||
+                        replyingToPoll?.question ||
                         replyingTo?.body_ciphertext ||
                         "").slice(0, 90)}
                     </span>
@@ -3384,6 +3638,7 @@ function WebApp() {
                     type="button"
                     onClick={() => {
                       setReplyingTo(null);
+                      setReplyingToPoll(null);
                       setEditingMessage(null);
                       setChatText("");
                     }}
@@ -3392,6 +3647,12 @@ function WebApp() {
                   </button>
                 </div>
               )}
+
+              {hasLiveFormatting(chatText) ? (
+                <div className="composerLivePreview">
+                  {renderLiveFormatting(chatText, "chat_preview")}
+                </div>
+              ) : null}
 
               <div className="composerInputRow">
                 <textarea
@@ -3471,6 +3732,57 @@ function WebApp() {
             </button>
             <button type="button" title="Spoiler" onClick={() => applyTextFormatting("spoiler")}>
               <SpoilerFormatIcon />
+            </button>
+          </div>
+        )}
+
+        {noteFormatMenu && (
+          <div
+            className="textFormatMenu noteFormatMenu"
+            style={{
+              left: noteFormatMenu.x,
+              top: noteFormatMenu.y
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" title="Bold" onClick={() => applyNoteFormatting("bold")}>
+              <BoldFormatIcon />
+            </button>
+            <button type="button" title="Italic" onClick={() => applyNoteFormatting("italic")}>
+              <ItalicFormatIcon />
+            </button>
+            <button type="button" title="Strikethrough" onClick={() => applyNoteFormatting("strike")}>
+              <StrikeFormatIcon />
+            </button>
+            <button type="button" title="Underline" onClick={() => applyNoteFormatting("underline")}>
+              <UnderlineFormatIcon />
+            </button>
+            <button type="button" title="Spoiler" onClick={() => applyNoteFormatting("spoiler")}>
+              <SpoilerFormatIcon />
+            </button>
+          </div>
+        )}
+
+        {noteMenu && (
+          <div
+            className="messageContextMenu noteContextMenu"
+            style={{
+              left: noteMenu.x,
+              top: noteMenu.y
+            }}
+            onClick={(event) => event.stopPropagation()}
+          >
+            <button type="button" onClick={() => toggleNotePin(noteMenu.note)}>
+              <Pin size={16} />
+              <span>{noteMenu.note.pinned_at ? "Unpin Note" : "Pin Note"}</span>
+            </button>
+            <button
+              className="danger"
+              type="button"
+              onClick={() => deleteNote(noteMenu.note.id)}
+            >
+              <DeleteActionIcon />
+              <span>Delete Note</span>
             </button>
           </div>
         )}
@@ -4743,6 +5055,7 @@ function AppMessage({
   return (
     <div
       id={`message_${message.id}`}
+      data-created-at={message.created_at || ""}
       className={[
         grouped ? "appMessage grouped" : "appMessage",
         message.optimistic ? "optimisticMessage messageSendingAnimation" : ""

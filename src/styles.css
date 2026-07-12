@@ -10489,3 +10489,361 @@ html.vodkachWebHost .refinedCreateCard {
     bottom: 8px !important;
   }
 }
+
+
+/* Patch 078: polished call handle, Notes formatting, timeline polls */
+
+/* Cleaner, nearly invisible call resize control */
+.callResizeHandle {
+  left: 50% !important;
+  bottom: 0 !important;
+  width: 34px !important;
+  height: 13px !important;
+  border-radius: 6px 6px 0 0 !important;
+  color: rgba(255,255,255,.16) !important;
+  background: rgba(255,255,255,.018) !important;
+  cursor: ns-resize !important;
+  touch-action: none !important;
+}
+
+.callResizeHandle:hover,
+body.resizingCallPanel .callResizeHandle {
+  color: rgba(255,255,255,.42) !important;
+  background: rgba(255,255,255,.04) !important;
+}
+
+.callResizeHandle svg {
+  width: 22px !important;
+  height: 10px !important;
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.35 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+body.resizingCallPanel {
+  cursor: ns-resize !important;
+  user-select: none !important;
+}
+
+/* Participants no longer overlap */
+.finalAvatarPair {
+  gap: 14px !important;
+}
+
+.finalCallAvatar + .finalCallAvatar {
+  margin-left: 0 !important;
+}
+
+.finalCallAvatar > span {
+  right: -6px !important;
+  bottom: -5px !important;
+  z-index: 3 !important;
+}
+
+/* Live Markdown preview */
+.composerLivePreview {
+  max-height: 72px !important;
+  padding: 7px 12px 5px !important;
+  border-bottom: 1px solid rgba(255,255,255,.055) !important;
+  overflow: auto !important;
+  color: #d8dade !important;
+  background: rgba(0,0,0,.12) !important;
+  font-family:
+    "gg sans",
+    "Noto Sans",
+    "Helvetica Neue",
+    Helvetica,
+    Arial,
+    sans-serif !important;
+  font-size: .8rem !important;
+  line-height: 1.25rem !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+}
+
+.liveFormatMarker {
+  color: #71767f !important;
+  font-weight: 500 !important;
+}
+
+.livePreviewSpoiler {
+  padding: 0 3px !important;
+  border-radius: 3px !important;
+  color: #d8dade !important;
+  background: #2b2d31 !important;
+}
+
+.messageComposer.composerForm {
+  display: grid !important;
+  grid-template-rows: auto auto !important;
+}
+
+.messageComposer .composerLivePreview {
+  margin: 0 !important;
+}
+
+.notesComposer {
+  grid-template-rows: auto auto !important;
+}
+
+.notesComposer .notesLivePreview {
+  grid-column: 1 / -1 !important;
+  margin: -6px -7px 0 -12px !important;
+  border-radius: 9px 9px 0 0 !important;
+}
+
+.noteMessage {
+  border-left: 2px solid transparent !important;
+}
+
+.noteMessage.pinned {
+  border-left-color: #8f949c !important;
+  background: rgba(255,255,255,.018) !important;
+}
+
+.notePinnedLabel {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  color: #858a92 !important;
+  font-size: .61rem !important;
+}
+
+.noteMessage > button {
+  display: none !important;
+}
+
+.noteContextMenu {
+  min-width: 176px !important;
+}
+
+/* Header controls: Call -> Pins -> More */
+.chatHeaderActions {
+  gap: 1px !important;
+}
+
+.chatHeaderActions > button {
+  width: 34px !important;
+  height: 34px !important;
+  margin: 0 !important;
+}
+
+/* Polls are mounted into the actual chronological timeline */
+.inlinePollFeed {
+  display: none !important;
+}
+
+.pollTimelineMount {
+  width: 100% !important;
+  margin: 2px 0 8px !important;
+  flex: 0 0 auto !important;
+}
+
+.pollTimelineMount .chatPollCard {
+  position: relative !important;
+  width: min(540px, calc(100% - 76px)) !important;
+  margin: 0 18px 0 58px !important;
+  padding: 11px 13px 12px 15px !important;
+  border: 0 !important;
+  border-left: 3px solid var(--poll-accent, #fc0303) !important;
+  border-radius: 0 9px 9px 0 !important;
+  background: #181a1f !important;
+  box-shadow: none !important;
+}
+
+.pollTimelineMount .inlinePollAuthor > img {
+  left: -49px !important;
+  top: 0 !important;
+  width: 38px !important;
+  height: 38px !important;
+  border-radius: 10px !important;
+}
+
+.pollTimelineMount .inlinePollHeader {
+  min-height: 34px !important;
+}
+
+.pollTimelineMount .chatPollCard > h3 {
+  margin: 8px 0 10px !important;
+  color: #f2f3f5 !important;
+  font-size: .94rem !important;
+  line-height: 1.25rem !important;
+}
+
+.pollTimelineMount .chatPollOptions {
+  display: grid !important;
+  gap: 6px !important;
+}
+
+.pollTimelineMount .chatPollOptions > button {
+  min-height: 35px !important;
+  border: 1px solid #34373e !important;
+  border-radius: 7px !important;
+  overflow: hidden !important;
+  background: #202228 !important;
+}
+
+.pollTimelineMount .chatPollOptions > button.selected {
+  border-color: var(--poll-accent, #fc0303) !important;
+}
+
+.pollTimelineMount .pollOptionFill {
+  background: color-mix(
+    in srgb,
+    var(--poll-accent, #fc0303) 18%,
+    transparent
+  ) !important;
+}
+
+.pollTimelineMount .pollCheck {
+  border-color: #565b64 !important;
+}
+
+.pollTimelineMount .chatPollOptions > button.selected .pollCheck {
+  border-color: var(--poll-accent, #fc0303) !important;
+  background: var(--poll-accent, #fc0303) !important;
+}
+
+.pollTimelineMount .chatPollCard > footer {
+  margin-top: 9px !important;
+}
+
+.pollContextMenu {
+  z-index: 15050 !important;
+}
+
+/* Poll accent customization */
+.pollAccentSetting {
+  grid-column: 1 / -1 !important;
+}
+
+.pollColorControl {
+  min-height: 38px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pollColorControl > button {
+  width: 22px !important;
+  height: 22px !important;
+  min-width: 22px !important;
+  padding: 0 !important;
+  border: 2px solid transparent !important;
+  border-radius: 50% !important;
+  background: var(--choice-color) !important;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.1) !important;
+}
+
+.pollColorControl > button.selected {
+  border-color: #fff !important;
+}
+
+.pollColorControl > input[type="color"] {
+  width: 28px !important;
+  height: 28px !important;
+  padding: 2px !important;
+  border: 1px solid #3a3d44 !important;
+  border-radius: 7px !important;
+  background: #111216 !important;
+}
+
+/* Dual screen share always keeps both streams visible */
+.finalShareLayout.dual .finalShareVideos {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+}
+
+.finalShareVideos > article {
+  min-height: 0 !important;
+}
+
+@media (max-width: 760px) {
+  .pollTimelineMount .chatPollCard {
+    width: calc(100% - 56px) !important;
+    margin-left: 48px !important;
+    margin-right: 8px !important;
+  }
+
+  .pollTimelineMount .inlinePollAuthor > img {
+    left: -42px !important;
+    width: 34px !important;
+    height: 34px !important;
+  }
+
+  .finalShareLayout.dual .finalShareVideos {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: repeat(2, minmax(0, 1fr)) !important;
+  }
+}
+
+
+/* Patch 079: emergency Google login interaction fix */
+
+.authScreen.discordAuthScreen {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483000 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-height: 100vh !important;
+  overflow: auto !important;
+  isolation: isolate !important;
+  pointer-events: auto !important;
+}
+
+.authScreen.discordAuthScreen::before,
+.authScreen.discordAuthScreen::after,
+.discordAuthCard::before,
+.discordAuthCard::after {
+  pointer-events: none !important;
+}
+
+.discordAuthCard {
+  position: relative !important;
+  z-index: 2 !important;
+  pointer-events: auto !important;
+}
+
+.discordAuthCard > * {
+  pointer-events: auto !important;
+}
+
+.authGoogleButton {
+  position: relative !important;
+  z-index: 20 !important;
+  width: 100% !important;
+  min-height: 42px !important;
+  margin-top: 4px !important;
+  border: 0 !important;
+  cursor: pointer !important;
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+.authGoogleButton:disabled {
+  pointer-events: auto !important;
+}
+
+body:has(.authScreen.discordAuthScreen) .vodkachCallOverlay,
+body:has(.authScreen.discordAuthScreen) .discordIncomingBanner,
+body:has(.authScreen.discordAuthScreen) .finalIncomingCall,
+body:has(.authScreen.discordAuthScreen) .callErrorToast,
+body:has(.authScreen.discordAuthScreen) .textFormatMenu,
+body:has(.authScreen.discordAuthScreen) .messageContextMenu {
+  display: none !important;
+  pointer-events: none !important;
+}
+
+/* Patch 080: OAuth must work even when application JavaScript is unavailable. */
+.authGoogleButton,
+a.authGoogleButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  box-sizing: border-box !important;
+  text-decoration: none !important;
+  user-select: none !important;
+  -webkit-user-drag: none !important;
+}

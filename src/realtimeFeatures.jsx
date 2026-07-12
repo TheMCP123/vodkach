@@ -30,8 +30,10 @@ export function CallIcon() {
 
 function HangupIcon() {
   return (
-    <svg className="callGlyph callEndGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M3.45 14.9c2.2-2.15 5.05-3.25 8.55-3.25s6.35 1.1 8.55 3.25c.45.44.5 1.14.12 1.64l-1.35 1.76c-.35.46-.98.6-1.5.33l-2.45-1.28a1.2 1.2 0 0 1-.64-1.07l.02-1.44a12.5 12.5 0 0 0-5.5 0l.02 1.44c0 .45-.25.86-.64 1.07l-2.45 1.28c-.52.27-1.15.13-1.5-.33l-1.35-1.76a1.2 1.2 0 0 1 .12-1.64Z" />
+    <svg className="vodkachFeatureIcon callHangupGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5.3 16.8c1.7-1.7 4-2.6 6.7-2.6s5 .9 6.7 2.6" />
+      <path d="m7.8 15.2-1 3.1M16.2 15.2l1 3.1" />
+      <path d="M9.4 14.5v2.7M14.6 14.5v2.7" />
     </svg>
   );
 }
@@ -47,20 +49,21 @@ function AcceptCallIcon() {
 
 function MicrophoneIcon({ muted = false }) {
   return (
-    <svg className="callGlyph callMicGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M12 14.25a3.75 3.75 0 0 0 3.75-3.75V6.75a3.75 3.75 0 0 0-7.5 0v3.75A3.75 3.75 0 0 0 12 14.25Z" />
-      <path d="M5.75 10.5a6.25 6.25 0 0 0 12.5 0h-2a4.25 4.25 0 0 1-8.5 0h-2ZM11 16.65V20H8.25v2h7.5v-2H13v-3.35h-2Z" />
-      {muted ? <path className="callGlyphSlash" d="M4.3 3 21 19.7l-1.4 1.4L2.9 4.4 4.3 3Z" /> : null}
+    <svg className="vodkachFeatureIcon callMicGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="9" y="3" width="6" height="10" rx="3" />
+      <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 17v4M8.5 21h7" />
+      {muted ? <path className="iconSlash" d="M4 4l16 16" /> : null}
     </svg>
   );
 }
 
 function CameraIcon({ disabled = false }) {
   return (
-    <svg className="callGlyph callCameraGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 6h9A2.5 2.5 0 0 1 16 8.5v7A2.5 2.5 0 0 1 13.5 18h-9A2.5 2.5 0 0 1 2 15.5v-7A2.5 2.5 0 0 1 4.5 6Z" />
-      <path d="m17 9 5-2.5v11L17 15V9Z" />
-      {disabled ? <path className="callGlyphSlash" d="M4.3 3 21 19.7l-1.4 1.4L2.9 4.4 4.3 3Z" /> : null}
+    <svg className="vodkachFeatureIcon callCameraGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="6" width="12.5" height="12" rx="2.5" />
+      <path d="m15.5 10 5-3v10l-5-3z" />
+      {disabled ? <path className="iconSlash" d="M4 4l16 16" /> : null}
     </svg>
   );
 }
@@ -161,6 +164,7 @@ export const CallSystem = forwardRef(function CallSystem(
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const meetingRef = useRef(null);
   const meetingElementRef = useRef(null);
+  const participantAudioRef = useRef(null);
   const remoteSpeakingTimerRef = useRef(null);
   const localAudioCleanupRef = useRef(null);
 
@@ -183,9 +187,7 @@ export const CallSystem = forwardRef(function CallSystem(
       setCall(callData);
 
       meeting.self.on("roomJoined", () => {
-        setPhase((currentPhase) =>
-          currentPhase === "connected" ? "connected" : "ringing"
-        );
+        setPhase("ringing");
       });
 
       const getJoinedCount = () => {
@@ -207,9 +209,9 @@ export const CallSystem = forwardRef(function CallSystem(
         const count = getJoinedCount();
         setRemoteParticipantCount(count);
 
-        if (count > 0) {
-          setRemoteParticipantCount(count);
-        } else {
+        setRemoteParticipantCount(count);
+
+        if (count === 0) {
           setRemoteSpeaking(false);
         }
       };
@@ -238,9 +240,10 @@ export const CallSystem = forwardRef(function CallSystem(
       });
 
       meeting.self.on("roomLeft", () => {
-        setPhase("idle");
-        setCall(null);
-        meetingRef.current = null;
+        // A temporary media disconnect must not destroy the ringing/call UI.
+        setPhase((currentPhase) =>
+          currentPhase === "connected" ? "connecting" : currentPhase
+        );
       });
 
       await meeting.join();
@@ -248,6 +251,10 @@ export const CallSystem = forwardRef(function CallSystem(
       requestAnimationFrame(() => {
         if (meetingElementRef.current) {
           meetingElementRef.current.meeting = meeting;
+        }
+
+        if (participantAudioRef.current) {
+          participantAudioRef.current.meeting = meeting;
         }
       });
 
@@ -572,38 +579,85 @@ export const CallSystem = forwardRef(function CallSystem(
 
     let stopped = false;
 
-    async function updateRtt() {
-      try {
-        const candidates = [
-          meetingRef.current?.self?.connectionStats,
-          meetingRef.current?.self?.networkStats,
-          meetingRef.current?.room?.connectionStats
-        ].filter(Boolean);
+    function findPeerConnections(root) {
+      const found = [];
+      const seen = new WeakSet();
 
-        let rtt = null;
+      function walk(value, depth) {
+        if (!value || depth > 5) return;
+        if (typeof value !== "object" && typeof value !== "function") return;
+        if (seen.has(value)) return;
+        seen.add(value);
 
-        for (const stats of candidates) {
-          const value =
-            stats.rtt ??
-            stats.roundTripTime ??
-            stats.currentRoundTripTime ??
-            stats.latency;
-
-          if (Number.isFinite(Number(value))) {
-            const numeric = Number(value);
-            rtt = numeric < 10 ? Math.round(numeric * 1000) : Math.round(numeric);
-            break;
-          }
+        if (
+          typeof RTCPeerConnection !== "undefined" &&
+          value instanceof RTCPeerConnection
+        ) {
+          found.push(value);
+          return;
         }
 
-        if (!stopped) setNetworkPing(rtt);
+        let keys = [];
+        try {
+          keys = Reflect.ownKeys(value).slice(0, 80);
+        } catch {
+          return;
+        }
+
+        for (const key of keys) {
+          try {
+            walk(value[key], depth + 1);
+          } catch {
+            // Some SDK internals use throwing getters.
+          }
+        }
+      }
+
+      walk(root, 0);
+      return found;
+    }
+
+    async function measureWebRtcPing() {
+      try {
+        const peerConnections = findPeerConnections(meetingRef.current);
+        let bestRtt = null;
+
+        for (const peerConnection of peerConnections) {
+          const stats = await peerConnection.getStats();
+
+          stats.forEach((report) => {
+            const isSelectedPair =
+              report.type === "candidate-pair" &&
+              (
+                report.selected ||
+                report.nominated ||
+                report.state === "succeeded"
+              );
+
+            if (
+              isSelectedPair &&
+              Number.isFinite(report.currentRoundTripTime)
+            ) {
+              const rtt = Math.max(
+                1,
+                Math.round(report.currentRoundTripTime * 1000)
+              );
+
+              if (bestRtt == null || rtt < bestRtt) {
+                bestRtt = rtt;
+              }
+            }
+          });
+        }
+
+        if (!stopped) setNetworkPing(bestRtt);
       } catch {
         if (!stopped) setNetworkPing(null);
       }
     }
 
-    updateRtt();
-    const timer = window.setInterval(updateRtt, 4000);
+    measureWebRtcPing();
+    const timer = window.setInterval(measureWebRtcPing, 3000);
 
     return () => {
       stopped = true;
@@ -640,7 +694,12 @@ export const CallSystem = forwardRef(function CallSystem(
 
     async function checkCalls() {
       try {
-        const data = await api("/api/calls/status");
+        const exactCallId =
+          call?.id && !String(call.id).startsWith("preparing_")
+            ? `?call_id=${encodeURIComponent(call.id)}`
+            : "";
+
+        const data = await api(`/api/calls/status${exactCallId}`);
 
         if (stopped) return;
 
@@ -650,17 +709,14 @@ export const CallSystem = forwardRef(function CallSystem(
           setIncoming(null);
         }
 
-        if (call && data.current) {
-          setCall((current) =>
-            current
-              ? {
-                  ...current,
-                  ...data.current,
-                  auth_token: current.auth_token
-                }
-              : current
-          );
-
+        if (
+          call &&
+          data.current &&
+          (
+            String(call.id).startsWith("preparing_") ||
+            data.current.id === call.id
+          )
+        ) {
           if (data.current.status === "active") {
             setPhase("connected");
             setCallStartedAt((value) => value || Date.now());
@@ -684,7 +740,7 @@ export const CallSystem = forwardRef(function CallSystem(
     checkCalls();
     const timer = window.setInterval(
       checkCalls,
-      call || incoming ? 700 : 650
+      call || incoming ? 900 : 500
     );
 
     return () => {
@@ -696,131 +752,100 @@ export const CallSystem = forwardRef(function CallSystem(
   return (
     <>
       {incoming && !call && (
-        <div className="incomingVoiceBanner">
+        <div className="premiumIncomingCall">
           <img
             src={incoming.caller_avatar_url || "/default-avatar.png"}
             alt=""
           />
 
-          <div className="incomingVoiceCopy">
+          <div className="premiumIncomingCopy">
             <strong>
               {incoming.caller_display_name ||
                 incoming.caller_username ||
                 "Incoming call"}
             </strong>
-            <span>is calling you</span>
+            <span>Incoming voice call</span>
           </div>
 
           <button
-            className="incomingVoiceDecline"
+            className="premiumIncomingDecline"
             type="button"
+            title="Decline"
             onClick={declineCall}
           >
             <HangupIcon />
-            <span>Decline</span>
           </button>
 
           <button
-            className="incomingVoiceAccept"
+            className="premiumIncomingAccept"
             type="button"
+            title="Accept"
             onClick={acceptCall}
           >
             <AcceptCallIcon />
-            <span>Accept</span>
           </button>
         </div>
       )}
 
       {call &&
         createPortal(
-          <div className={screenSharing ? "inlineDiscordCall sharing" : "inlineDiscordCall"}>
-            <header className="inlineDiscordCallTopbar">
-              <div className="inlineCallIdentity">
-                <span className="inlineVoiceBars">
-                  <span />
-                  <span />
-                  <span />
+          <div className={screenSharing ? "premiumInlineCall sharing" : "premiumInlineCall"}>
+            <section className="premiumCallStage">
+              <div className="premiumCallMeta">
+                <span>
+                  {phase === "connected"
+                    ? formatDuration(elapsedSeconds)
+                    : phase === "ringing"
+                      ? "Ringing..."
+                      : phase === "preparing"
+                        ? "Starting..."
+                        : "Connecting..."}
                 </span>
-                <div>
-                  <strong>
-                    {call.other_display_name ||
-                      call.other_username ||
-                      "Vodkach Call"}
-                  </strong>
-                  <span>
-                    {phase === "connected"
-                      ? "Voice Connected"
-                      : phase === "ringing"
-                        ? "Ringing..."
-                        : phase === "connecting"
-                          ? "Connecting to voice..."
-                          : phase === "preparing"
-                            ? "Starting call..."
-                            : "Calling..."}
-                  </span>
-                </div>
-              </div>
-
-              <div className="inlineCallStats">
-                <span>{formatDuration(elapsedSeconds)}</span>
                 <span>{networkPing == null ? "RTC -" : `${networkPing} ms`}</span>
-                <span>{connectionQuality()}</span>
               </div>
-            </header>
 
-            <section className="inlineDiscordStage">
               {screenSharing ? (
-                <div className="inlineScreenShareStage">
-                  <div className="screenSharePlaceholder">
+                <div className="premiumShareLayout">
+                  <div className="premiumShareSurface">
                     <ScreenShareIcon active />
-                    <strong>Screen sharing is active</strong>
-                    <span>Your shared screen is being broadcast</span>
+                    <strong>Screen Share</strong>
+                    <span>Your screen is being shared</span>
                   </div>
 
-                  <div className="inlineParticipantRail">
-                    <article className="inlineParticipantMini">
-                      <img
-                        src={user?.avatar_url || "/default-avatar.png"}
-                        alt=""
-                      />
+                  <div className="premiumShareParticipants">
+                    <div>
+                      <img src={user?.avatar_url || "/default-avatar.png"} alt="" />
                       <span>{user?.display_name || user?.username || "You"}</span>
-                      <small>{muted ? "Muted" : "You"}</small>
-                    </article>
-
-                    <article className="inlineParticipantMini">
-                      <img
-                        src={call.other_avatar_url || "/default-avatar.png"}
-                        alt=""
-                      />
+                    </div>
+                    <div>
+                      <img src={call.other_avatar_url || "/default-avatar.png"} alt="" />
                       <span>
                         {call.other_display_name ||
                           call.other_username ||
                           "Participant"}
                       </span>
-                      <small>
-                        {phase === "connected" ? "Connected" : "Waiting"}
-                      </small>
-                    </article>
+                    </div>
                   </div>
                 </div>
               ) : (
-                <div className={phase === "connected" ? "inlineParticipantCanvas connected" : "inlineParticipantCanvas ringing"}>
-                  <article className={localSpeaking ? "inlineParticipantCard speaking" : "inlineParticipantCard"}>
-                    <div className="inlineAvatarWrap">
+                <div className={phase === "connected" ? "premiumCallPeople connected" : "premiumCallPeople ringing"}>
+                  <article className={localSpeaking ? "premiumCallPerson speaking" : "premiumCallPerson"}>
+                    <div>
                       <img
                         src={user?.avatar_url || "/default-avatar.png"}
                         alt=""
                       />
-                      <span className={muted ? "inlineMicBadge muted" : "inlineMicBadge"}>
-                        <MicrophoneIcon muted={muted} />
-                      </span>
+                      {muted ? (
+                        <span className="premiumMutedBadge">
+                          <MicrophoneIcon muted />
+                        </span>
+                      ) : null}
                     </div>
                     <strong>{user?.display_name || user?.username || "You"}</strong>
-                    <span>{muted ? "Muted" : localSpeaking ? "Speaking" : ""}</span>
                   </article>
 
-                  <article className={remoteSpeaking ? "inlineParticipantCard speaking" : "inlineParticipantCard"}>
-                    <div className="inlineAvatarWrap">
+                  <article className={remoteSpeaking ? "premiumCallPerson speaking" : "premiumCallPerson"}>
+                    <div>
                       <img
                         src={call.other_avatar_url || "/default-avatar.png"}
                         alt=""
@@ -831,48 +856,43 @@ export const CallSystem = forwardRef(function CallSystem(
                         call.other_username ||
                         "Participant"}
                     </strong>
-                    <span>{remoteSpeaking ? "Speaking" : ""}</span>
                   </article>
                 </div>
               )}
 
-              <div className="inlineDiscordControls">
-                <div className="inlineControlGroup">
-                  <button
-                    className={muted ? "inlineCallButton dangerActive" : "inlineCallButton"}
-                    type="button"
-                    title={muted ? "Unmute" : "Mute"}
-                    disabled={mediaBusy || phase !== "connected"}
-                    onClick={toggleMicrophone}
-                  >
-                    <MicrophoneIcon muted={muted} />
-                  </button>
-
-                  <button
-                    className={videoEnabled ? "inlineCallButton active" : "inlineCallButton"}
-                    type="button"
-                    title={videoEnabled ? "Turn camera off" : "Turn camera on"}
-                    disabled={mediaBusy || phase !== "connected"}
-                    onClick={toggleVideo}
-                  >
-                    <CameraIcon disabled={!videoEnabled} />
-                  </button>
-                </div>
-
-                <div className="inlineControlGroup">
-                  <button
-                    className={screenSharing ? "inlineCallButton active" : "inlineCallButton"}
-                    type="button"
-                    title={screenSharing ? "Stop sharing" : "Share screen"}
-                    disabled={mediaBusy || phase !== "connected"}
-                    onClick={toggleScreenShare}
-                  >
-                    <ScreenShareIcon active={screenSharing} />
-                  </button>
-                </div>
+              <div className="premiumCallControls">
+                <button
+                  className={muted ? "premiumCallControl activeDanger" : "premiumCallControl"}
+                  type="button"
+                  title={muted ? "Unmute" : "Mute"}
+                  disabled={mediaBusy || phase !== "connected"}
+                  onClick={toggleMicrophone}
+                >
+                  <MicrophoneIcon muted={muted} />
+                </button>
 
                 <button
-                  className="inlineCallButton disconnect"
+                  className={videoEnabled ? "premiumCallControl active" : "premiumCallControl"}
+                  type="button"
+                  title={videoEnabled ? "Turn camera off" : "Turn camera on"}
+                  disabled={mediaBusy || phase !== "connected"}
+                  onClick={toggleVideo}
+                >
+                  <CameraIcon disabled={!videoEnabled} />
+                </button>
+
+                <button
+                  className={screenSharing ? "premiumCallControl active" : "premiumCallControl"}
+                  type="button"
+                  title={screenSharing ? "Stop sharing" : "Share screen"}
+                  disabled={mediaBusy || phase !== "connected"}
+                  onClick={toggleScreenShare}
+                >
+                  <ScreenShareIcon active={screenSharing} />
+                </button>
+
+                <button
+                  className="premiumCallControl disconnect"
                   type="button"
                   title="Disconnect"
                   onClick={endCall}
@@ -887,6 +907,9 @@ export const CallSystem = forwardRef(function CallSystem(
                 ref: meetingElementRef,
                 mode: "fill",
                 "show-setup-screen": "false"
+              })}
+              {React.createElement("rtk-participants-audio", {
+                ref: participantAudioRef
               })}
             </div>
           </div>,

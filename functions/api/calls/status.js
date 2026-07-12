@@ -43,6 +43,11 @@ export async function onRequestGet(context) {
        AND datetime(expires_at) <= datetime('now')`
   ).run();
 
+  const url = new URL(context.request.url);
+  const requestedCallId = String(
+    url.searchParams.get("call_id") || ""
+  ).trim();
+
   const result = await context.env.DB.prepare(
     `SELECT
        calls.*,
@@ -57,10 +62,11 @@ export async function onRequestGet(context) {
      JOIN users callee ON callee.id = calls.callee_user_id
      WHERE (calls.caller_user_id = ? OR calls.callee_user_id = ?)
        AND datetime(calls.created_at) >= datetime('now', '-2 hours')
+       AND (? = '' OR calls.id = ?)
      ORDER BY datetime(calls.created_at) DESC
      LIMIT 5`
   )
-    .bind(user.id, user.id)
+    .bind(user.id, user.id, requestedCallId, requestedCallId)
     .all();
 
   const rows = result.results || [];

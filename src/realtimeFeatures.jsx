@@ -121,19 +121,49 @@ function loadScript(src) {
 
 let realtimeKitLoaderPromise = null;
 
+async function importRealtimeKitUi() {
+  const sources = [
+    "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit-ui@1.2.0/loader/index.es2017.js",
+    "https://unpkg.com/@cloudflare/realtimekit-ui@1.2.0/loader/index.es2017.js"
+  ];
+
+  let lastError = null;
+
+  for (const source of sources) {
+    try {
+      const module = await import(
+        /* @vite-ignore */
+        source
+      );
+
+      await module.defineCustomElements();
+      return;
+    } catch (error) {
+      lastError = error;
+    }
+  }
+
+  throw lastError || new Error("Failed to load RealtimeKit UI");
+}
+
 async function loadRealtimeKit() {
-  if (window.RealtimeKitClient && customElements.get("rtk-meeting")) return;
+  if (
+    window.RealtimeKitClient &&
+    customElements.get("rtk-participants-audio")
+  ) {
+    return;
+  }
 
   if (!realtimeKitLoaderPromise) {
     realtimeKitLoaderPromise = Promise.all([
       loadScript(
         "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit@1.3.0/dist/browser.js"
       ),
-      import(
-        /* @vite-ignore */
-        "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit-ui@1.3.0/loader/index.es2017.js"
-      ).then((module) => module.defineCustomElements())
-    ]);
+      importRealtimeKitUi()
+    ]).catch((error) => {
+      realtimeKitLoaderPromise = null;
+      throw error;
+    });
   }
 
   await realtimeKitLoaderPromise;

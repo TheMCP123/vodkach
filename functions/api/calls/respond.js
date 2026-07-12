@@ -62,9 +62,40 @@ export async function onRequestPost(context) {
   }
 
   try {
+    let meetingId = String(call.realtime_meeting_id || "").trim();
+
+    for (let attempt = 0; !meetingId && attempt < 12; attempt += 1) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+
+      const refreshed = await context.env.DB.prepare(
+        `SELECT realtime_meeting_id, status
+         FROM calls
+         WHERE id = ?
+         LIMIT 1`
+      )
+        .bind(callId)
+        .first();
+
+      if (!refreshed || refreshed.status !== "ringing") {
+        return json(
+          { ok: false, error: "This call is no longer available" },
+          { status: 409 }
+        );
+      }
+
+      meetingId = String(refreshed.realtime_meeting_id || "").trim();
+    }
+
+    if (!meetingId) {
+      return json(
+        { ok: false, error: "Call is still starting. Try again." },
+        { status: 425 }
+      );
+    }
+
     const participant = await realtimeRequest(
       context.env,
-      `/meetings/${call.realtime_meeting_id}/participants`,
+      `/meetings/${meetingId}/participants`,
       {
         method: "POST",
         body: JSON.stringify({

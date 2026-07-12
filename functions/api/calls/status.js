@@ -4,6 +4,14 @@ import { getCurrentUser, json } from "../../_shared/auth.js";
 function mapCall(row, viewerId) {
   const viewerIsCaller = row.caller_user_id === viewerId;
 
+  const localIsCaller = viewerIsCaller;
+  const localJoinedAt = localIsCaller
+    ? row.caller_joined_at
+    : row.callee_joined_at;
+  const remoteJoinedAt = localIsCaller
+    ? row.callee_joined_at
+    : row.caller_joined_at;
+
   return {
     id: row.id,
     chat_id: row.chat_id,
@@ -24,7 +32,29 @@ function mapCall(row, viewerId) {
       : row.caller_display_name,
     other_avatar_url: viewerIsCaller
       ? row.callee_avatar_url
-      : row.caller_avatar_url
+      : row.caller_avatar_url,
+    media: {
+      local_joined: Boolean(localJoinedAt),
+      remote_joined: Boolean(remoteJoinedAt),
+      local_muted: Boolean(
+        localIsCaller ? row.caller_muted : row.callee_muted
+      ),
+      remote_muted: Boolean(
+        localIsCaller ? row.callee_muted : row.caller_muted
+      ),
+      local_sharing: Boolean(
+        localIsCaller ? row.caller_sharing : row.callee_sharing
+      ),
+      remote_sharing: Boolean(
+        localIsCaller ? row.callee_sharing : row.caller_sharing
+      ),
+      local_speaking: Boolean(
+        localIsCaller ? row.caller_speaking : row.callee_speaking
+      ),
+      remote_speaking: Boolean(
+        localIsCaller ? row.callee_speaking : row.caller_speaking
+      )
+    }
   };
 }
 

@@ -30,10 +30,8 @@ export function CallIcon() {
 
 function HangupIcon() {
   return (
-    <svg className="vodkachFeatureIcon callHangupGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M5.3 16.8c1.7-1.7 4-2.6 6.7-2.6s5 .9 6.7 2.6" />
-      <path d="m7.8 15.2-1 3.1M16.2 15.2l1 3.1" />
-      <path d="M9.4 14.5v2.7M14.6 14.5v2.7" />
+    <svg className="callIcon callIconHangup" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M3.3 14.7c2.2-2.15 5.1-3.25 8.7-3.25s6.5 1.1 8.7 3.25c.44.43.5 1.1.14 1.6l-1.45 1.9c-.34.45-.96.59-1.47.32l-2.58-1.35a1.17 1.17 0 0 1-.63-1.04l.02-1.35a13 13 0 0 0-5.46 0l.02 1.35c0 .44-.24.84-.63 1.04l-2.58 1.35c-.51.27-1.13.13-1.47-.32l-1.45-1.9a1.17 1.17 0 0 1 .14-1.6Z" />
     </svg>
   );
 }
@@ -49,21 +47,19 @@ function AcceptCallIcon() {
 
 function MicrophoneIcon({ muted = false }) {
   return (
-    <svg className="vodkachFeatureIcon callMicGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="9" y="3" width="6" height="10" rx="3" />
-      <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0" />
-      <path d="M12 17v4M8.5 21h7" />
-      {muted ? <path className="iconSlash" d="M4 4l16 16" /> : null}
+    <svg className="callIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M12 14.4a3.9 3.9 0 0 0 3.9-3.9V6.9a3.9 3.9 0 1 0-7.8 0v3.6a3.9 3.9 0 0 0 3.9 3.9Z" />
+      <path d="M5.6 10.5a6.4 6.4 0 0 0 12.8 0h-2a4.4 4.4 0 0 1-8.8 0h-2ZM11 16.8V20H8.3v2h7.4v-2H13v-3.2h-2Z" />
+      {muted ? <path className="callIconSlash" d="M3.8 2.9 21.1 20.2l-1.4 1.4L2.4 4.3l1.4-1.4Z" /> : null}
     </svg>
   );
 }
 
 function CameraIcon({ disabled = false }) {
   return (
-    <svg className="vodkachFeatureIcon callCameraGlyph" viewBox="0 0 24 24" aria-hidden="true">
-      <rect x="3" y="6" width="12.5" height="12" rx="2.5" />
-      <path d="m15.5 10 5-3v10l-5-3z" />
-      {disabled ? <path className="iconSlash" d="M4 4l16 16" /> : null}
+    <svg className="callIcon" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M4.5 6h9A2.5 2.5 0 0 1 16 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 2 15.5v-7A2.5 2.5 0 0 1 4.5 6ZM17 9l5-2.6v11.2L17 15V9Z" />
+      {disabled ? <path className="callIconSlash" d="M3.8 2.9 21.1 20.2l-1.4 1.4L2.4 4.3l1.4-1.4Z" /> : null}
     </svg>
   );
 }
@@ -131,16 +127,67 @@ async function loadRealtimeKit() {
   if (!realtimeKitLoaderPromise) {
     realtimeKitLoaderPromise = Promise.all([
       loadScript(
-        "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit@latest/dist/browser.js"
+        "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit@1.3.0/dist/browser.js"
       ),
       import(
         /* @vite-ignore */
-        "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit-ui@latest/loader/index.es2017.js"
+        "https://cdn.jsdelivr.net/npm/@cloudflare/realtimekit-ui@1.3.0/loader/index.es2017.js"
       ).then((module) => module.defineCustomElements())
     ]);
   }
 
   await realtimeKitLoaderPromise;
+}
+
+
+function extractTrack(value) {
+  if (!value) return null;
+  if (value instanceof MediaStreamTrack) return value;
+  if (value.track instanceof MediaStreamTrack) return value.track;
+  if (value.video instanceof MediaStreamTrack) return value.video;
+  if (value.video?.track instanceof MediaStreamTrack) return value.video.track;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const track = extractTrack(item);
+      if (track) return track;
+    }
+  }
+  return null;
+}
+
+function MediaTrackVideo({ track, muted = false }) {
+  const ref = useRef(null);
+
+  useEffect(() => {
+    if (!ref.current) return;
+
+    if (!track) {
+      ref.current.srcObject = null;
+      return;
+    }
+
+    const stream = new MediaStream([track]);
+    ref.current.srcObject = stream;
+    ref.current.play().catch(() => {});
+
+    return () => {
+      if (ref.current?.srcObject === stream) {
+        ref.current.srcObject = null;
+      }
+    };
+  }, [track]);
+
+  if (!track) return null;
+
+  return (
+    <video
+      ref={ref}
+      autoPlay
+      playsInline
+      muted={muted}
+      className="callShareVideo"
+    />
+  );
 }
 
 export const CallSystem = forwardRef(function CallSystem(
@@ -152,25 +199,96 @@ export const CallSystem = forwardRef(function CallSystem(
   const [phase, setPhase] = useState("idle");
   const [error, setError] = useState("");
   const [muted, setMuted] = useState(false);
+  const [remoteMuted, setRemoteMuted] = useState(false);
   const [videoEnabled, setVideoEnabled] = useState(false);
   const [screenSharing, setScreenSharing] = useState(false);
+  const [remoteSharing, setRemoteSharing] = useState(false);
+  const [localShareTrack, setLocalShareTrack] = useState(null);
+  const [remoteShareTrack, setRemoteShareTrack] = useState(null);
+  const [localSpeaking, setLocalSpeaking] = useState(false);
+  const [remoteSpeaking, setRemoteSpeaking] = useState(false);
   const [mediaBusy, setMediaBusy] = useState(false);
   const [networkPing, setNetworkPing] = useState(null);
-  const [connectionType, setConnectionType] = useState("Unknown");
-  const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
-  const [remoteSpeaking, setRemoteSpeaking] = useState(false);
-  const [localSpeaking, setLocalSpeaking] = useState(false);
   const [callStartedAt, setCallStartedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
+
   const meetingRef = useRef(null);
-  const meetingElementRef = useRef(null);
   const participantAudioRef = useRef(null);
-  const remoteSpeakingTimerRef = useRef(null);
   const localAudioCleanupRef = useRef(null);
+  const remoteSpeakingTimerRef = useRef(null);
+  const peerConnectionRef = useRef(null);
+  const currentCallRef = useRef(null);
+
+  useEffect(() => {
+    currentCallRef.current = call;
+  }, [call]);
+
+  useEffect(() => {
+    if (user?.id) {
+      loadRealtimeKit().catch(() => {});
+    }
+  }, [user?.id]);
+
+  async function pushMediaState(next) {
+    const current = currentCallRef.current;
+    if (!current?.id || String(current.id).startsWith("preparing_")) return;
+
+    try {
+      await api("/api/calls/media", {
+        method: "POST",
+        body: JSON.stringify({
+          call_id: current.id,
+          ...next
+        })
+      });
+    } catch {
+      // Polling and SDK events remain the fallback.
+    }
+  }
+
+  function bindRemoteParticipant(participant) {
+    if (!participant) return;
+
+    const updateMute = (event) => {
+      const enabled =
+        event?.audioEnabled ??
+        event?.enabled ??
+        participant.audioEnabled;
+
+      if (typeof enabled === "boolean") {
+        setRemoteMuted(!enabled);
+      }
+    };
+
+    const updateShare = (event) => {
+      const enabled =
+        event?.screenShareEnabled ??
+        event?.enabled ??
+        participant.screenShareEnabled;
+
+      if (typeof enabled === "boolean") {
+        setRemoteSharing(enabled);
+      }
+
+      const track = extractTrack(
+        event?.screenShareTracks ||
+        participant.screenShareTracks ||
+        participant.screenShareTrack
+      );
+      setRemoteShareTrack(track);
+    };
+
+    updateMute();
+    updateShare();
+
+    participant.on?.("audioUpdate", updateMute);
+    participant.on?.("screenShareUpdate", updateShare);
+  }
 
   async function connectToMeeting(callData) {
     setError("");
     setPhase("connecting");
+    setCall(callData);
 
     try {
       await loadRealtimeKit();
@@ -184,51 +302,75 @@ export const CallSystem = forwardRef(function CallSystem(
       });
 
       meetingRef.current = meeting;
-      setCall(callData);
+      peerConnectionRef.current = null;
 
-      meeting.self.on("roomJoined", () => {
-        setPhase("ringing");
+      meeting.self.on?.("roomJoined", () => {
+        setPhase("connecting");
+        pushMediaState({
+          joined: true,
+          muted: false,
+          sharing: false,
+          speaking: false
+        });
       });
 
-      const getJoinedCount = () => {
-        const joined = meeting.participants?.joined;
-
-        if (!joined) return 0;
-        if (typeof joined.size === "number") return joined.size;
-        if (typeof joined.toArray === "function") return joined.toArray().length;
-        if (Array.isArray(joined)) return joined.length;
-
-        try {
-          return Array.from(joined.values?.() || []).length;
-        } catch {
-          return 0;
+      meeting.self.on?.("audioUpdate", (event) => {
+        const enabled = event?.audioEnabled ?? event?.enabled;
+        if (typeof enabled === "boolean") {
+          setMuted(!enabled);
+          pushMediaState({ muted: !enabled });
         }
-      };
+      });
 
-      const updateRemoteParticipants = () => {
-        const count = getJoinedCount();
-        setRemoteParticipantCount(count);
-
-        setRemoteParticipantCount(count);
-
-        if (count === 0) {
-          setRemoteSpeaking(false);
+      meeting.self.on?.("screenShareUpdate", (event) => {
+        const enabled = event?.screenShareEnabled ?? event?.enabled;
+        if (typeof enabled === "boolean") {
+          setScreenSharing(enabled);
+          pushMediaState({ sharing: enabled });
         }
-      };
 
-      meeting.participants?.joined?.on?.(
-        "participantJoined",
-        updateRemoteParticipants
-      );
-      meeting.participants?.joined?.on?.(
-        "participantLeft",
-        updateRemoteParticipants
-      );
+        setLocalShareTrack(
+          extractTrack(
+            event?.screenShareTracks ||
+            meeting.self.screenShareTracks ||
+            meeting.self.screenShareTrack
+          )
+        );
+      });
+
+      meeting.participants?.joined?.on?.("participantJoined", (participant) => {
+        bindRemoteParticipant(participant);
+      });
+
+      meeting.participants?.joined?.on?.("participantLeft", () => {
+        setRemoteSpeaking(false);
+        setRemoteMuted(false);
+        setRemoteSharing(false);
+        setRemoteShareTrack(null);
+      });
+
+      const joined = meeting.participants?.joined;
+      const initialParticipants =
+        joined?.toArray?.() ||
+        (joined?.values ? Array.from(joined.values()) : []);
+
+      for (const participant of initialParticipants || []) {
+        bindRemoteParticipant(participant);
+      }
 
       meeting.participants?.on?.("activeSpeaker", (speaker) => {
-        const volume = Number(speaker?.volume ?? 0);
+        const selfId =
+          meeting.self?.id ||
+          meeting.self?.peerId ||
+          meeting.self?.customParticipantId;
+        const speakerId =
+          speaker?.id ||
+          speaker?.peerId ||
+          speaker?.customParticipantId;
 
-        setRemoteSpeaking(volume > 0.01 || Boolean(speaker?.peerId || speaker?.id));
+        if (speakerId && selfId && speakerId === selfId) return;
+
+        setRemoteSpeaking(Boolean(speaker));
 
         if (remoteSpeakingTimerRef.current) {
           window.clearTimeout(remoteSpeakingTimerRef.current);
@@ -236,23 +378,23 @@ export const CallSystem = forwardRef(function CallSystem(
 
         remoteSpeakingTimerRef.current = window.setTimeout(() => {
           setRemoteSpeaking(false);
-        }, 650);
+        }, 420);
       });
 
-      meeting.self.on("roomLeft", () => {
-        // A temporary media disconnect must not destroy the ringing/call UI.
-        setPhase((currentPhase) =>
-          currentPhase === "connected" ? "connecting" : currentPhase
+      meeting.self.on?.("roomLeft", () => {
+        setPhase((value) =>
+          value === "connected" ? "reconnecting" : value
         );
+        pushMediaState({
+          joined: false,
+          speaking: false,
+          sharing: false
+        });
       });
 
       await meeting.join();
 
       requestAnimationFrame(() => {
-        if (meetingElementRef.current) {
-          meetingElementRef.current.meeting = meeting;
-        }
-
         if (participantAudioRef.current) {
           participantAudioRef.current.meeting = meeting;
         }
@@ -261,35 +403,32 @@ export const CallSystem = forwardRef(function CallSystem(
       setMuted(false);
       setVideoEnabled(false);
       setScreenSharing(false);
-      setCallStartedAt(null);
-      setElapsedSeconds(0);
-      setRemoteParticipantCount(0);
-      setPhase("ringing");
+      setRemoteMuted(false);
+      setRemoteSharing(false);
+      setLocalShareTrack(null);
+      setRemoteShareTrack(null);
     } catch (connectError) {
       setError(connectError.message || "Could not connect to the call");
-      setPhase("idle");
       setCall(null);
+      setPhase("idle");
     }
   }
 
   async function startCall() {
     if (!activeChat?.id || call || phase !== "idle") return;
 
-    const otherUser = activeChat.other_user || {};
+    const other = activeChat.other_user || {};
 
     setCall({
       id: `preparing_${Date.now()}`,
       chat_id: activeChat.id,
-      status: "preparing",
-      other_user_id: otherUser.id,
-      other_username: otherUser.username,
-      other_display_name: otherUser.display_name,
-      other_avatar_url: otherUser.avatar_url
+      other_user_id: other.id,
+      other_username: other.username,
+      other_display_name: other.display_name,
+      other_avatar_url: other.avatar_url
     });
     setPhase("preparing");
     setError("");
-    setRemoteSpeaking(false);
-    setLocalSpeaking(false);
 
     try {
       const data = await api("/api/calls/start", {
@@ -297,13 +436,12 @@ export const CallSystem = forwardRef(function CallSystem(
         body: JSON.stringify({ chat_id: activeChat.id })
       });
 
-      setCall(data.call);
       await connectToMeeting({
         ...data.call,
         auth_token: data.auth_token
       });
     } catch (startError) {
-      setError(startError.message);
+      setError(startError.message || "Could not start the call");
       setCall(null);
       setPhase("idle");
     }
@@ -318,90 +456,116 @@ export const CallSystem = forwardRef(function CallSystem(
   async function acceptCall() {
     if (!incoming?.id) return;
 
+    const acceptedIncoming = incoming;
+    setIncoming(null);
+    setCall(acceptedIncoming);
     setPhase("connecting");
     setError("");
 
     try {
-      const data = await api("/api/calls/respond", {
-        method: "POST",
-        body: JSON.stringify({
-          call_id: incoming.id,
-          action: "accept"
-        })
-      });
+      let data = null;
 
-      setIncoming(null);
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        try {
+          data = await api("/api/calls/respond", {
+            method: "POST",
+            body: JSON.stringify({
+              call_id: acceptedIncoming.id,
+              action: "accept"
+            })
+          });
+          break;
+        } catch (acceptError) {
+          if (attempt === 2) throw acceptError;
+          await new Promise((resolve) => setTimeout(resolve, 500));
+        }
+      }
+
       await connectToMeeting({
         ...data.call,
         auth_token: data.auth_token
       });
     } catch (acceptError) {
-      setError(acceptError.message);
+      setError(acceptError.message || "Could not accept the call");
+      setCall(null);
       setPhase("idle");
     }
   }
 
   async function declineCall() {
-    if (!incoming?.id) return;
+    const current = incoming;
+    setIncoming(null);
+
+    if (!current?.id) return;
 
     try {
       await api("/api/calls/respond", {
         method: "POST",
         body: JSON.stringify({
-          call_id: incoming.id,
+          call_id: current.id,
           action: "decline"
         })
       });
     } catch {
-      // The caller may already have ended the call.
+      // Caller may already have ended it.
     }
-
-    setIncoming(null);
   }
 
-  async function endCall() {
-    const active = call;
-
-    try {
-      if (meetingRef.current) {
-        await meetingRef.current.leave();
-      }
-    } catch {
-      // Continue with server cleanup.
-    }
-
-    if (active?.id) {
-      try {
-        await api("/api/calls/end", {
-          method: "POST",
-          body: JSON.stringify({ call_id: active.id })
-        });
-      } catch {
-        // Local UI should still close.
-      }
-    }
-
-    meetingRef.current = null;
-    setCall(null);
-    setMuted(false);
-    setVideoEnabled(false);
-    setScreenSharing(false);
-    setMediaBusy(false);
-    setCallStartedAt(null);
-    setElapsedSeconds(0);
-    setNetworkPing(null);
-    setRemoteParticipantCount(0);
-    setRemoteSpeaking(false);
-    setLocalSpeaking(false);
+  async function closeLocalCall() {
+    localAudioCleanupRef.current?.();
+    localAudioCleanupRef.current = null;
 
     if (remoteSpeakingTimerRef.current) {
       window.clearTimeout(remoteSpeakingTimerRef.current);
       remoteSpeakingTimerRef.current = null;
     }
 
-    localAudioCleanupRef.current?.();
-    localAudioCleanupRef.current = null;
+    meetingRef.current = null;
+    peerConnectionRef.current = null;
+    setCall(null);
     setPhase("idle");
+    setMuted(false);
+    setRemoteMuted(false);
+    setVideoEnabled(false);
+    setScreenSharing(false);
+    setRemoteSharing(false);
+    setLocalShareTrack(null);
+    setRemoteShareTrack(null);
+    setLocalSpeaking(false);
+    setRemoteSpeaking(false);
+    setMediaBusy(false);
+    setNetworkPing(null);
+    setCallStartedAt(null);
+    setElapsedSeconds(0);
+  }
+
+  async function endCall() {
+    const current = currentCallRef.current;
+
+    await pushMediaState({
+      joined: false,
+      speaking: false,
+      sharing: false
+    });
+
+    try {
+      await meetingRef.current?.leave?.();
+    } catch {
+      // Server cleanup is still required.
+    }
+
+    if (current?.id && !String(current.id).startsWith("preparing_")) {
+      try {
+        await api("/api/calls/end", {
+          method: "POST",
+          body: JSON.stringify({ call_id: current.id })
+        });
+      } catch {
+        // UI must still close locally.
+      }
+    }
+
+    await closeLocalCall();
   }
 
   async function toggleMicrophone() {
@@ -409,16 +573,17 @@ export const CallSystem = forwardRef(function CallSystem(
     if (!meeting || mediaBusy) return;
 
     setMediaBusy(true);
-    setError("");
 
     try {
       if (muted) {
         await meeting.self.enableAudio();
-        setMuted(false);
       } else {
         await meeting.self.disableAudio();
-        setMuted(true);
       }
+
+      const nextMuted = !muted;
+      setMuted(nextMuted);
+      await pushMediaState({ muted: nextMuted });
     } catch (mediaError) {
       setError(mediaError.message || "Could not change microphone state");
     } finally {
@@ -431,16 +596,15 @@ export const CallSystem = forwardRef(function CallSystem(
     if (!meeting || mediaBusy) return;
 
     setMediaBusy(true);
-    setError("");
 
     try {
       if (videoEnabled) {
         await meeting.self.disableVideo();
-        setVideoEnabled(false);
       } else {
         await meeting.self.enableVideo();
-        setVideoEnabled(true);
       }
+
+      setVideoEnabled(!videoEnabled);
     } catch (mediaError) {
       setError(mediaError.message || "Could not change camera state");
     } finally {
@@ -453,16 +617,26 @@ export const CallSystem = forwardRef(function CallSystem(
     if (!meeting || mediaBusy) return;
 
     setMediaBusy(true);
-    setError("");
 
     try {
       if (screenSharing) {
         await meeting.self.disableScreenShare();
-        setScreenSharing(false);
       } else {
         await meeting.self.enableScreenShare();
-        setScreenSharing(true);
       }
+
+      const next = !screenSharing;
+      setScreenSharing(next);
+      await pushMediaState({ sharing: next });
+
+      window.setTimeout(() => {
+        setLocalShareTrack(
+          extractTrack(
+            meeting.self.screenShareTracks ||
+            meeting.self.screenShareTrack
+          )
+        );
+      }, 120);
     } catch (mediaError) {
       setError(mediaError.message || "Could not change screen share state");
     } finally {
@@ -478,40 +652,49 @@ export const CallSystem = forwardRef(function CallSystem(
       return undefined;
     }
 
-    const audioTrack = meetingRef.current?.self?.audioTrack;
+    const track = extractTrack(
+      meetingRef.current?.self?.audioTrack ||
+      meetingRef.current?.self?.audioTracks ||
+      meetingRef.current?.self?.tracks?.audio
+    );
 
-    if (!audioTrack) return undefined;
+    if (!track) return undefined;
 
     let stopped = false;
-    let frameId = 0;
-    let audioContext = null;
-    let stream = null;
+    let frame = 0;
+    let context = null;
 
     try {
-      audioContext = new AudioContext();
-      stream = new MediaStream([audioTrack]);
-      const source = audioContext.createMediaStreamSource(stream);
-      const analyser = audioContext.createAnalyser();
-      analyser.fftSize = 512;
-      analyser.smoothingTimeConstant = 0.72;
+      context = new AudioContext();
+      const source = context.createMediaStreamSource(new MediaStream([track]));
+      const analyser = context.createAnalyser();
+      analyser.fftSize = 256;
+      analyser.smoothingTimeConstant = 0.76;
       source.connect(analyser);
 
       const values = new Uint8Array(analyser.frequencyBinCount);
+      let last = false;
 
       const tick = () => {
         if (stopped) return;
 
         analyser.getByteTimeDomainData(values);
-
         let sum = 0;
+
         for (const value of values) {
           const normalized = (value - 128) / 128;
           sum += normalized * normalized;
         }
 
-        const rms = Math.sqrt(sum / values.length);
-        setLocalSpeaking(rms > 0.035);
-        frameId = requestAnimationFrame(tick);
+        const speaking = Math.sqrt(sum / values.length) > 0.035;
+
+        if (speaking !== last) {
+          last = speaking;
+          setLocalSpeaking(speaking);
+          pushMediaState({ speaking });
+        }
+
+        frame = requestAnimationFrame(tick);
       };
 
       tick();
@@ -521,171 +704,119 @@ export const CallSystem = forwardRef(function CallSystem(
 
     const cleanup = () => {
       stopped = true;
-      cancelAnimationFrame(frameId);
-      audioContext?.close?.().catch?.(() => {});
+      cancelAnimationFrame(frame);
+      context?.close?.().catch?.(() => {});
       setLocalSpeaking(false);
+      pushMediaState({ speaking: false });
     };
 
     localAudioCleanupRef.current = cleanup;
-
     return cleanup;
   }, [phase, muted]);
 
   useEffect(() => {
     if (!callStartedAt || phase !== "connected") return undefined;
 
-    const updateElapsed = () => {
+    const update = () => {
       setElapsedSeconds(
         Math.max(0, Math.floor((Date.now() - callStartedAt) / 1000))
       );
     };
 
-    updateElapsed();
-    const timer = window.setInterval(updateElapsed, 1000);
+    update();
+    const timer = window.setInterval(update, 1000);
     return () => window.clearInterval(timer);
   }, [callStartedAt, phase]);
 
   useEffect(() => {
-    const connection =
-      navigator.connection ||
-      navigator.mozConnection ||
-      navigator.webkitConnection;
-
-    function updateConnectionType() {
-      const effectiveType = connection?.effectiveType;
-      const type = connection?.type;
-      setConnectionType(
-        effectiveType
-          ? String(effectiveType).toUpperCase()
-          : type
-            ? String(type)
-            : "Unknown"
-      );
-    }
-
-    updateConnectionType();
-    connection?.addEventListener?.("change", updateConnectionType);
-
-    return () => {
-      connection?.removeEventListener?.("change", updateConnectionType);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!call || phase !== "connected") {
+    if (phase !== "connected") {
       setNetworkPing(null);
       return undefined;
     }
 
     let stopped = false;
 
-    function findPeerConnections(root) {
-      const found = [];
+    function findPeerConnectionOnce(root) {
+      if (peerConnectionRef.current) return peerConnectionRef.current;
+
+      const queue = [{ value: root, depth: 0 }];
       const seen = new WeakSet();
 
-      function walk(value, depth) {
-        if (!value || depth > 5) return;
-        if (typeof value !== "object" && typeof value !== "function") return;
-        if (seen.has(value)) return;
+      while (queue.length) {
+        const { value, depth } = queue.shift();
+
+        if (!value || depth > 3) continue;
+        if (typeof value !== "object" && typeof value !== "function") continue;
+        if (seen.has(value)) continue;
         seen.add(value);
 
         if (
           typeof RTCPeerConnection !== "undefined" &&
           value instanceof RTCPeerConnection
         ) {
-          found.push(value);
-          return;
+          peerConnectionRef.current = value;
+          return value;
         }
 
         let keys = [];
         try {
-          keys = Reflect.ownKeys(value).slice(0, 80);
+          keys = Reflect.ownKeys(value).slice(0, 35);
         } catch {
-          return;
+          continue;
         }
 
         for (const key of keys) {
           try {
-            walk(value[key], depth + 1);
+            queue.push({ value: value[key], depth: depth + 1 });
           } catch {
-            // Some SDK internals use throwing getters.
+            // Ignore throwing SDK getters.
           }
         }
       }
 
-      walk(root, 0);
-      return found;
+      return null;
     }
 
-    async function measureWebRtcPing() {
+    async function sampleRtt() {
       try {
-        const peerConnections = findPeerConnections(meetingRef.current);
-        let bestRtt = null;
+        const peer = findPeerConnectionOnce(meetingRef.current);
 
-        for (const peerConnection of peerConnections) {
-          const stats = await peerConnection.getStats();
-
-          stats.forEach((report) => {
-            const isSelectedPair =
-              report.type === "candidate-pair" &&
-              (
-                report.selected ||
-                report.nominated ||
-                report.state === "succeeded"
-              );
-
-            if (
-              isSelectedPair &&
-              Number.isFinite(report.currentRoundTripTime)
-            ) {
-              const rtt = Math.max(
-                1,
-                Math.round(report.currentRoundTripTime * 1000)
-              );
-
-              if (bestRtt == null || rtt < bestRtt) {
-                bestRtt = rtt;
-              }
-            }
-          });
+        if (!peer) {
+          if (!stopped) setNetworkPing(null);
+          return;
         }
 
-        if (!stopped) setNetworkPing(bestRtt);
+        const report = await peer.getStats();
+        let rtt = null;
+
+        report.forEach((item) => {
+          if (
+            item.type === "candidate-pair" &&
+            (item.selected || item.nominated || item.state === "succeeded") &&
+            Number.isFinite(item.currentRoundTripTime)
+          ) {
+            const value = Math.max(
+              1,
+              Math.round(item.currentRoundTripTime * 1000)
+            );
+            if (rtt == null || value < rtt) rtt = value;
+          }
+        });
+
+        if (!stopped) setNetworkPing(rtt);
       } catch {
         if (!stopped) setNetworkPing(null);
       }
     }
 
-    measureWebRtcPing();
-    const timer = window.setInterval(measureWebRtcPing, 3000);
+    sampleRtt();
+    const timer = window.setInterval(sampleRtt, 2000);
 
     return () => {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [call?.id, phase]);
-
-  function formatDuration(totalSeconds) {
-    const hours = Math.floor(totalSeconds / 3600);
-    const minutes = Math.floor((totalSeconds % 3600) / 60);
-    const seconds = totalSeconds % 60;
-
-    if (hours > 0) {
-      return `${hours}:${String(minutes).padStart(2, "0")}:${String(
-        seconds
-      ).padStart(2, "0")}`;
-    }
-
-    return `${minutes}:${String(seconds).padStart(2, "0")}`;
-  }
-
-  function connectionQuality() {
-    if (networkPing == null) return "Checking";
-    if (networkPing < 90) return "Excellent";
-    if (networkPing < 180) return "Good";
-    if (networkPing < 300) return "Fair";
-    return "Poor";
-  }
+  }, [phase, call?.id]);
 
   useEffect(() => {
     if (!user?.id) return undefined;
@@ -694,81 +825,122 @@ export const CallSystem = forwardRef(function CallSystem(
 
     async function checkCalls() {
       try {
-        const exactCallId =
-          call?.id && !String(call.id).startsWith("preparing_")
-            ? `?call_id=${encodeURIComponent(call.id)}`
+        const callId =
+          currentCallRef.current?.id &&
+          !String(currentCallRef.current.id).startsWith("preparing_")
+            ? `?call_id=${encodeURIComponent(currentCallRef.current.id)}`
             : "";
 
-        const data = await api(`/api/calls/status${exactCallId}`);
+        const data = await api(`/api/calls/status${callId}`);
 
         if (stopped) return;
 
-        if (!call && data.incoming) {
+        if (!currentCallRef.current && data.incoming) {
           setIncoming(data.incoming);
         } else if (!data.incoming) {
           setIncoming(null);
         }
 
+        const current = currentCallRef.current;
+        const server = data.current;
+
+        if (!current || !server) return;
         if (
-          call &&
-          data.current &&
-          (
-            String(call.id).startsWith("preparing_") ||
-            data.current.id === call.id
-          )
-        ) {
-          if (data.current.status === "active") {
-            setPhase("connected");
+          !String(current.id).startsWith("preparing_") &&
+          server.id !== current.id
+        ) return;
+
+        setCall((value) =>
+          value
+            ? {
+                ...value,
+                ...server,
+                auth_token: value.auth_token
+              }
+            : value
+        );
+
+        setRemoteMuted(Boolean(server.media?.remote_muted));
+        setRemoteSharing(Boolean(server.media?.remote_sharing));
+        setRemoteSpeaking(Boolean(server.media?.remote_speaking));
+
+        if (server.status === "ringing") {
+          setPhase((value) =>
+            ["preparing", "connecting"].includes(value)
+              ? value
+              : "ringing"
+          );
+        } else if (server.status === "active") {
+          const ready =
+            server.media?.local_joined &&
+            server.media?.remote_joined;
+
+          setPhase(ready ? "connected" : "connecting");
+
+          if (ready) {
             setCallStartedAt((value) => value || Date.now());
-          } else if (data.current.status === "ringing") {
-            setPhase((currentPhase) =>
-              ["preparing", "connecting"].includes(currentPhase)
-                ? currentPhase
-                : "ringing"
-            );
-          } else if (
-            ["declined", "ended", "missed"].includes(data.current.status)
-          ) {
-            endCall();
           }
+        } else if (
+          ["declined", "ended", "missed"].includes(server.status)
+        ) {
+          await closeLocalCall();
         }
       } catch {
-        // Silent polling failure.
+        // Keep the current UI during temporary network failures.
       }
     }
 
     checkCalls();
     const timer = window.setInterval(
       checkCalls,
-      call || incoming ? 900 : 500
+      currentCallRef.current || incoming ? 500 : 700
     );
 
     return () => {
       stopped = true;
       window.clearInterval(timer);
     };
-  }, [user?.id, call?.id]);
+  }, [user?.id, call?.id, incoming?.id]);
+
+  function formatDuration(seconds) {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const rest = seconds % 60;
+
+    if (hours) {
+      return `${hours}:${String(minutes).padStart(2, "0")}:${String(rest).padStart(2, "0")}`;
+    }
+
+    return `${minutes}:${String(rest).padStart(2, "0")}`;
+  }
+
+  const showShare = screenSharing || remoteSharing;
+  const displayedShareTrack = remoteShareTrack || localShareTrack;
+  const otherName =
+    call?.other_display_name ||
+    call?.other_username ||
+    "Participant";
 
   return (
     <>
       {incoming && !call && (
-        <div className="premiumIncomingCall">
+        <div className="discordIncomingBanner">
           <img
             src={incoming.caller_avatar_url || "/default-avatar.png"}
             alt=""
           />
 
-          <div className="premiumIncomingCopy">
+          <div>
             <strong>
               {incoming.caller_display_name ||
                 incoming.caller_username ||
                 "Incoming call"}
             </strong>
-            <span>Incoming voice call</span>
+            <span>is calling you</span>
           </div>
 
           <button
-            className="premiumIncomingDecline"
+            className="incomingDeclineButton"
             type="button"
             title="Decline"
             onClick={declineCall}
@@ -777,7 +949,7 @@ export const CallSystem = forwardRef(function CallSystem(
           </button>
 
           <button
-            className="premiumIncomingAccept"
+            className="incomingAcceptButton"
             type="button"
             title="Accept"
             onClick={acceptCall}
@@ -789,130 +961,127 @@ export const CallSystem = forwardRef(function CallSystem(
 
       {call &&
         createPortal(
-          <div className={screenSharing ? "premiumInlineCall sharing" : "premiumInlineCall"}>
-            <section className="premiumCallStage">
-              <div className="premiumCallMeta">
-                <span>
-                  {phase === "connected"
-                    ? formatDuration(elapsedSeconds)
-                    : phase === "ringing"
-                      ? "Ringing..."
-                      : phase === "preparing"
-                        ? "Starting..."
-                        : "Connecting..."}
-                </span>
-                <span>{networkPing == null ? "RTC -" : `${networkPing} ms`}</span>
-              </div>
-
-              {screenSharing ? (
-                <div className="premiumShareLayout">
-                  <div className="premiumShareSurface">
+          <section className={showShare ? "discordCallBar sharing" : "discordCallBar"}>
+            {showShare ? (
+              <div className="discordShareStage">
+                {displayedShareTrack ? (
+                  <MediaTrackVideo
+                    track={displayedShareTrack}
+                    muted={!remoteShareTrack}
+                  />
+                ) : (
+                  <div className="shareWaitingState">
                     <ScreenShareIcon active />
-                    <strong>Screen Share</strong>
-                    <span>Your screen is being shared</span>
-                  </div>
-
-                  <div className="premiumShareParticipants">
-                    <div>
-                      <img src={user?.avatar_url || "/default-avatar.png"} alt="" />
-                      <span>{user?.display_name || user?.username || "You"}</span>
-                    </div>
-                    <div>
-                      <img src={call.other_avatar_url || "/default-avatar.png"} alt="" />
-                      <span>
-                        {call.other_display_name ||
-                          call.other_username ||
-                          "Participant"}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div className={phase === "connected" ? "premiumCallPeople connected" : "premiumCallPeople ringing"}>
-                  <article className={localSpeaking ? "premiumCallPerson speaking" : "premiumCallPerson"}>
-                    <div>
-                      <img
-                        src={user?.avatar_url || "/default-avatar.png"}
-                        alt=""
-                      />
-                      {muted ? (
-                        <span className="premiumMutedBadge">
-                          <MicrophoneIcon muted />
-                        </span>
-                      ) : null}
-                    </div>
-                    <strong>{user?.display_name || user?.username || "You"}</strong>
-                  </article>
-
-                  <article className={remoteSpeaking ? "premiumCallPerson speaking" : "premiumCallPerson"}>
-                    <div>
-                      <img
-                        src={call.other_avatar_url || "/default-avatar.png"}
-                        alt=""
-                      />
-                    </div>
                     <strong>
-                      {call.other_display_name ||
-                        call.other_username ||
-                        "Participant"}
+                      {remoteSharing ? `${otherName} is sharing` : "You are sharing"}
                     </strong>
-                  </article>
+                    <span>Waiting for the video track...</span>
+                  </div>
+                )}
+
+                <div className="shareParticipantRail">
+                  <img
+                    src={user?.avatar_url || "/default-avatar.png"}
+                    alt=""
+                  />
+                  <img
+                    src={call.other_avatar_url || "/default-avatar.png"}
+                    alt=""
+                  />
                 </div>
-              )}
-
-              <div className="premiumCallControls">
-                <button
-                  className={muted ? "premiumCallControl activeDanger" : "premiumCallControl"}
-                  type="button"
-                  title={muted ? "Unmute" : "Mute"}
-                  disabled={mediaBusy || phase !== "connected"}
-                  onClick={toggleMicrophone}
-                >
-                  <MicrophoneIcon muted={muted} />
-                </button>
-
-                <button
-                  className={videoEnabled ? "premiumCallControl active" : "premiumCallControl"}
-                  type="button"
-                  title={videoEnabled ? "Turn camera off" : "Turn camera on"}
-                  disabled={mediaBusy || phase !== "connected"}
-                  onClick={toggleVideo}
-                >
-                  <CameraIcon disabled={!videoEnabled} />
-                </button>
-
-                <button
-                  className={screenSharing ? "premiumCallControl active" : "premiumCallControl"}
-                  type="button"
-                  title={screenSharing ? "Stop sharing" : "Share screen"}
-                  disabled={mediaBusy || phase !== "connected"}
-                  onClick={toggleScreenShare}
-                >
-                  <ScreenShareIcon active={screenSharing} />
-                </button>
-
-                <button
-                  className="premiumCallControl disconnect"
-                  type="button"
-                  title="Disconnect"
-                  onClick={endCall}
-                >
-                  <HangupIcon />
-                </button>
               </div>
-            </section>
+            ) : (
+              <div className="discordVoiceSummary">
+                <div className="callAvatarStack">
+                  <div className={localSpeaking ? "callAvatar speaking" : "callAvatar"}>
+                    <img
+                      src={user?.avatar_url || "/default-avatar.png"}
+                      alt=""
+                    />
+                    {muted ? (
+                      <span className="callMuteBadge">
+                        <MicrophoneIcon muted />
+                      </span>
+                    ) : null}
+                  </div>
 
-            <div className="hiddenRealtimeMeeting" aria-hidden="true">
-              {React.createElement("rtk-meeting", {
-                ref: meetingElementRef,
-                mode: "fill",
-                "show-setup-screen": "false"
-              })}
+                  <div className={remoteSpeaking && !remoteMuted ? "callAvatar speaking" : "callAvatar"}>
+                    <img
+                      src={call.other_avatar_url || "/default-avatar.png"}
+                      alt=""
+                    />
+                    {remoteMuted ? (
+                      <span className="callMuteBadge">
+                        <MicrophoneIcon muted />
+                      </span>
+                    ) : null}
+                  </div>
+                </div>
+
+                <div className="callPrimaryInfo">
+                  <strong>{otherName}</strong>
+                  <span>
+                    {phase === "connected"
+                      ? `${formatDuration(elapsedSeconds)} · ${networkPing == null ? "RTC —" : `${networkPing} ms`}`
+                      : phase === "ringing"
+                        ? "Ringing..."
+                        : phase === "reconnecting"
+                          ? "Reconnecting..."
+                          : phase === "preparing"
+                            ? "Starting call..."
+                            : "Joining voice..."}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            <div className="discordCallControls">
+              <button
+                className={muted ? "callControl activeDanger" : "callControl"}
+                type="button"
+                title={muted ? "Unmute" : "Mute"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleMicrophone}
+              >
+                <MicrophoneIcon muted={muted} />
+              </button>
+
+              <button
+                className={videoEnabled ? "callControl active" : "callControl"}
+                type="button"
+                title={videoEnabled ? "Turn camera off" : "Turn camera on"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleVideo}
+              >
+                <CameraIcon disabled={!videoEnabled} />
+              </button>
+
+              <button
+                className={screenSharing ? "callControl active" : "callControl"}
+                type="button"
+                title={screenSharing ? "Stop sharing" : "Share screen"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleScreenShare}
+              >
+                <ScreenShareIcon active={screenSharing} />
+              </button>
+
+              <button
+                className="callControl disconnect"
+                type="button"
+                title="Disconnect"
+                onClick={endCall}
+              >
+                <HangupIcon />
+              </button>
+            </div>
+
+            <div className="callAudioMount" aria-hidden="true">
               {React.createElement("rtk-participants-audio", {
                 ref: participantAudioRef
               })}
             </div>
-          </div>,
+          </section>,
           document.getElementById("vodkach-call-slot") || document.body
         )}
 

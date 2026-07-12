@@ -47,6 +47,28 @@ export async function onRequestPost(context) {
     );
   }
 
+  const callId = makeId("call");
+
+  await context.env.DB.prepare(
+    `INSERT INTO calls (
+       id,
+       chat_id,
+       caller_user_id,
+       callee_user_id,
+       realtime_meeting_id,
+       status,
+       created_at,
+       expires_at
+     ) VALUES (?, ?, ?, ?, '', 'ringing', datetime('now'), datetime('now', '+60 seconds'))`
+  )
+    .bind(
+      callId,
+      chatId,
+      user.id,
+      directChat.other_user_id
+    )
+    .run();
+
   try {
     const meeting = await realtimeRequest(context.env, "/meetings", {
       method: "POST",
@@ -84,27 +106,12 @@ export async function onRequestPost(context) {
       throw new Error("RealtimeKit did not return a participant token");
     }
 
-    const callId = makeId("call");
-
     await context.env.DB.prepare(
-      `INSERT INTO calls (
-         id,
-         chat_id,
-         caller_user_id,
-         callee_user_id,
-         realtime_meeting_id,
-         status,
-         created_at,
-         expires_at
-       ) VALUES (?, ?, ?, ?, ?, 'ringing', datetime('now'), datetime('now', '+60 seconds'))`
+      `UPDATE calls
+       SET realtime_meeting_id = ?
+       WHERE id = ?`
     )
-      .bind(
-        callId,
-        chatId,
-        user.id,
-        directChat.other_user_id,
-        meetingId
-      )
+      .bind(meetingId, callId)
       .run();
 
     return json({
@@ -121,6 +128,15 @@ export async function onRequestPost(context) {
       }
     });
   } catch (error) {
+    await context.env.DB.prepare(
+      `UPDATE calls
+       SET status = 'ended',
+           ended_at = datetime('now')
+       WHERE id = ?`
+    )
+      .bind(callId)
+      .run();
+
     return errorResponse(error);
   }
 }

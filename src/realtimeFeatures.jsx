@@ -30,11 +30,11 @@ export function CallIcon() {
 
 function HangupIcon() {
   return (
-    <IconBase>
-      <path d="M4.2 15.7c2.1-2.05 4.7-3.08 7.8-3.08s5.7 1.03 7.8 3.08" />
-      <path d="M7.2 14.2 6 18.2M16.8 14.2l1.2 4" />
-      <path d="M9 13.1v3.1M15 13.1v3.1" />
-    </IconBase>
+    <svg className="vodkachFeatureIcon callHangupGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <path d="M5.3 16.8c1.7-1.7 4-2.6 6.7-2.6s5 .9 6.7 2.6" />
+      <path d="m7.8 15.2-1 3.1M16.2 15.2l1 3.1" />
+      <path d="M9.4 14.5v2.7M14.6 14.5v2.7" />
+    </svg>
   );
 }
 
@@ -49,32 +49,33 @@ function AcceptCallIcon() {
 
 function MicrophoneIcon({ muted = false }) {
   return (
-    <IconBase>
+    <svg className="vodkachFeatureIcon callMicGlyph" viewBox="0 0 24 24" aria-hidden="true">
       <rect x="9" y="3" width="6" height="10" rx="3" />
-      <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7" />
+      <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0" />
+      <path d="M12 17v4M8.5 21h7" />
       {muted ? <path className="iconSlash" d="M4 4l16 16" /> : null}
-    </IconBase>
+    </svg>
   );
 }
 
 function CameraIcon({ disabled = false }) {
   return (
-    <IconBase>
-      <rect x="3" y="6" width="12.5" height="12" rx="2.4" />
-      <path d="m15.5 10 5-3v10l-5-3" />
+    <svg className="vodkachFeatureIcon callCameraGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="6" width="12.5" height="12" rx="2.5" />
+      <path d="m15.5 10 5-3v10l-5-3z" />
       {disabled ? <path className="iconSlash" d="M4 4l16 16" /> : null}
-    </IconBase>
+    </svg>
   );
 }
 
 function ScreenShareIcon({ active = false }) {
   return (
-    <IconBase>
-      <rect x="3" y="4" width="18" height="13" rx="2.4" />
+    <svg className="vodkachFeatureIcon callShareGlyph" viewBox="0 0 24 24" aria-hidden="true">
+      <rect x="3" y="4" width="18" height="13" rx="2.5" />
       <path d="M8 21h8M12 17v4" />
       <path d="m9 11 3-3 3 3M12 8v6" />
-      {active ? <circle cx="18.5" cy="5.5" r="2" className="shareActiveDot" /> : null}
-    </IconBase>
+      {active ? <circle className="shareActiveDot" cx="19" cy="5" r="2" /> : null}
+    </svg>
   );
 }
 
@@ -157,10 +158,14 @@ export const CallSystem = forwardRef(function CallSystem(
   const [networkPing, setNetworkPing] = useState(null);
   const [connectionType, setConnectionType] = useState("Unknown");
   const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
+  const [remoteSpeaking, setRemoteSpeaking] = useState(false);
+  const [localSpeaking, setLocalSpeaking] = useState(false);
   const [callStartedAt, setCallStartedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const meetingRef = useRef(null);
   const meetingElementRef = useRef(null);
+  const remoteSpeakingTimerRef = useRef(null);
+  const localAudioCleanupRef = useRef(null);
 
   async function connectToMeeting(callData) {
     setError("");
@@ -184,15 +189,23 @@ export const CallSystem = forwardRef(function CallSystem(
         setPhase("ringing");
       });
 
-      const updateRemoteParticipants = () => {
-        const joined =
-          meeting.participants?.joined?.toArray?.() ||
-          meeting.participants?.joined ||
-          [];
-        const count = Array.isArray(joined)
-          ? joined.length
-          : Number(joined?.size || 0);
+      const getJoinedCount = () => {
+        const joined = meeting.participants?.joined;
 
+        if (!joined) return 0;
+        if (typeof joined.size === "number") return joined.size;
+        if (typeof joined.toArray === "function") return joined.toArray().length;
+        if (Array.isArray(joined)) return joined.length;
+
+        try {
+          return Array.from(joined.values?.() || []).length;
+        } catch {
+          return 0;
+        }
+      };
+
+      const updateRemoteParticipants = () => {
+        const count = getJoinedCount();
         setRemoteParticipantCount(count);
 
         if (count > 0) {
@@ -200,6 +213,7 @@ export const CallSystem = forwardRef(function CallSystem(
           setCallStartedAt((value) => value || Date.now());
         } else {
           setPhase("ringing");
+          setRemoteSpeaking(false);
         }
       };
 
@@ -211,6 +225,20 @@ export const CallSystem = forwardRef(function CallSystem(
         "participantLeft",
         updateRemoteParticipants
       );
+
+      meeting.participants?.on?.("activeSpeaker", (speaker) => {
+        const volume = Number(speaker?.volume ?? 0);
+
+        setRemoteSpeaking(volume > 0.01 || Boolean(speaker?.peerId || speaker?.id));
+
+        if (remoteSpeakingTimerRef.current) {
+          window.clearTimeout(remoteSpeakingTimerRef.current);
+        }
+
+        remoteSpeakingTimerRef.current = window.setTimeout(() => {
+          setRemoteSpeaking(false);
+        }, 650);
+      });
 
       meeting.self.on("roomLeft", () => {
         setPhase("idle");
@@ -243,8 +271,21 @@ export const CallSystem = forwardRef(function CallSystem(
   async function startCall() {
     if (!activeChat?.id || call || phase !== "idle") return;
 
-    setPhase("starting");
+    const otherUser = activeChat.other_user || {};
+
+    setCall({
+      id: `preparing_${Date.now()}`,
+      chat_id: activeChat.id,
+      status: "preparing",
+      other_user_id: otherUser.id,
+      other_username: otherUser.username,
+      other_display_name: otherUser.display_name,
+      other_avatar_url: otherUser.avatar_url
+    });
+    setPhase("preparing");
     setError("");
+    setRemoteSpeaking(false);
+    setLocalSpeaking(false);
 
     try {
       const data = await api("/api/calls/start", {
@@ -259,6 +300,7 @@ export const CallSystem = forwardRef(function CallSystem(
       });
     } catch (startError) {
       setError(startError.message);
+      setCall(null);
       setPhase("idle");
     }
   }
@@ -345,6 +387,16 @@ export const CallSystem = forwardRef(function CallSystem(
     setElapsedSeconds(0);
     setNetworkPing(null);
     setRemoteParticipantCount(0);
+    setRemoteSpeaking(false);
+    setLocalSpeaking(false);
+
+    if (remoteSpeakingTimerRef.current) {
+      window.clearTimeout(remoteSpeakingTimerRef.current);
+      remoteSpeakingTimerRef.current = null;
+    }
+
+    localAudioCleanupRef.current?.();
+    localAudioCleanupRef.current = null;
     setPhase("idle");
   }
 
@@ -415,6 +467,67 @@ export const CallSystem = forwardRef(function CallSystem(
   }
 
   useEffect(() => {
+    if (phase !== "connected" || muted) {
+      setLocalSpeaking(false);
+      localAudioCleanupRef.current?.();
+      localAudioCleanupRef.current = null;
+      return undefined;
+    }
+
+    const audioTrack = meetingRef.current?.self?.audioTrack;
+
+    if (!audioTrack) return undefined;
+
+    let stopped = false;
+    let frameId = 0;
+    let audioContext = null;
+    let stream = null;
+
+    try {
+      audioContext = new AudioContext();
+      stream = new MediaStream([audioTrack]);
+      const source = audioContext.createMediaStreamSource(stream);
+      const analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      analyser.smoothingTimeConstant = 0.72;
+      source.connect(analyser);
+
+      const values = new Uint8Array(analyser.frequencyBinCount);
+
+      const tick = () => {
+        if (stopped) return;
+
+        analyser.getByteTimeDomainData(values);
+
+        let sum = 0;
+        for (const value of values) {
+          const normalized = (value - 128) / 128;
+          sum += normalized * normalized;
+        }
+
+        const rms = Math.sqrt(sum / values.length);
+        setLocalSpeaking(rms > 0.035);
+        frameId = requestAnimationFrame(tick);
+      };
+
+      tick();
+    } catch {
+      setLocalSpeaking(false);
+    }
+
+    const cleanup = () => {
+      stopped = true;
+      cancelAnimationFrame(frameId);
+      audioContext?.close?.().catch?.(() => {});
+      setLocalSpeaking(false);
+    };
+
+    localAudioCleanupRef.current = cleanup;
+
+    return cleanup;
+  }, [phase, muted]);
+
+  useEffect(() => {
     if (!callStartedAt || phase !== "connected") return undefined;
 
     const updateElapsed = () => {
@@ -462,57 +575,85 @@ export const CallSystem = forwardRef(function CallSystem(
 
     let stopped = false;
 
-    async function measureWebRtcPing() {
-      try {
-        const peerConnections = [];
+    function findPeerConnections(root) {
+      const found = [];
+      const seen = new WeakSet();
 
-        const possibleSources = [
-          meetingRef.current?.room,
-          meetingRef.current?.internals,
-          meetingRef.current
-        ];
+      function walk(value, depth) {
+        if (!value || depth > 5) return;
+        if (typeof value !== "object" && typeof value !== "function") return;
+        if (seen.has(value)) return;
+        seen.add(value);
 
-        for (const source of possibleSources) {
-          if (!source) continue;
-
-          for (const value of Object.values(source)) {
-            if (
-              value &&
-              typeof value.getStats === "function" &&
-              value.constructor?.name === "RTCPeerConnection"
-            ) {
-              peerConnections.push(value);
-            }
-          }
+        if (
+          typeof RTCPeerConnection !== "undefined" &&
+          value instanceof RTCPeerConnection
+        ) {
+          found.push(value);
+          return;
         }
 
+        let keys = [];
+        try {
+          keys = Reflect.ownKeys(value).slice(0, 80);
+        } catch {
+          return;
+        }
+
+        for (const key of keys) {
+          try {
+            walk(value[key], depth + 1);
+          } catch {
+            // Some SDK internals use throwing getters.
+          }
+        }
+      }
+
+      walk(root, 0);
+      return found;
+    }
+
+    async function measureWebRtcPing() {
+      try {
+        const peerConnections = findPeerConnections(meetingRef.current);
         let bestRtt = null;
 
         for (const peerConnection of peerConnections) {
           const stats = await peerConnection.getStats();
 
           stats.forEach((report) => {
-            if (
+            const isSelectedPair =
               report.type === "candidate-pair" &&
-              report.state === "succeeded" &&
-              report.currentRoundTripTime != null
+              (
+                report.selected ||
+                report.nominated ||
+                report.state === "succeeded"
+              );
+
+            if (
+              isSelectedPair &&
+              Number.isFinite(report.currentRoundTripTime)
             ) {
-              const rtt = Math.round(report.currentRoundTripTime * 1000);
-              if (bestRtt == null || rtt < bestRtt) bestRtt = rtt;
+              const rtt = Math.max(
+                1,
+                Math.round(report.currentRoundTripTime * 1000)
+              );
+
+              if (bestRtt == null || rtt < bestRtt) {
+                bestRtt = rtt;
+              }
             }
           });
         }
 
-        if (!stopped) {
-          setNetworkPing(bestRtt);
-        }
+        if (!stopped) setNetworkPing(bestRtt);
       } catch {
         if (!stopped) setNetworkPing(null);
       }
     }
 
     measureWebRtcPing();
-    const timer = window.setInterval(measureWebRtcPing, 4000);
+    const timer = window.setInterval(measureWebRtcPing, 3000);
 
     return () => {
       stopped = true;
@@ -572,7 +713,10 @@ export const CallSystem = forwardRef(function CallSystem(
     }
 
     checkCalls();
-    const timer = window.setInterval(checkCalls, 1800);
+    const timer = window.setInterval(
+      checkCalls,
+      call || incoming ? 900 : 500
+    );
 
     return () => {
       stopped = true;
@@ -583,32 +727,40 @@ export const CallSystem = forwardRef(function CallSystem(
   return (
     <>
       {incoming && !call && (
-        <div className="incomingCallCard">
-          <img
-            src={incoming.caller_avatar_url || "/default-avatar.png"}
-            alt=""
-          />
-          <div className="incomingCallText">
+        <div className="discordIncomingCall">
+          <div className="incomingAvatarPulse">
+            <img
+              src={incoming.caller_avatar_url || "/default-avatar.png"}
+              alt=""
+            />
+            <span />
+            <span />
+          </div>
+
+          <div className="discordIncomingText">
             <strong>
               {incoming.caller_display_name ||
                 incoming.caller_username ||
                 "Incoming call"}
             </strong>
-            <span>Incoming Vodkach call</span>
+            <span>Incoming voice call</span>
           </div>
-          <div className="incomingCallActions">
+
+          <div className="discordIncomingActions">
             <button
-              className="callDeclineButton"
+              className="incomingDecline"
               type="button"
               aria-label="Decline call"
+              title="Decline"
               onClick={declineCall}
             >
               <HangupIcon />
             </button>
             <button
-              className="callAcceptButton"
+              className="incomingAccept"
               type="button"
               aria-label="Accept call"
+              title="Accept"
               onClick={acceptCall}
             >
               <AcceptCallIcon />
@@ -639,8 +791,10 @@ export const CallSystem = forwardRef(function CallSystem(
                       : phase === "ringing"
                         ? "Ringing..."
                         : phase === "connecting"
-                          ? "Connecting..."
-                          : "Calling..."}
+                          ? "Connecting to voice..."
+                          : phase === "preparing"
+                            ? "Starting call..."
+                            : "Calling..."}
                   </span>
                 </div>
               </div>
@@ -689,7 +843,7 @@ export const CallSystem = forwardRef(function CallSystem(
                 </div>
               ) : (
                 <div className={phase === "connected" ? "inlineParticipantCanvas connected" : "inlineParticipantCanvas ringing"}>
-                  <article className="inlineParticipantCard">
+                  <article className={localSpeaking ? "inlineParticipantCard speaking" : "inlineParticipantCard"}>
                     <div className="inlineAvatarWrap">
                       <img
                         src={user?.avatar_url || "/default-avatar.png"}
@@ -703,7 +857,7 @@ export const CallSystem = forwardRef(function CallSystem(
                     <span>{muted ? "Muted" : "Connected"}</span>
                   </article>
 
-                  <article className="inlineParticipantCard">
+                  <article className={remoteSpeaking ? "inlineParticipantCard speaking" : "inlineParticipantCard"}>
                     <div className="inlineAvatarWrap">
                       <img
                         src={call.other_avatar_url || "/default-avatar.png"}

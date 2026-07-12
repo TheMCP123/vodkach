@@ -8311,3 +8311,270 @@ html.vodkachWebHost .refinedCreateCard {
   0%, 100% { opacity: .45; }
   50% { opacity: 1; }
 }
+
+
+/* Patch 071: MEGA call stability, exact states, incoming UI and speaking outline */
+
+/* Fully neutralize inherited transforms that damaged icons */
+.vodkachFeatureIcon,
+.vodkachFeatureIcon *,
+.callHangupGlyph,
+.callMicGlyph,
+.callCameraGlyph,
+.callShareGlyph {
+  transform: none !important;
+  rotate: 0deg !important;
+  transform-origin: center !important;
+  vector-effect: non-scaling-stroke;
+}
+
+.callHangupGlyph,
+.callMicGlyph,
+.callCameraGlyph,
+.callShareGlyph {
+  fill: none !important;
+  stroke: currentColor !important;
+  stroke-width: 1.85 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+.callCameraGlyph path:first-of-type {
+  fill: none !important;
+}
+
+.shareActiveDot {
+  fill: #23a55a !important;
+  stroke: #23a55a !important;
+}
+
+.iconSlash {
+  stroke-width: 2.35 !important;
+}
+
+/* Outgoing call appears immediately; room creation no longer leaves dead UI */
+.inlineDiscordCall {
+  animation: inlineCallEnter .16s ease-out;
+}
+
+@keyframes inlineCallEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Stable ringing animation */
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap {
+  animation: stableRingFloat 1.4s ease-in-out infinite;
+}
+
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::before,
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::after {
+  content: "";
+  position: absolute;
+  inset: -7px;
+  z-index: -1;
+  border: 2px solid rgba(252,3,3,.42);
+  border-radius: 29px;
+  opacity: 0;
+  pointer-events: none;
+  animation: stableRingWave 1.6s ease-out infinite;
+}
+
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::after {
+  inset: -14px;
+  animation-delay: .55s;
+}
+
+@keyframes stableRingFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+@keyframes stableRingWave {
+  0% {
+    opacity: .72;
+    transform: scale(.9);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.16);
+  }
+}
+
+/* Real speaking outline from microphone analyser / RealtimeKit activeSpeaker */
+.inlineParticipantCard .inlineAvatarWrap {
+  border-radius: 27px;
+  transition:
+    box-shadow .11s ease,
+    transform .11s ease;
+}
+
+.inlineParticipantCard.speaking .inlineAvatarWrap {
+  box-shadow:
+    0 0 0 3px #fc0303,
+    0 0 0 7px rgba(252,3,3,.16);
+  transform: scale(1.025);
+}
+
+.inlineParticipantCard.speaking > span {
+  color: #ff7b7f;
+}
+
+/* Discord-like incoming call */
+.discordIncomingCall {
+  position: fixed;
+  right: 22px;
+  top: 22px;
+  z-index: 12000;
+  width: min(390px, calc(100vw - 32px));
+  min-height: 84px;
+  padding: 12px 13px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  display: grid;
+  grid-template-columns: 58px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  color: #f4f5f7;
+  background: #17181c;
+  box-shadow: 0 22px 70px rgba(0,0,0,.58);
+  animation: incomingCallEnter .18s ease-out;
+}
+
+@keyframes incomingCallEnter {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.incomingAvatarPulse {
+  position: relative;
+  width: 56px;
+  height: 56px;
+}
+
+.incomingAvatarPulse img {
+  position: relative;
+  z-index: 2;
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  object-fit: cover;
+  background: #25272c;
+}
+
+.incomingAvatarPulse > span {
+  position: absolute;
+  inset: -4px;
+  z-index: 1;
+  border: 2px solid rgba(35,165,90,.5);
+  border-radius: 18px;
+  opacity: 0;
+  animation: incomingPulse 1.7s ease-out infinite;
+}
+
+.incomingAvatarPulse > span:last-child {
+  inset: -10px;
+  animation-delay: .55s;
+}
+
+@keyframes incomingPulse {
+  0% {
+    opacity: .75;
+    transform: scale(.88);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.12);
+  }
+}
+
+.discordIncomingText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.discordIncomingText strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: .96rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discordIncomingText span {
+  color: #9ca1a9;
+  font-size: .75rem;
+}
+
+.discordIncomingActions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.discordIncomingActions button {
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+
+.incomingDecline {
+  background: #da373c;
+}
+
+.incomingAccept {
+  background: #23a55a;
+}
+
+.discordIncomingActions .vodkachFeatureIcon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+/* Clean controls */
+.inlineCallButton {
+  overflow: visible !important;
+}
+
+.inlineCallButton .vodkachFeatureIcon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.inlineCallButton.disconnect .vodkachFeatureIcon {
+  width: 24px !important;
+  height: 24px !important;
+}
+
+/* Ping is WebRTC RTT only */
+.inlineCallStats span:nth-child(2) {
+  min-width: 54px;
+}
+
+@media (max-width: 620px) {
+  .discordIncomingCall {
+    left: 10px;
+    right: 10px;
+    top: 10px;
+    width: auto;
+  }
+}

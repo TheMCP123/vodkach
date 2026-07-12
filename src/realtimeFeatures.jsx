@@ -31,9 +31,9 @@ export function CallIcon() {
 function HangupIcon() {
   return (
     <IconBase>
-      <path d="M4.1 15.6c2.25-2.15 4.9-3.2 7.9-3.2s5.65 1.05 7.9 3.2" />
-      <path d="m6.9 14.2-1.1 4.1M17.1 14.2l1.1 4.1" />
-      <path d="M9.2 12.9v3.4M14.8 12.9v3.4" />
+      <path d="M4.2 15.7c2.1-2.05 4.7-3.08 7.8-3.08s5.7 1.03 7.8 3.08" />
+      <path d="M7.2 14.2 6 18.2M16.8 14.2l1.2 4" />
+      <path d="M9 13.1v3.1M15 13.1v3.1" />
     </IconBase>
   );
 }
@@ -50,7 +50,7 @@ function AcceptCallIcon() {
 function MicrophoneIcon({ muted = false }) {
   return (
     <IconBase>
-      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <rect x="9" y="3" width="6" height="10" rx="3" />
       <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7" />
       {muted ? <path className="iconSlash" d="M4 4l16 16" /> : null}
     </IconBase>
@@ -60,8 +60,8 @@ function MicrophoneIcon({ muted = false }) {
 function CameraIcon({ disabled = false }) {
   return (
     <IconBase>
-      <rect x="3" y="6" width="13" height="12" rx="2.5" />
-      <path d="m16 10 5-3v10l-5-3" />
+      <rect x="3" y="6" width="12.5" height="12" rx="2.4" />
+      <path d="m15.5 10 5-3v10l-5-3" />
       {disabled ? <path className="iconSlash" d="M4 4l16 16" /> : null}
     </IconBase>
   );
@@ -70,13 +70,10 @@ function CameraIcon({ disabled = false }) {
 function ScreenShareIcon({ active = false }) {
   return (
     <IconBase>
-      <rect x="3" y="4" width="18" height="13" rx="2.5" />
+      <rect x="3" y="4" width="18" height="13" rx="2.4" />
       <path d="M8 21h8M12 17v4" />
-      {active ? (
-        <path d="m9 10 3-3 3 3M12 7v7" />
-      ) : (
-        <path d="m9 12 3-3 3 3M12 9v5" />
-      )}
+      <path d="m9 11 3-3 3 3M12 8v6" />
+      {active ? <circle cx="18.5" cy="5.5" r="2" className="shareActiveDot" /> : null}
     </IconBase>
   );
 }
@@ -159,6 +156,7 @@ export const CallSystem = forwardRef(function CallSystem(
   const [mediaBusy, setMediaBusy] = useState(false);
   const [networkPing, setNetworkPing] = useState(null);
   const [connectionType, setConnectionType] = useState("Unknown");
+  const [remoteParticipantCount, setRemoteParticipantCount] = useState(0);
   const [callStartedAt, setCallStartedAt] = useState(null);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const meetingRef = useRef(null);
@@ -182,7 +180,38 @@ export const CallSystem = forwardRef(function CallSystem(
       meetingRef.current = meeting;
       setCall(callData);
 
-      meeting.self.on("roomJoined", () => setPhase("connected"));
+      meeting.self.on("roomJoined", () => {
+        setPhase("ringing");
+      });
+
+      const updateRemoteParticipants = () => {
+        const joined =
+          meeting.participants?.joined?.toArray?.() ||
+          meeting.participants?.joined ||
+          [];
+        const count = Array.isArray(joined)
+          ? joined.length
+          : Number(joined?.size || 0);
+
+        setRemoteParticipantCount(count);
+
+        if (count > 0) {
+          setPhase("connected");
+          setCallStartedAt((value) => value || Date.now());
+        } else {
+          setPhase("ringing");
+        }
+      };
+
+      meeting.participants?.joined?.on?.(
+        "participantJoined",
+        updateRemoteParticipants
+      );
+      meeting.participants?.joined?.on?.(
+        "participantLeft",
+        updateRemoteParticipants
+      );
+
       meeting.self.on("roomLeft", () => {
         setPhase("idle");
         setCall(null);
@@ -200,9 +229,10 @@ export const CallSystem = forwardRef(function CallSystem(
       setMuted(false);
       setVideoEnabled(false);
       setScreenSharing(false);
-      setCallStartedAt(Date.now());
+      setCallStartedAt(null);
       setElapsedSeconds(0);
-      setPhase("connected");
+      setRemoteParticipantCount(0);
+      setPhase("ringing");
     } catch (connectError) {
       setError(connectError.message || "Could not connect to the call");
       setPhase("idle");
@@ -314,6 +344,7 @@ export const CallSystem = forwardRef(function CallSystem(
     setCallStartedAt(null);
     setElapsedSeconds(0);
     setNetworkPing(null);
+    setRemoteParticipantCount(0);
     setPhase("idle");
   }
 
@@ -424,25 +455,64 @@ export const CallSystem = forwardRef(function CallSystem(
   }, []);
 
   useEffect(() => {
-    if (!call || phase !== "connected") return undefined;
+    if (!call || phase !== "connected") {
+      setNetworkPing(null);
+      return undefined;
+    }
 
     let stopped = false;
 
-    async function measurePing() {
-      const startedAt = performance.now();
-
+    async function measureWebRtcPing() {
       try {
-        await api("/api/calls/status");
+        const peerConnections = [];
+
+        const possibleSources = [
+          meetingRef.current?.room,
+          meetingRef.current?.internals,
+          meetingRef.current
+        ];
+
+        for (const source of possibleSources) {
+          if (!source) continue;
+
+          for (const value of Object.values(source)) {
+            if (
+              value &&
+              typeof value.getStats === "function" &&
+              value.constructor?.name === "RTCPeerConnection"
+            ) {
+              peerConnections.push(value);
+            }
+          }
+        }
+
+        let bestRtt = null;
+
+        for (const peerConnection of peerConnections) {
+          const stats = await peerConnection.getStats();
+
+          stats.forEach((report) => {
+            if (
+              report.type === "candidate-pair" &&
+              report.state === "succeeded" &&
+              report.currentRoundTripTime != null
+            ) {
+              const rtt = Math.round(report.currentRoundTripTime * 1000);
+              if (bestRtt == null || rtt < bestRtt) bestRtt = rtt;
+            }
+          });
+        }
+
         if (!stopped) {
-          setNetworkPing(Math.max(1, Math.round(performance.now() - startedAt)));
+          setNetworkPing(bestRtt);
         }
       } catch {
         if (!stopped) setNetworkPing(null);
       }
     }
 
-    measurePing();
-    const timer = window.setInterval(measurePing, 5000);
+    measureWebRtcPing();
+    const timer = window.setInterval(measureWebRtcPing, 4000);
 
     return () => {
       stopped = true;
@@ -566,16 +636,18 @@ export const CallSystem = forwardRef(function CallSystem(
                   <span>
                     {phase === "connected"
                       ? "Voice Connected"
-                      : phase === "connecting"
-                        ? "Connecting..."
-                        : "Calling..."}
+                      : phase === "ringing"
+                        ? "Ringing..."
+                        : phase === "connecting"
+                          ? "Connecting..."
+                          : "Calling..."}
                   </span>
                 </div>
               </div>
 
               <div className="inlineCallStats">
                 <span>{formatDuration(elapsedSeconds)}</span>
-                <span>{networkPing == null ? "-" : `${networkPing} ms`}</span>
+                <span>{networkPing == null ? "RTC -" : `${networkPing} ms`}</span>
                 <span>{connectionQuality()}</span>
               </div>
             </header>
@@ -616,7 +688,7 @@ export const CallSystem = forwardRef(function CallSystem(
                   </div>
                 </div>
               ) : (
-                <div className="inlineParticipantCanvas">
+                <div className={phase === "connected" ? "inlineParticipantCanvas connected" : "inlineParticipantCanvas ringing"}>
                   <article className="inlineParticipantCard">
                     <div className="inlineAvatarWrap">
                       <img
@@ -651,7 +723,11 @@ export const CallSystem = forwardRef(function CallSystem(
                         "Participant"}
                     </strong>
                     <span>
-                      {phase === "connected" ? "Connected" : "Waiting for answer"}
+                      {phase === "connected"
+                        ? "Connected"
+                        : phase === "ringing"
+                          ? "Ringing..."
+                          : "Connecting..."}
                     </span>
                   </article>
                 </div>

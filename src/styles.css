@@ -8180,3 +8180,134 @@ html.vodkachWebHost .refinedCreateCard {
     min-height: 86px;
   }
 }
+
+
+/* Patch 070: corrected call states, icons and animations */
+
+.inlineCallButton .vodkachFeatureIcon,
+.inlineMicBadge .vodkachFeatureIcon {
+  transform: none !important;
+  rotate: 0deg !important;
+}
+
+.inlineCallButton.disconnect .vodkachFeatureIcon,
+.callDeclineButton .vodkachFeatureIcon,
+.callEndButton .vodkachFeatureIcon {
+  transform: none !important;
+  rotate: 0deg !important;
+}
+
+.inlineCallButton svg path,
+.inlineCallButton svg rect,
+.inlineCallButton svg circle {
+  vector-effect: non-scaling-stroke;
+}
+
+.iconSlash {
+  stroke-width: 2.35 !important;
+}
+
+.shareActiveDot {
+  fill: #23a55a !important;
+  stroke: #23a55a !important;
+}
+
+/* Ringing animation before the other participant actually joins */
+.inlineParticipantCanvas.ringing .inlineAvatarWrap {
+  animation: callRingingFloat 1.8s ease-in-out infinite;
+}
+
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::before,
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::after {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 2px solid rgba(252,3,3,.28);
+  border-radius: 30px;
+  opacity: 0;
+  animation: callRingWave 1.8s ease-out infinite;
+}
+
+.inlineParticipantCanvas.ringing .inlineParticipantCard:last-child .inlineAvatarWrap::after {
+  inset: -16px;
+  animation-delay: .55s;
+}
+
+@keyframes callRingingFloat {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+@keyframes callRingWave {
+  0% {
+    opacity: .7;
+    transform: scale(.88);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+/* Speaking animation only after a remote participant is actually present */
+.inlineParticipantCanvas.connected .inlineParticipantCard {
+  position: relative;
+}
+
+.inlineParticipantCanvas.connected .inlineParticipantCard::before {
+  content: "";
+  position: absolute;
+  inset: -8px;
+  border: 2px solid rgba(35,165,90,.0);
+  border-radius: 30px;
+  pointer-events: none;
+  transition: border-color .2s ease;
+}
+
+.inlineParticipantCanvas.connected .inlineParticipantCard:hover::before {
+  border-color: rgba(35,165,90,.32);
+}
+
+/* Cleaner Discord-like controls */
+.inlineControlGroup {
+  padding: 3px !important;
+  gap: 3px !important;
+}
+
+.inlineCallButton {
+  width: 37px !important;
+  height: 37px !important;
+}
+
+.inlineCallButton.disconnect {
+  width: 54px !important;
+  height: 43px !important;
+}
+
+.inlineCallButton .vodkachFeatureIcon {
+  width: 20px !important;
+  height: 20px !important;
+}
+
+.inlineCallButton.disconnect .vodkachFeatureIcon {
+  width: 23px !important;
+  height: 23px !important;
+}
+
+/* Do not claim connection before remote user joins */
+.inlinePresenceBadge:not(.online) {
+  background: #747982 !important;
+}
+
+.inlineParticipantCanvas.ringing .inlinePresenceBadge {
+  animation: waitingPresencePulse 1.2s ease-in-out infinite;
+}
+
+@keyframes waitingPresencePulse {
+  0%, 100% { opacity: .45; }
+  50% { opacity: 1; }
+}

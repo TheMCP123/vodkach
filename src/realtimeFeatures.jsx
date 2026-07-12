@@ -45,6 +45,41 @@ function AcceptCallIcon() {
   );
 }
 
+
+function MicrophoneIcon({ muted = false }) {
+  return (
+    <IconBase>
+      <rect x="9" y="3" width="6" height="11" rx="3" />
+      <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7" />
+      {muted ? <path className="iconSlash" d="M4 4l16 16" /> : null}
+    </IconBase>
+  );
+}
+
+function CameraIcon({ disabled = false }) {
+  return (
+    <IconBase>
+      <rect x="3" y="6" width="13" height="12" rx="2.5" />
+      <path d="m16 10 5-3v10l-5-3" />
+      {disabled ? <path className="iconSlash" d="M4 4l16 16" /> : null}
+    </IconBase>
+  );
+}
+
+function ScreenShareIcon({ active = false }) {
+  return (
+    <IconBase>
+      <rect x="3" y="4" width="18" height="13" rx="2.5" />
+      <path d="M8 21h8M12 17v4" />
+      {active ? (
+        <path d="m9 10 3-3 3 3M12 7v7" />
+      ) : (
+        <path d="m9 12 3-3 3 3M12 9v5" />
+      )}
+    </IconBase>
+  );
+}
+
 function PollIcon() {
   return (
     <IconBase>
@@ -117,6 +152,10 @@ export const CallSystem = forwardRef(function CallSystem(
   const [call, setCall] = useState(null);
   const [phase, setPhase] = useState("idle");
   const [error, setError] = useState("");
+  const [muted, setMuted] = useState(false);
+  const [videoEnabled, setVideoEnabled] = useState(false);
+  const [screenSharing, setScreenSharing] = useState(false);
+  const [mediaBusy, setMediaBusy] = useState(false);
   const meetingRef = useRef(null);
   const meetingElementRef = useRef(null);
 
@@ -136,6 +175,7 @@ export const CallSystem = forwardRef(function CallSystem(
       });
 
       meetingRef.current = meeting;
+      setCall(callData);
 
       meeting.self.on("roomJoined", () => setPhase("connected"));
       meeting.self.on("roomLeft", () => {
@@ -146,11 +186,15 @@ export const CallSystem = forwardRef(function CallSystem(
 
       await meeting.join();
 
-      if (meetingElementRef.current) {
-        meetingElementRef.current.meeting = meeting;
-      }
+      requestAnimationFrame(() => {
+        if (meetingElementRef.current) {
+          meetingElementRef.current.meeting = meeting;
+        }
+      });
 
-      setCall(callData);
+      setMuted(false);
+      setVideoEnabled(false);
+      setScreenSharing(false);
       setPhase("connected");
     } catch (connectError) {
       setError(connectError.message || "Could not connect to the call");
@@ -256,7 +300,77 @@ export const CallSystem = forwardRef(function CallSystem(
 
     meetingRef.current = null;
     setCall(null);
+    setMuted(false);
+    setVideoEnabled(false);
+    setScreenSharing(false);
+    setMediaBusy(false);
     setPhase("idle");
+  }
+
+  async function toggleMicrophone() {
+    const meeting = meetingRef.current;
+    if (!meeting || mediaBusy) return;
+
+    setMediaBusy(true);
+    setError("");
+
+    try {
+      if (muted) {
+        await meeting.self.enableAudio();
+        setMuted(false);
+      } else {
+        await meeting.self.disableAudio();
+        setMuted(true);
+      }
+    } catch (mediaError) {
+      setError(mediaError.message || "Could not change microphone state");
+    } finally {
+      setMediaBusy(false);
+    }
+  }
+
+  async function toggleVideo() {
+    const meeting = meetingRef.current;
+    if (!meeting || mediaBusy) return;
+
+    setMediaBusy(true);
+    setError("");
+
+    try {
+      if (videoEnabled) {
+        await meeting.self.disableVideo();
+        setVideoEnabled(false);
+      } else {
+        await meeting.self.enableVideo();
+        setVideoEnabled(true);
+      }
+    } catch (mediaError) {
+      setError(mediaError.message || "Could not change camera state");
+    } finally {
+      setMediaBusy(false);
+    }
+  }
+
+  async function toggleScreenShare() {
+    const meeting = meetingRef.current;
+    if (!meeting || mediaBusy) return;
+
+    setMediaBusy(true);
+    setError("");
+
+    try {
+      if (screenSharing) {
+        await meeting.self.disableScreenShare();
+        setScreenSharing(false);
+      } else {
+        await meeting.self.enableScreenShare();
+        setScreenSharing(true);
+      }
+    } catch (mediaError) {
+      setError(mediaError.message || "Could not change screen share state");
+    } finally {
+      setMediaBusy(false);
+    }
   }
 
   useEffect(() => {
@@ -336,38 +450,106 @@ export const CallSystem = forwardRef(function CallSystem(
 
       {call && (
         <div className="vodkachCallOverlay">
-          <header className="vodkachCallHeader">
-            <div>
-              <strong>
-                {call.other_display_name ||
-                  call.other_username ||
-                  "Vodkach Call"}
-              </strong>
-              <span>
-                {phase === "connected"
-                  ? "Connected"
-                  : phase === "connecting"
-                    ? "Connecting..."
-                    : "Calling..."}
-              </span>
-            </div>
-            <button
-              className="callEndButton"
-              type="button"
-              onClick={endCall}
-            >
-              <HangupIcon />
-              <span>Disconnect</span>
-            </button>
-          </header>
+          <section className="discordCallCard">
+            <header className="discordCallHeader">
+              <div>
+                <strong>
+                  {call.other_display_name ||
+                    call.other_username ||
+                    "Vodkach Call"}
+                </strong>
+                <span>
+                  {phase === "connected"
+                    ? "Voice Connected"
+                    : phase === "connecting"
+                      ? "Connecting..."
+                      : "Calling..."}
+                </span>
+              </div>
+              <span className={phase === "connected" ? "callLiveDot active" : "callLiveDot"} />
+            </header>
 
-          <div className="vodkachMeetingSurface">
-            {React.createElement("rtk-meeting", {
-              ref: meetingElementRef,
-              mode: "fill",
-              "show-setup-screen": "false"
-            })}
-          </div>
+            <div className="discordCallStage">
+              <div className="callParticipantTile localParticipantTile">
+                <img
+                  src={user?.avatar_url || "/default-avatar.png"}
+                  alt=""
+                />
+                <span>{user?.display_name || user?.username || "You"}</span>
+                {muted ? <small>Muted</small> : null}
+              </div>
+
+              <div className="callConnectionLine">
+                <span />
+                <span />
+                <span />
+              </div>
+
+              <div className="callParticipantTile remoteParticipantTile">
+                <img
+                  src={call.other_avatar_url || "/default-avatar.png"}
+                  alt=""
+                />
+                <span>
+                  {call.other_display_name ||
+                    call.other_username ||
+                    "Participant"}
+                </span>
+                <small>
+                  {phase === "connected" ? "Connected" : "Waiting..."}
+                </small>
+              </div>
+            </div>
+
+            <div className="discordCallControls">
+              <button
+                className={muted ? "callControlButton activeDanger" : "callControlButton"}
+                type="button"
+                title={muted ? "Unmute" : "Mute"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleMicrophone}
+              >
+                <MicrophoneIcon muted={muted} />
+              </button>
+
+              <button
+                className={videoEnabled ? "callControlButton active" : "callControlButton"}
+                type="button"
+                title={videoEnabled ? "Turn camera off" : "Turn camera on"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleVideo}
+              >
+                <CameraIcon disabled={!videoEnabled} />
+              </button>
+
+              <button
+                className={screenSharing ? "callControlButton active" : "callControlButton"}
+                type="button"
+                title={screenSharing ? "Stop sharing" : "Share screen"}
+                disabled={mediaBusy || phase !== "connected"}
+                onClick={toggleScreenShare}
+              >
+                <ScreenShareIcon active={screenSharing} />
+              </button>
+
+              <button
+                className="callControlButton hangup"
+                type="button"
+                title="Disconnect"
+                onClick={endCall}
+              >
+                <HangupIcon />
+              </button>
+            </div>
+
+            <div className="hiddenRealtimeMeeting" aria-hidden="true">
+              {React.createElement("rtk-meeting", {
+                ref: meetingElementRef,
+                mode: "fill",
+                "show-setup-screen": "false"
+              })}
+            </div>
+          </section>
         </div>
       )}
 

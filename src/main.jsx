@@ -18,7 +18,8 @@ import {
   CallIcon,
   CallSystem,
   ChatPollFeed,
-  ChatPollSystem
+  ChatPollSystem,
+  VoiceCameraSettings
 } from "./realtimeFeatures.jsx";
 import "./styles.css?vodkach=074";
 
@@ -400,6 +401,12 @@ function SettingsNavIcon({ type }) {
       <>
         <path d="M7 10a5 5 0 0 1 10 0c0 5 2 5 2 6H5c0-1 2-1 2-6" />
         <path d="M10 19h4" />
+      </>
+    ),
+    voice: (
+      <>
+        <rect x="9" y="3" width="6" height="10" rx="3" />
+        <path d="M5.5 10.5a6.5 6.5 0 0 0 13 0M12 17v4M8.5 21h7" />
       </>
     )
   };
@@ -3541,6 +3548,14 @@ function WebApp() {
                   Notifications
                 </button>
                 <button
+                  className={settingsTab === "voice" ? "active" : ""}
+                  type="button"
+                  onClick={() => setSettingsTab("voice")}
+                >
+                  <SettingsNavIcon type="voice" />
+                  Voice & Camera
+                </button>
+                <button
                   className={settingsTab === "sessions" ? "active" : ""}
                   type="button"
                   onClick={() => {
@@ -3719,6 +3734,10 @@ function WebApp() {
                       {savingSettings ? "Saving..." : "Save Changes"}
                     </button>
                   </form>
+                )}
+
+                {settingsTab === "voice" && (
+                  <VoiceCameraSettings />
                 )}
 
                 {settingsTab === "sessions" && (

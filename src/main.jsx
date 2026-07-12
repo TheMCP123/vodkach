@@ -14,6 +14,11 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
+import {
+  CallIcon,
+  CallSystem,
+  ChatPollSystem
+} from "./realtimeFeatures.jsx";
 import "./styles.css";
 
 const isWebApp =
@@ -709,6 +714,7 @@ function WebApp() {
   const messagesViewportRef = useRef(null);
   const messagesEndRef = useRef(null);
   const lastOwnMessageIdRef = useRef(null);
+  const callSystemRef = useRef(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -2930,8 +2936,14 @@ function WebApp() {
                   "Direct Chat"}
               </div>
               <div className="chatHeaderActions">
-                <button type="button" aria-label="Start call">
-                  <Phone size={18} />
+                <button
+                  className="chatCallButton"
+                  type="button"
+                  aria-label="Start call"
+                  title="Start call"
+                  onClick={() => callSystemRef.current?.start()}
+                >
+                  <CallIcon />
                 </button>
                 <button
                   type="button"
@@ -3159,6 +3171,11 @@ function WebApp() {
                   }
                   maxLength={2000}
                   rows={1}
+                />
+                <ChatPollSystem
+                  api={api}
+                  chatId={activeChat.id}
+                  currentUserId={auth.user.id}
                 />
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>
                   {editingMessage ? "Save" : "Send"}
@@ -3870,6 +3887,13 @@ function WebApp() {
         )}
       </aside>
       )}
+
+      <CallSystem
+        ref={callSystemRef}
+        api={api}
+        user={auth.user}
+        activeChat={activeChat}
+      />
     </main>
   );
 }

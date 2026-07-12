@@ -5711,3 +5711,747 @@ html.vodkachWebHost .refinedCreateCard {
   font-size: 1.22rem !important;
   font-weight: 760 !important;
 }
+
+
+/* Patch 061: RealtimeKit calls and Discord-like chat polls */
+
+.vodkachFeatureIcon {
+  width: 20px;
+  height: 20px;
+  display: block;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.chatCallButton .vodkachFeatureIcon {
+  width: 19px;
+  height: 19px;
+}
+
+.incomingCallCard {
+  position: fixed;
+  right: 22px;
+  top: 22px;
+  z-index: 4200;
+  width: min(390px, calc(100vw - 32px));
+  min-height: 76px;
+  padding: 12px;
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  border: 1px solid rgba(255,255,255,.09);
+  border-radius: 12px;
+  color: #f6f7f8;
+  background: #17181c;
+  box-shadow: 0 18px 60px rgba(0,0,0,.55);
+}
+
+.incomingCallCard > img {
+  width: 52px;
+  height: 52px;
+  border-radius: 13px;
+  object-fit: cover;
+}
+
+.incomingCallText {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.incomingCallText strong {
+  overflow: hidden;
+  font-size: 1rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.incomingCallText span {
+  color: #aeb2b8;
+  font-size: .82rem;
+}
+
+.incomingCallActions {
+  display: flex;
+  gap: 8px;
+}
+
+.incomingCallActions button,
+.callEndButton {
+  border: 0;
+  display: grid;
+  place-items: center;
+  color: #fff;
+}
+
+.incomingCallActions button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+}
+
+.callAcceptButton {
+  background: #23a55a;
+}
+
+.callDeclineButton,
+.callEndButton {
+  background: #da373c;
+}
+
+.incomingCallActions .vodkachFeatureIcon {
+  width: 19px;
+  height: 19px;
+}
+
+.callDeclineButton .vodkachFeatureIcon,
+.callEndButton .vodkachFeatureIcon {
+  transform: rotate(5deg);
+}
+
+.vodkachCallOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 4000;
+  display: grid;
+  grid-template-rows: 58px minmax(0, 1fr);
+  color: #fff;
+  background: #0b0c0f;
+}
+
+.vodkachCallHeader {
+  padding: 0 16px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #121316;
+}
+
+.vodkachCallHeader > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vodkachCallHeader strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.vodkachCallHeader span {
+  color: #aeb2b8;
+  font-size: .78rem;
+}
+
+.callEndButton {
+  min-height: 36px;
+  padding: 0 13px;
+  grid-auto-flow: column;
+  gap: 8px;
+  border-radius: 7px;
+}
+
+.callEndButton .vodkachFeatureIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.callEndButton span {
+  color: #fff;
+  font-size: .82rem;
+}
+
+.vodkachMeetingSurface,
+.vodkachMeetingSurface rtk-meeting {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  display: block;
+}
+
+.callErrorToast {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  z-index: 4300;
+  max-width: min(520px, calc(100vw - 32px));
+  padding: 11px 14px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  color: #fff;
+  background: #da373c;
+  box-shadow: 0 14px 40px rgba(0,0,0,.45);
+}
+
+/* Poll composer button */
+.composerPollButton {
+  position: relative;
+  flex: 0 0 auto;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  display: grid !important;
+  place-items: center !important;
+  color: #b7bbc2 !important;
+  background: transparent !important;
+}
+
+.composerPollButton:hover,
+.composerPollButton.hasPolls {
+  color: #fff !important;
+  background: #303238 !important;
+}
+
+.composerPollButton .vodkachFeatureIcon {
+  width: 19px;
+  height: 19px;
+}
+
+.composerPollButton > span {
+  position: absolute;
+  right: -2px;
+  top: -3px;
+  min-width: 15px;
+  height: 15px;
+  padding: 0 4px;
+  border: 2px solid #23252a;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: #fc0303;
+  font-size: 9px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+/* Poll panel anchored above composer */
+.chatPollPanel {
+  position: absolute;
+  right: 18px;
+  bottom: calc(100% + 10px);
+  z-index: 1500;
+  width: min(430px, calc(100vw - 38px));
+  max-height: min(620px, calc(100vh - 150px));
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 12px;
+  overflow: hidden;
+  color: #f6f7f8;
+  background: #15161a;
+  box-shadow: 0 18px 58px rgba(0,0,0,.55);
+}
+
+.messageComposer {
+  position: relative;
+}
+
+.chatPollPanel > header {
+  min-height: 62px;
+  padding: 10px 12px 10px 15px;
+  border-bottom: 1px solid rgba(255,255,255,.07);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chatPollPanel > header > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.chatPollPanel > header strong {
+  font-size: 1rem;
+}
+
+.chatPollPanel > header span {
+  color: #92979f;
+  font-size: .76rem;
+}
+
+.chatPollPanel > header > button {
+  min-height: 34px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 7px;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #fff;
+  background: #fc0303;
+  font-weight: 700;
+}
+
+.chatPollPanel > header .vodkachFeatureIcon {
+  width: 16px;
+  height: 16px;
+}
+
+.chatPollPanelBody {
+  max-height: 520px;
+  padding: 12px;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: #3f4249 transparent;
+}
+
+.chatPollPanelBody::-webkit-scrollbar {
+  width: 8px;
+}
+
+.chatPollPanelBody::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background: #3f4249;
+  background-clip: padding-box;
+}
+
+.chatPollCard {
+  padding: 14px;
+  border: 1px solid rgba(255,255,255,.075);
+  border-radius: 10px;
+  background: #1b1c21;
+}
+
+.chatPollCard + .chatPollCard {
+  margin-top: 10px;
+}
+
+.chatPollCard > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.chatPollEyebrow {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aeb2b8;
+  font-size: .72rem;
+  font-weight: 750;
+  text-transform: uppercase;
+  letter-spacing: .05em;
+}
+
+.chatPollEyebrow .vodkachFeatureIcon {
+  width: 14px;
+  height: 14px;
+}
+
+.chatPollCard h3 {
+  margin: 5px 0 0;
+  color: #fff;
+  font-size: .98rem;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.pollChip {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  color: #c6c9ce;
+  background: #292b31;
+  font-size: .68rem;
+}
+
+.chatPollOptions {
+  margin-top: 12px;
+  display: grid;
+  gap: 7px;
+}
+
+.chatPollOptions > button {
+  position: relative;
+  min-height: 39px;
+  padding: 0 10px;
+  border: 1px solid #363940;
+  border-radius: 7px;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  color: #e6e8eb;
+  background: #22242a;
+  text-align: left;
+}
+
+.chatPollOptions > button:hover:not(:disabled) {
+  border-color: #555a64;
+}
+
+.chatPollOptions > button.selected {
+  border-color: rgba(35,165,90,.75);
+}
+
+.pollOptionFill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  z-index: 0;
+  background: rgba(35,165,90,.17);
+  transition: width .2s ease;
+}
+
+.pollOptionMain,
+.pollPercent {
+  position: relative;
+  z-index: 1;
+}
+
+.pollOptionMain {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.pollOptionMain > span:last-child {
+  overflow-wrap: anywhere;
+}
+
+.pollCheck {
+  flex: 0 0 17px;
+  width: 17px;
+  height: 17px;
+  border: 1px solid #696e78;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  color: #fff;
+  background: transparent;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.selected .pollCheck {
+  border-color: #23a55a;
+  background: #23a55a;
+}
+
+.pollPercent {
+  flex: 0 0 auto;
+  color: #b8bcc3;
+  font-size: .74rem;
+  font-weight: 700;
+}
+
+.chatPollCard > footer {
+  margin-top: 11px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.chatPollCard > footer > span {
+  color: #92979f;
+  font-size: .72rem;
+}
+
+.chatPollCard > footer > button {
+  padding: 0;
+  border: 0;
+  color: #f26b6f;
+  background: transparent;
+  font-size: .74rem;
+}
+
+.pollEmptyState {
+  min-height: 210px;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 7px;
+  color: #9ca1a9;
+  text-align: center;
+}
+
+.pollEmptyState .vodkachFeatureIcon {
+  width: 34px;
+  height: 34px;
+  margin-bottom: 5px;
+}
+
+.pollEmptyState strong {
+  color: #fff;
+}
+
+.pollEmptyState span {
+  max-width: 260px;
+  font-size: .8rem;
+}
+
+/* Poll creation modal */
+.pollModalBackdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 3500;
+  padding: 20px;
+  display: grid;
+  place-items: center;
+  background: rgba(0,0,0,.68);
+  backdrop-filter: blur(5px);
+}
+
+.pollCreateModal {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  padding: 20px;
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 13px;
+  color: #f4f5f7;
+  background: #17181c;
+  box-shadow: 0 24px 80px rgba(0,0,0,.62);
+  scrollbar-width: thin;
+  scrollbar-color: #41454c transparent;
+}
+
+.pollCreateModal > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+}
+
+.pollCreateModal h2 {
+  margin: 5px 0 0;
+  font-size: 1.35rem;
+}
+
+.pollCreateModal > header > button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 7px;
+  display: grid;
+  place-items: center;
+  color: #aeb2b8;
+  background: transparent;
+}
+
+.pollCreateModal > header > button:hover {
+  color: #fff;
+  background: #292b31;
+}
+
+.pollCreateModal > header .vodkachFeatureIcon {
+  width: 18px;
+  height: 18px;
+}
+
+.pollCreateModal > label {
+  margin-top: 18px;
+  display: grid;
+  gap: 7px;
+}
+
+.pollCreateModal label > span,
+.pollOptionEditor > span,
+.pollDurationField > span {
+  color: #c8cbd0;
+  font-size: .77rem;
+  font-weight: 750;
+}
+
+.pollCreateModal textarea,
+.pollCreateModal input,
+.pollCreateModal select {
+  width: 100%;
+  border: 1px solid #34373e;
+  border-radius: 7px;
+  outline: 0;
+  color: #f4f5f7;
+  background: #101115;
+  font: inherit;
+  box-sizing: border-box;
+}
+
+.pollCreateModal textarea {
+  min-height: 76px;
+  padding: 10px 11px;
+  resize: vertical;
+}
+
+.pollCreateModal input,
+.pollCreateModal select {
+  height: 39px;
+  padding: 0 10px;
+}
+
+.pollCreateModal textarea:focus,
+.pollCreateModal input:focus,
+.pollCreateModal select:focus {
+  border-color: #626873;
+}
+
+.pollOptionEditor {
+  margin-top: 17px;
+  display: grid;
+  gap: 7px;
+}
+
+.pollOptionEditor > div {
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr) 32px;
+  align-items: center;
+  gap: 8px;
+}
+
+.pollOptionEditor > div > span {
+  color: #858a93;
+  text-align: center;
+  font-size: .75rem;
+  font-weight: 800;
+}
+
+.pollOptionEditor > div > button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  display: grid;
+  place-items: center;
+  color: #aeb2b8;
+  background: transparent;
+}
+
+.pollOptionEditor > div > button:hover {
+  color: #fff;
+  background: #292b31;
+}
+
+.pollOptionEditor > div > button .vodkachFeatureIcon {
+  width: 15px;
+  height: 15px;
+}
+
+.addPollOption {
+  width: max-content;
+  min-height: 32px;
+  padding: 0;
+  border: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #b9bdc4;
+  background: transparent;
+}
+
+.addPollOption:hover {
+  color: #fff;
+}
+
+.addPollOption .vodkachFeatureIcon {
+  width: 15px;
+  height: 15px;
+}
+
+.pollSettingsGrid {
+  margin-top: 18px;
+  border-top: 1px solid rgba(255,255,255,.07);
+}
+
+.pollToggleRow {
+  min-height: 58px;
+  border-bottom: 1px solid rgba(255,255,255,.06);
+  display: flex !important;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.pollToggleRow > div {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.pollToggleRow strong {
+  font-size: .83rem;
+}
+
+.pollToggleRow span {
+  color: #8f949c;
+  font-size: .72rem;
+}
+
+.pollToggleRow input {
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+  accent-color: #fc0303;
+}
+
+.pollDurationField {
+  min-height: 62px;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 180px;
+  align-items: center;
+  gap: 16px;
+}
+
+.pollFormError {
+  margin-top: 12px;
+  padding: 9px 10px;
+  border-radius: 7px;
+  color: #ffb4b7;
+  background: rgba(218,55,60,.14);
+  font-size: .78rem;
+}
+
+.pollCreateModal > footer {
+  margin-top: 18px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.pollCreateModal > footer > button {
+  min-height: 38px;
+  padding: 0 15px;
+  border: 0;
+  border-radius: 7px;
+  color: #fff;
+  background: #2b2d33;
+  font-weight: 750;
+}
+
+.pollCreateModal > footer > button[type="submit"] {
+  background: #fc0303;
+}
+
+.pollCreateModal > footer > button:disabled {
+  opacity: .6;
+}
+
+@media (max-width: 720px) {
+  .chatPollPanel {
+    right: 8px;
+    left: 8px;
+    width: auto;
+  }
+
+  .pollDurationField {
+    grid-template-columns: 1fr;
+    gap: 7px;
+    padding: 10px 0;
+  }
+
+  .pollDurationField select {
+    width: 100%;
+  }
+}

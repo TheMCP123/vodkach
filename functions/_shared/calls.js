@@ -18,9 +18,16 @@ export async function readJson(request) {
 }
 
 export function requireRealtimeConfig(env) {
-  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || "").trim();
-  const appId = String(env.CLOUDFLARE_REALTIME_APP_ID || "").trim();
-  const token = String(env.CLOUDFLARE_REALTIME_API_TOKEN || "").trim();
+  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || "")
+    .replace(/\s+/g, "")
+    .trim();
+  const appId = String(env.CLOUDFLARE_REALTIME_APP_ID || "")
+    .replace(/\s+/g, "")
+    .trim();
+  const token = String(env.CLOUDFLARE_REALTIME_API_TOKEN || "")
+    .replace(/^Bearer\s+/i, "")
+    .replace(/[\r\n\t ]+/g, "")
+    .trim();
 
   if (!accountId || !appId || !token) {
     throw new Error(

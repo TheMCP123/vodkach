@@ -6,6 +6,7 @@ import React, {
   useRef,
   useState
 } from "react";
+import { createPortal } from "react-dom";
 
 function IconBase({ children, className = "" }) {
   return (
@@ -578,8 +579,9 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
         {polls.length ? <span>{polls.length}</span> : null}
       </button>
 
-      {panelOpen && (
-        <div className="chatPollPanel">
+      {panelOpen &&
+        createPortal(
+          <div className="chatPollPanel">
           <header>
             <div>
               <strong>Polls</strong>
@@ -610,11 +612,13 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
               </div>
             )}
           </div>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
 
-      {open && (
-        <div className="pollModalBackdrop" onMouseDown={() => setOpen(false)}>
+      {open &&
+        createPortal(
+          <div className="pollModalBackdrop" onMouseDown={() => setOpen(false)}>
           <form
             className="pollCreateModal"
             onSubmit={createPoll}
@@ -746,8 +750,9 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
               </button>
             </footer>
           </form>
-        </div>
-      )}
+        </div>,
+          document.body
+        )}
     </>
   );
 }

@@ -6455,3 +6455,96 @@ html.vodkachWebHost .refinedCreateCard {
     width: 100%;
   }
 }
+
+
+/* Patch 062: stable composer grid and unclipped Poll UI */
+
+.messageComposer.composerForm {
+  position: relative !important;
+  width: 100% !important;
+  overflow: visible !important;
+}
+
+.composerInputRow {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 36px 76px !important;
+  align-items: end !important;
+  column-gap: 7px !important;
+  padding: 7px 8px 7px 12px !important;
+}
+
+.composerInputRow textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+}
+
+.composerPollButton {
+  grid-column: 2 !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  align-self: end !important;
+}
+
+.composerInputRow > button[type="submit"] {
+  grid-column: 3 !important;
+  width: 76px !important;
+  min-width: 76px !important;
+  max-width: 76px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+  align-self: end !important;
+}
+
+/* Poll list is now portaled to body */
+.chatPollPanel {
+  position: fixed !important;
+  right: 24px !important;
+  bottom: 78px !important;
+  z-index: 10020 !important;
+  width: min(430px, calc(100vw - 32px)) !important;
+  max-height: min(620px, calc(100vh - 108px)) !important;
+  isolation: isolate;
+}
+
+.pollModalBackdrop {
+  z-index: 10030 !important;
+  isolation: isolate;
+}
+
+.pollCreateModal {
+  position: relative;
+  z-index: 1;
+}
+
+@media (max-width: 720px) {
+  .composerInputRow {
+    grid-template-columns: minmax(0, 1fr) 34px 68px !important;
+    column-gap: 5px !important;
+    padding-left: 9px !important;
+    padding-right: 6px !important;
+  }
+
+  .composerInputRow > button[type="submit"] {
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+  }
+
+  .chatPollPanel {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 72px !important;
+    width: auto !important;
+  }
+}

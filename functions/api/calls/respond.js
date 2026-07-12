@@ -73,7 +73,7 @@ export async function onRequestPost(context) {
           /^https?:\/\//i.test(user.avatar_url)
             ? { picture: user.avatar_url }
             : {}),
-          preset_name: "vodkach_call",
+          preset_name: "vodkach_voice",
           custom_participant_id: user.id
         })
       }

@@ -6900,3 +6900,47 @@ html.vodkachWebHost .refinedCreateCard {
     padding-left: 54px !important;
   }
 }
+
+
+/* Patch 066: keep all chat content above the composer */
+
+.messagesList,
+.chatMessages,
+.messagesViewport,
+.messageScroller,
+.appMessages,
+.chatMessageList {
+  padding-bottom: 112px !important;
+  scroll-padding-bottom: 112px !important;
+  box-sizing: border-box !important;
+}
+
+.messagesEndAnchor {
+  min-height: 1px !important;
+  margin-bottom: 100px !important;
+}
+
+/* Poll cards are part of the message flow and must never sit under composer */
+.inlinePollFeed {
+  margin-bottom: 28px !important;
+}
+
+/* Composer always stays above content */
+.messageComposer.composerForm {
+  z-index: 120 !important;
+  background: linear-gradient(
+    to top,
+    #121316 0%,
+    #121316 78%,
+    rgba(18,19,22,0) 100%
+  ) !important;
+  padding-top: 10px !important;
+}
+
+/* Prevent the last poll/message from being visually cut by the bottom edge */
+.appChat::after {
+  content: "";
+  display: block;
+  height: 104px;
+  flex: 0 0 104px;
+}

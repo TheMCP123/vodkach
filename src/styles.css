@@ -6676,3 +6676,227 @@ html.vodkachWebHost .refinedCreateCard {
     margin-left: 4px;
   }
 }
+
+
+/* Patch 064: final composer geometry, inline polls, correct presence behavior */
+
+/* Central chat column is the only positioning context for the composer */
+.appChat {
+  position: relative !important;
+  min-width: 0 !important;
+  overflow: hidden !important;
+}
+
+.messageComposer.composerForm {
+  position: absolute !important;
+  left: 14px !important;
+  right: 14px !important;
+  bottom: 12px !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+.composerInputRow {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  min-height: 46px !important;
+  margin: 0 !important;
+  padding: 6px 7px 6px 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 34px 72px !important;
+  align-items: end !important;
+  gap: 7px !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+.composerInputRow textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  height: 32px;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 6px 2px 6px 0 !important;
+  align-self: end !important;
+  box-sizing: border-box !important;
+  line-height: 20px !important;
+  vertical-align: middle !important;
+}
+
+.composerPollButton {
+  grid-column: 2 !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  align-self: end !important;
+  justify-self: center !important;
+}
+
+.composerInputRow > button[type="submit"] {
+  grid-column: 3 !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 10px !important;
+  align-self: end !important;
+  justify-self: end !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+  box-sizing: border-box !important;
+}
+
+/* Poll modal is centered within the chat only */
+.pollModalBackdrop {
+  position: fixed !important;
+  top: 0 !important;
+  bottom: 0 !important;
+  left: calc(64px + 232px) !important;
+  right: 260px !important;
+  width: auto !important;
+  height: auto !important;
+  padding: 22px !important;
+  box-sizing: border-box !important;
+}
+
+/* Polls align with regular message avatars/content */
+.inlinePollFeed {
+  width: auto !important;
+  max-width: 620px !important;
+  margin: 8px 22px 20px 20px !important;
+  display: grid !important;
+  gap: 12px !important;
+}
+
+.inlinePollFeed .chatPollCard {
+  position: relative !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 12px 14px 13px 60px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  box-sizing: border-box !important;
+  background: rgba(255,255,255,.025) !important;
+  box-shadow: none !important;
+}
+
+.inlinePollHeader {
+  min-height: 38px;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: space-between !important;
+}
+
+.inlinePollAuthor {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.inlinePollAuthor > img {
+  position: absolute;
+  left: 10px;
+  top: 11px;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.inlinePollAuthor > div {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inlinePollAuthor strong {
+  overflow: hidden;
+  color: #fff;
+  font-size: .94rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inlinePollFeed .chatPollCard > h3 {
+  margin: 7px 0 11px !important;
+  font-size: .96rem !important;
+}
+
+.inlinePollFeed .chatPollOptions {
+  margin-top: 0 !important;
+}
+
+.inlinePollFeed .chatPollOptions > button {
+  min-height: 36px !important;
+  border-radius: 6px !important;
+}
+
+.inlinePollFeed .chatPollCard > footer {
+  margin-top: 9px !important;
+}
+
+@media (max-width: 980px) {
+  .pollModalBackdrop {
+    right: 0 !important;
+  }
+}
+
+@media (max-width: 720px) {
+  .messageComposer.composerForm {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+
+  .composerInputRow {
+    grid-template-columns: minmax(0, 1fr) 32px 64px !important;
+    gap: 5px !important;
+    padding-left: 9px !important;
+    padding-right: 5px !important;
+  }
+
+  .composerInputRow > button[type="submit"] {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+
+  .pollModalBackdrop {
+    left: 0 !important;
+    right: 0 !important;
+    padding: 12px !important;
+  }
+
+  .inlinePollFeed {
+    margin-left: 6px !important;
+    margin-right: 6px !important;
+  }
+
+  .inlinePollFeed .chatPollCard {
+    padding-left: 54px !important;
+  }
+}

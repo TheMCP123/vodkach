@@ -419,16 +419,27 @@ function PollCard({ poll, api, reload, currentUserId }) {
 
   return (
     <article className="chatPollCard inlineChatPoll">
-      <header>
-        <div>
-          <span className="chatPollEyebrow">
+      <header className="inlinePollHeader">
+        <div className="inlinePollAuthor">
+          <img
+            src={poll.creator_avatar_url || "/default-avatar.png"}
+            alt=""
+          />
+          <div>
+            <strong>
+              {poll.creator_display_name ||
+                poll.creator_username ||
+                "Vodkach User"}
+            </strong>
+            <span className="chatPollEyebrow">
             <PollIcon />
-            Poll
-          </span>
-          <h3>{poll.question}</h3>
+              Poll
+            </span>
+          </div>
         </div>
         {poll.anonymous ? <span className="pollChip">Anonymous</span> : null}
       </header>
+      <h3>{poll.question}</h3>
 
       <div className="chatPollOptions">
         {poll.options.map((option) => {

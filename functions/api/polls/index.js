@@ -49,6 +49,7 @@ async function listPolls(env, chatId, userId) {
        chat_polls.*,
        users.username AS creator_username,
        users.display_name AS creator_display_name,
+       users.avatar_url AS creator_avatar_url,
        EXISTS(
          SELECT 1 FROM chat_poll_votes
          WHERE chat_poll_votes.poll_id = chat_polls.id

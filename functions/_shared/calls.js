@@ -17,7 +17,7 @@ export async function readJson(request) {
   }
 }
 
-function cleanConfigValue(value, { token = false } = {}) {
+function cleanConfigValue(value, { token = false, id = false } = {}) {
   let result = String(value || "").trim();
 
   while (
@@ -35,12 +35,30 @@ function cleanConfigValue(value, { token = false } = {}) {
     result = result.replace(/^Bearer\s+/i, "");
   }
 
-  return result.replace(/[\u0000-\u001F\u007F\s]+/g, "");
+  result = result.replace(/[\u0000-\u001F\u007F\s]+/g, "");
+
+  if (id && /^https?:\/\//i.test(result)) {
+    try {
+      const url = new URL(result);
+      const parts = url.pathname.split("/").filter(Boolean);
+      result = parts[parts.length - 1] || result;
+    } catch {
+      // Keep original value so the API can return the real error.
+    }
+  }
+
+  return result;
 }
 
 export function requireRealtimeConfig(env) {
-  const accountId = cleanConfigValue(env.CLOUDFLARE_ACCOUNT_ID);
-  const appId = cleanConfigValue(env.CLOUDFLARE_REALTIME_APP_ID);
+  const accountId = cleanConfigValue(
+    env.CLOUDFLARE_ACCOUNT_ID,
+    { id: true }
+  );
+  const appId = cleanConfigValue(
+    env.CLOUDFLARE_REALTIME_APP_ID,
+    { id: true }
+  );
   const token = cleanConfigValue(
     env.CLOUDFLARE_REALTIME_API_TOKEN,
     { token: true }
@@ -49,12 +67,6 @@ export function requireRealtimeConfig(env) {
   if (!accountId || !appId || !token) {
     throw new Error(
       "RealtimeKit variables are missing in this deployment."
-    );
-  }
-
-  if (accountId.length > 32 || appId.length > 32) {
-    throw new Error(
-      "RealtimeKit Account ID or App ID is invalid. Copy only the raw ID."
     );
   }
 

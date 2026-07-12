@@ -328,6 +328,13 @@ export const CallSystem = forwardRef(function CallSystem(
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [callStartedAt, setCallStartedAt] = useState(null);
   const [mediaBusy, setMediaBusy] = useState(false);
+  const [callPanelHeight, setCallPanelHeight] = useState(() => {
+    const stored = Number(localStorage.getItem("vodkach_call_panel_height"));
+    return Number.isFinite(stored) && stored >= 100 && stored <= 620
+      ? stored
+      : 140;
+  });
+  const resizeStateRef = useRef(null);
 
   const [localCameraTrack, setLocalCameraTrack] = useState(null);
   const [remoteCameraTrack, setRemoteCameraTrack] = useState(null);
@@ -1026,13 +1033,65 @@ export const CallSystem = forwardRef(function CallSystem(
     return `${minutes}:${String(seconds).padStart(2, "0")}`;
   }
 
+  function beginCallResize(event) {
+    event.preventDefault();
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+
+    resizeStateRef.current = {
+      startY: event.clientY,
+      startHeight: callPanelHeight
+    };
+
+    const onMove = (moveEvent) => {
+      const state = resizeStateRef.current;
+      if (!state) return;
+
+      const next = Math.max(
+        100,
+        Math.min(620, state.startHeight + moveEvent.clientY - state.startY)
+      );
+
+      setCallPanelHeight(next);
+    };
+
+    const onUp = () => {
+      resizeStateRef.current = null;
+      localStorage.setItem(
+        "vodkach_call_panel_height",
+        String(callPanelHeight)
+      );
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+  }
+
   const otherName =
     call?.other_display_name ||
     call?.other_username ||
     "Participant";
 
   const showScreenShare = screenSharing || remoteSharing;
-  const shareTrack = remoteShareTrack || localShareTrack;
+  const shareTracks = [
+    screenSharing
+      ? {
+          id: "local",
+          label: user?.display_name || user?.username || "You",
+          track: localShareTrack,
+          muted: true
+        }
+      : null,
+    remoteSharing
+      ? {
+          id: "remote",
+          label: otherName,
+          track: remoteShareTrack,
+          muted: false
+        }
+      : null
+  ].filter(Boolean);
   const showCamera = cameraEnabled || remoteCameraEnabled;
   const connected = phase === "connected";
 
@@ -1086,22 +1145,36 @@ export const CallSystem = forwardRef(function CallSystem(
                   ? "finalCallDock camera"
                   : "finalCallDock"
             }
+            style={{ "--call-panel-height": `${callPanelHeight}px` }}
           >
             <div className="finalCallMedia">
               {showScreenShare ? (
-                <div className="finalShareLayout">
-                  {shareTrack ? (
-                    <TrackVideo
-                      track={shareTrack}
-                      muted={!remoteShareTrack}
-                      className="finalShareVideo"
-                    />
-                  ) : (
-                    <div className="finalMediaWaiting">
-                      <ScreenShareIcon active />
-                      <strong>Screen share is starting</strong>
-                    </div>
-                  )}
+                <div
+                  className={
+                    shareTracks.length > 1
+                      ? "finalShareLayout dual"
+                      : "finalShareLayout"
+                  }
+                >
+                  <div className="finalShareVideos">
+                    {shareTracks.map((share) => (
+                      <article key={share.id}>
+                        {share.track ? (
+                          <TrackVideo
+                            track={share.track}
+                            muted={share.muted}
+                            className="finalShareVideo"
+                          />
+                        ) : (
+                          <div className="finalMediaWaiting">
+                            <ScreenShareIcon active />
+                            <strong>{share.label} is sharing</strong>
+                          </div>
+                        )}
+                        <span>{share.label}</span>
+                      </article>
+                    ))}
+                  </div>
 
                   <div className="finalShareRail">
                     <img
@@ -1229,6 +1302,16 @@ export const CallSystem = forwardRef(function CallSystem(
                 <HangupIcon />
               </button>
             </div>
+
+            <button
+              className="callResizeHandle"
+              type="button"
+              aria-label="Resize call panel"
+              title="Drag to resize"
+              onPointerDown={beginCallResize}
+            >
+              <span>⌄</span>
+            </button>
           </section>,
           document.getElementById("vodkach-call-slot") || document.body
         )}

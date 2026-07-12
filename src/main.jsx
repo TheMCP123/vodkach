@@ -7,6 +7,7 @@ import {
   LockKeyhole,
   MessageCircle,
   MoreVertical,
+  Pin,
   Phone,
   Plus,
   Search,
@@ -659,6 +660,11 @@ function WebApp() {
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [notes, setNotes] = useState([]);
+  const [noteText, setNoteText] = useState("");
+  const [loadingNotes, setLoadingNotes] = useState(false);
+  const [pinnedMessages, setPinnedMessages] = useState([]);
+  const [pinsOpen, setPinsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [searchResults, setSearchResults] = useState([]);
   const [loadingSearch, setLoadingSearch] = useState(false);
@@ -1257,6 +1263,95 @@ function WebApp() {
     });
   }
 
+
+  async function loadNotes() {
+    setLoadingNotes(true);
+
+    try {
+      const data = await api("/api/notes");
+      setNotes(data.notes || []);
+    } finally {
+      setLoadingNotes(false);
+    }
+  }
+
+  async function createNote(event) {
+    event?.preventDefault?.();
+
+    const body = noteText.trim();
+    if (!body) return;
+
+    setNoteText("");
+
+    try {
+      const data = await api("/api/notes", {
+        method: "POST",
+        body: JSON.stringify({ body })
+      });
+
+      if (data.note) {
+        setNotes((current) => [...current, data.note]);
+      } else {
+        await loadNotes();
+      }
+    } catch (error) {
+      setNoteText(body);
+      setUiError(error.message);
+    }
+  }
+
+  async function deleteNote(noteId) {
+    try {
+      await api("/api/notes/delete", {
+        method: "POST",
+        body: JSON.stringify({ note_id: noteId })
+      });
+
+      setNotes((current) =>
+        current.filter((note) => note.id !== noteId)
+      );
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
+  async function loadPinnedMessages(chatId = activeChat?.id) {
+    if (!chatId) {
+      setPinnedMessages([]);
+      return;
+    }
+
+    const data = await api(
+      `/api/pins?chat_id=${encodeURIComponent(chatId)}`
+    );
+
+    setPinnedMessages(data.messages || []);
+  }
+
+  function messageIsPinned(messageId) {
+    return pinnedMessages.some((message) => message.id === messageId);
+  }
+
+  async function toggleMessagePin(message) {
+    const action = messageIsPinned(message.id) ? "unpin" : "pin";
+
+    setMessageMenu(null);
+
+    try {
+      await api("/api/pins/toggle", {
+        method: "POST",
+        body: JSON.stringify({
+          message_id: message.id,
+          action
+        })
+      });
+
+      await loadPinnedMessages(message.chat_id || activeChat?.id);
+    } catch (error) {
+      setUiError(error.message);
+    }
+  }
+
   async function loadMessages(chat) {
     if (!chat?.id) return;
 
@@ -1559,10 +1654,20 @@ function WebApp() {
   useEffect(() => {
     if (!activeChat?.id) {
       setMessages([]);
+      setPinnedMessages([]);
+      setPinsOpen(false);
       return;
     }
+
     loadMessages(activeChat).catch((error) => setUiError(error.message));
+    loadPinnedMessages(activeChat.id).catch(() => {});
   }, [activeChat?.id]);
+
+  useEffect(() => {
+    if (view !== "notes") return;
+
+    loadNotes().catch((error) => setUiError(error.message));
+  }, [view]);
 
   useEffect(() => {
     if (!activeChat?.id) return;
@@ -2020,16 +2125,12 @@ function WebApp() {
       return;
     }
 
-    const rect = textarea.getBoundingClientRect();
-    const estimatedX = Math.min(
-      rect.left + rect.width / 2 - 105,
-      window.innerWidth - 230
-    );
-    const estimatedY = Math.max(12, rect.top - 50);
+    event.preventDefault();
+    event.stopPropagation();
 
     setTextFormatMenu({
-      x: estimatedX,
-      y: estimatedY,
+      x: Math.min(event.clientX, window.innerWidth - 220),
+      y: Math.min(event.clientY, window.innerHeight - 54),
       start,
       end
     });
@@ -2590,6 +2691,19 @@ function WebApp() {
             <FileText size={16} />
             Shop
           </button>
+
+          <button
+            className={view === "notes" ? "sidebarNavButton active" : "sidebarNavButton"}
+            type="button"
+            onClick={() => {
+              setActiveChat(null);
+              setPinsOpen(false);
+              setView("notes");
+            }}
+          >
+            <MessageCircle size={16} />
+            Notes
+          </button>
         </div>
 
         <nav className="channelList">
@@ -2935,6 +3049,81 @@ function WebApp() {
           </>
         )}
 
+        {view === "notes" && (
+          <section className="notesView">
+            <header className="notesHeader">
+              <div>
+                <strong>Notes</strong>
+                <span>Private messages visible only to you</span>
+              </div>
+            </header>
+
+            <div className="notesMessages">
+              {!loadingNotes && notes.length === 0 && (
+                <div className="notesEmptyState">
+                  <MessageCircle size={28} />
+                  <strong>Your private notes</strong>
+                  <span>
+                    Save ideas, reminders, links, or anything else here.
+                  </span>
+                </div>
+              )}
+
+              {notes.map((note) => (
+                <article key={note.id} className="noteMessage">
+                  <img
+                    src={getAvatar(auth.user)}
+                    alt=""
+                    draggable="false"
+                  />
+                  <div>
+                    <header>
+                      <strong>{currentDisplayName}</strong>
+                      <span>{formatLocalTime(note.created_at)}</span>
+                    </header>
+                    <p>{note.body}</p>
+                  </div>
+                  <button
+                    type="button"
+                    title="Delete note"
+                    onClick={() => deleteNote(note.id)}
+                  >
+                    ×
+                  </button>
+                </article>
+              ))}
+            </div>
+
+            <form className="notesComposer" onSubmit={createNote}>
+              <textarea
+                value={noteText}
+                maxLength={4000}
+                rows={1}
+                placeholder="Write a private note"
+                onChange={(event) => {
+                  setNoteText(event.target.value);
+                  const element = event.currentTarget;
+                  element.style.height = "auto";
+                  element.style.height = `${Math.min(element.scrollHeight, 116)}px`;
+                }}
+                onKeyDown={(event) => {
+                  if (
+                    event.key === "Enter" &&
+                    !event.shiftKey &&
+                    !event.nativeEvent.isComposing
+                  ) {
+                    event.preventDefault();
+                    event.currentTarget.form?.requestSubmit();
+                  }
+                }}
+              />
+              <button type="submit" disabled={!noteText.trim()}>
+                Save
+              </button>
+            </form>
+          </section>
+        )}
+
         {view === "chat" && activeChat && (
           <>
             <header className="appChatHeader">
@@ -2944,6 +3133,19 @@ function WebApp() {
                   "Direct Chat"}
               </div>
               <div className="chatHeaderActions">
+                <button
+                  className={pinsOpen ? "chatPinButton active" : "chatPinButton"}
+                  type="button"
+                  aria-label="Pinned messages"
+                  title="Pinned messages"
+                  onClick={() => setPinsOpen((open) => !open)}
+                >
+                  <Pin size={17} />
+                  {pinnedMessages.length > 0 ? (
+                    <span>{pinnedMessages.length}</span>
+                  ) : null}
+                </button>
+
                 <button
                   className="chatCallButton"
                   type="button"
@@ -3032,6 +3234,55 @@ function WebApp() {
 
             <div id="vodkach-call-slot" className="vodkachCallSlot" />
 
+            {pinsOpen && (
+              <aside className="pinnedMessagesPanel">
+                <header>
+                  <div>
+                    <strong>Pinned Messages</strong>
+                    <span>{pinnedMessages.length} pinned</span>
+                  </div>
+                  <button type="button" onClick={() => setPinsOpen(false)}>
+                    ×
+                  </button>
+                </header>
+
+                <div>
+                  {pinnedMessages.length === 0 ? (
+                    <div className="pinsEmptyState">
+                      <Pin size={23} />
+                      <span>No pinned messages yet.</span>
+                    </div>
+                  ) : (
+                    pinnedMessages.map((message) => (
+                      <button
+                        key={message.id}
+                        className="pinnedMessageItem"
+                        type="button"
+                        onClick={() => {
+                          jumpToMessage(message.id);
+                          setPinsOpen(false);
+                        }}
+                      >
+                        <img
+                          src={getAvatar(message.sender)}
+                          alt=""
+                        />
+                        <span>
+                          <strong>
+                            {message.sender?.display_name ||
+                              message.sender?.username ||
+                              "User"}
+                          </strong>
+                          <span>{message.body_ciphertext}</span>
+                        </span>
+                        <Pin size={14} />
+                      </button>
+                    ))
+                  )}
+                </div>
+              </aside>
+            )}
+
             <div className="appMessages" ref={messagesViewportRef}>
               {messages.length === 0 && (
                 <div className="chatStart redesigned">
@@ -3081,6 +3332,7 @@ function WebApp() {
                       ? jumpToMessage(message.reply_to_message_id)
                       : null
                   }
+                  pinned={messageIsPinned(message.id)}
                   onContextMenu={(event) => {
                     event.preventDefault();
                     event.stopPropagation();
@@ -3167,13 +3419,8 @@ function WebApp() {
                       event.preventDefault();
                       event.currentTarget.form?.requestSubmit();
                     }
-                  }}                  onSelect={updateTextSelectionMenu}
-                  onMouseUp={updateTextSelectionMenu}
-                  onKeyUp={(event) => {
-                    if (event.key !== "Enter") {
-                      updateTextSelectionMenu(event);
-                    }
                   }}
+                  onContextMenu={updateTextSelectionMenu}
                   onBlur={() => {
                     window.setTimeout(() => {
                       const active = document.activeElement;
@@ -3252,6 +3499,18 @@ function WebApp() {
                   <span>Edit</span>
                 </button>
               )}
+
+            <button
+              type="button"
+              onClick={() => toggleMessagePin(messageMenu.message)}
+            >
+              <Pin size={16} />
+              <span>
+                {messageIsPinned(messageMenu.message.id)
+                  ? "Unpin Message"
+                  : "Pin Message"}
+              </span>
+            </button>
 
             <button
               className="danger"
@@ -4475,6 +4734,7 @@ function AppMessage({
   time,
   text,
   grouped = false,
+  pinned = false,
   onContextMenu,
   onOpenLink,
   onOpenProfile,
@@ -4539,6 +4799,12 @@ function AppMessage({
           {message.edited_at && (
             <span className="editedLabel">Edited</span>
           )}
+          {pinned ? (
+            <span className="messagePinnedLabel">
+              <Pin size={11} />
+              Pinned
+            </span>
+          ) : null}
         </p>
       </div>
     </div>

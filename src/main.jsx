@@ -17,6 +17,7 @@ import {
 import {
   CallIcon,
   CallSystem,
+  ChatPollFeed,
   ChatPollSystem
 } from "./realtimeFeatures.jsx";
 import "./styles.css";
@@ -3083,6 +3084,12 @@ function WebApp() {
                   }}
                 />
               ))}
+
+              <ChatPollFeed
+                api={api}
+                chatId={activeChat.id}
+                currentUserId={auth.user.id}
+              />
 
               <div ref={messagesEndRef} className="messagesEndAnchor" />
 

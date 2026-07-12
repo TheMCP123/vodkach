@@ -17,21 +17,44 @@ export async function readJson(request) {
   }
 }
 
+function cleanConfigValue(value, { token = false } = {}) {
+  let result = String(value || "").trim();
+
+  while (
+    result.length >= 2 &&
+    (
+      (result.startsWith('"') && result.endsWith('"')) ||
+      (result.startsWith("'") && result.endsWith("'")) ||
+      (result.startsWith("`") && result.endsWith("`"))
+    )
+  ) {
+    result = result.slice(1, -1).trim();
+  }
+
+  if (token) {
+    result = result.replace(/^Bearer\s+/i, "");
+  }
+
+  return result.replace(/[\u0000-\u001F\u007F\s]+/g, "");
+}
+
 export function requireRealtimeConfig(env) {
-  const accountId = String(env.CLOUDFLARE_ACCOUNT_ID || "")
-    .replace(/\s+/g, "")
-    .trim();
-  const appId = String(env.CLOUDFLARE_REALTIME_APP_ID || "")
-    .replace(/\s+/g, "")
-    .trim();
-  const token = String(env.CLOUDFLARE_REALTIME_API_TOKEN || "")
-    .replace(/^Bearer\s+/i, "")
-    .replace(/[\r\n\t ]+/g, "")
-    .trim();
+  const accountId = cleanConfigValue(env.CLOUDFLARE_ACCOUNT_ID);
+  const appId = cleanConfigValue(env.CLOUDFLARE_REALTIME_APP_ID);
+  const token = cleanConfigValue(
+    env.CLOUDFLARE_REALTIME_API_TOKEN,
+    { token: true }
+  );
 
   if (!accountId || !appId || !token) {
     throw new Error(
-      "RealtimeKit is not configured. Check CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_REALTIME_APP_ID and CLOUDFLARE_REALTIME_API_TOKEN."
+      "RealtimeKit variables are missing in this deployment."
+    );
+  }
+
+  if (accountId.length > 32 || appId.length > 32) {
+    throw new Error(
+      "RealtimeKit Account ID or App ID is invalid. Copy only the raw ID."
     );
   }
 
@@ -52,14 +75,38 @@ export async function realtimeRequest(env, path, options = {}) {
     }
   );
 
-  const data = await response.json().catch(() => ({}));
+  const rawText = await response.text();
+  let data = {};
+
+  try {
+    data = rawText ? JSON.parse(rawText) : {};
+  } catch {
+    data = { error: rawText };
+  }
 
   if (!response.ok || data.success === false) {
-    const message =
-      data.errors?.[0]?.message ||
+    const apiMessage =
+      data.errors?.map((item) => item?.message).filter(Boolean).join("; ") ||
+      data.message ||
       data.error ||
-      `RealtimeKit request failed (${response.status})`;
-    throw new Error(message);
+      rawText ||
+      "Unknown RealtimeKit error";
+
+    if (response.status === 400 && /auth/i.test(apiMessage)) {
+      throw new Error(
+        "RealtimeKit authentication failed. Recreate the API Token with Account - Realtime - Realtime Admin, then replace CLOUDFLARE_REALTIME_API_TOKEN in the Production environment."
+      );
+    }
+
+    if (response.status === 403) {
+      throw new Error(
+        "RealtimeKit API Token does not have Realtime Admin permission."
+      );
+    }
+
+    throw new Error(
+      `RealtimeKit: ${apiMessage} (HTTP ${response.status})`
+    );
   }
 
   return data.result || data.data || data;

@@ -51,9 +51,7 @@ export async function onRequestPost(context) {
     const meeting = await realtimeRequest(context.env, "/meetings", {
       method: "POST",
       body: JSON.stringify({
-        title: `Vodkach call ${chatId}`,
-        preferred_region: "auto",
-        record_on_start: false
+        title: `Vodkach call ${chatId}`
       })
     });
 
@@ -70,7 +68,10 @@ export async function onRequestPost(context) {
         method: "POST",
         body: JSON.stringify({
           name: user.display_name || user.username || "Vodkach User",
-          picture: user.avatar_url || undefined,
+          ...(user.avatar_url &&
+          /^https?:\/\//i.test(user.avatar_url)
+            ? { picture: user.avatar_url }
+            : {}),
           preset_name: "vodkach_call",
           custom_participant_id: user.id
         })

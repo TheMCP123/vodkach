@@ -405,6 +405,7 @@ function PollCard({ poll, api, reload, currentUserId }) {
       })
     });
     reload();
+    window.dispatchEvent(new CustomEvent("vodkach:polls-changed"));
   }
 
   async function closePoll() {
@@ -413,10 +414,11 @@ function PollCard({ poll, api, reload, currentUserId }) {
       body: JSON.stringify({ poll_id: poll.id })
     });
     reload();
+    window.dispatchEvent(new CustomEvent("vodkach:polls-changed"));
   }
 
   return (
-    <article className="chatPollCard">
+    <article className="chatPollCard inlineChatPoll">
       <header>
         <div>
           <span className="chatPollEyebrow">
@@ -476,9 +478,66 @@ function PollCard({ poll, api, reload, currentUserId }) {
   );
 }
 
+
+export function ChatPollFeed({ api, chatId, currentUserId }) {
+  const [polls, setPolls] = useState([]);
+
+  async function loadPolls() {
+    if (!chatId) return;
+
+    try {
+      const data = await api(
+        `/api/polls?chat_id=${encodeURIComponent(chatId)}`
+      );
+      setPolls(data.polls || []);
+    } catch {
+      // Keep the message stream usable when polls fail to refresh.
+    }
+  }
+
+  useEffect(() => {
+    setPolls([]);
+    if (!chatId) return undefined;
+
+    const onChanged = (event) => {
+      if (!event.detail?.chatId || event.detail.chatId === chatId) {
+        loadPolls();
+      }
+    };
+
+    loadPolls();
+    const timer = window.setInterval(loadPolls, 3500);
+    window.addEventListener("vodkach:polls-changed", onChanged);
+
+    return () => {
+      window.clearInterval(timer);
+      window.removeEventListener("vodkach:polls-changed", onChanged);
+    };
+  }, [chatId]);
+
+  if (!polls.length) return null;
+
+  return (
+    <div className="inlinePollFeed">
+      {polls
+        .slice()
+        .reverse()
+        .map((poll) => (
+          <PollCard
+            key={poll.id}
+            poll={poll}
+            api={api}
+            reload={loadPolls}
+            currentUserId={currentUserId}
+          />
+        ))}
+    </div>
+  );
+}
+
 export function ChatPollSystem({ api, chatId, currentUserId }) {
   const [open, setOpen] = useState(false);
-  const [panelOpen, setPanelOpen] = useState(false);
+
   const [polls, setPolls] = useState([]);
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
@@ -503,7 +562,6 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
   }
 
   useEffect(() => {
-    setPanelOpen(false);
     setOpen(false);
     setPolls([]);
 
@@ -557,8 +615,12 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
       setHideResults(false);
       setDuration("0");
       setOpen(false);
-      setPanelOpen(true);
       await loadPolls();
+      window.dispatchEvent(
+        new CustomEvent("vodkach:polls-changed", {
+          detail: { chatId }
+        })
+      );
     } catch (createError) {
       setError(createError.message);
     } finally {
@@ -573,48 +635,10 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
         type="button"
         aria-label="Polls"
         title="Polls"
-        onClick={() => setPanelOpen((value) => !value)}
+        onClick={() => setOpen(true)}
       >
         <PollIcon />
-        {polls.length ? <span>{polls.length}</span> : null}
       </button>
-
-      {panelOpen &&
-        createPortal(
-          <div className="chatPollPanel">
-          <header>
-            <div>
-              <strong>Polls</strong>
-              <span>{polls.length ? `${polls.length} in this chat` : "No polls yet"}</span>
-            </div>
-            <button type="button" onClick={() => setOpen(true)}>
-              <PlusIcon />
-              New Poll
-            </button>
-          </header>
-
-          <div className="chatPollPanelBody">
-            {polls.length ? (
-              polls.map((poll) => (
-                <PollCard
-                  key={poll.id}
-                  poll={poll}
-                  api={api}
-                  reload={loadPolls}
-                  currentUserId={currentUserId}
-                />
-              ))
-            ) : (
-              <div className="pollEmptyState">
-                <PollIcon />
-                <strong>Create the first poll</strong>
-                <span>Ask a question without leaving the conversation.</span>
-              </div>
-            )}
-          </div>
-        </div>,
-          document.body
-        )}
 
       {open &&
         createPortal(

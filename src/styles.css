@@ -11302,3 +11302,274 @@ a.authGoogleButton {
   .settingsModalNav > button { justify-content: center !important; padding: 0 !important; }
   .settingsNavIcon { width: 22px !important; height: 22px !important; }
 }
+
+/* Patch 094: restore original settings and composer geometry without changing design */
+
+/* Settings are a full-screen two-column page, exactly as before the UI regression. */
+.settingsOverlay {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 50000 !important;
+  overflow: hidden !important;
+  background: #111214 !important;
+}
+
+.settingsModal {
+  position: static !important;
+  width: 100vw !important;
+  max-width: none !important;
+  height: 100vh !important;
+  max-height: none !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  display: grid !important;
+  grid-template-columns: minmax(220px, 34%) minmax(0, 1fr) !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.settingsModalNav {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 54px 18px 30px max(18px, calc((100vw - 1060px) / 2)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border-right: 1px solid rgba(255,255,255,.055) !important;
+  background: #0d0e10 !important;
+  box-sizing: border-box !important;
+}
+
+.settingsModalContent {
+  position: relative !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  padding: 58px max(70px, calc((100vw - 1060px) / 2)) 70px 42px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  color: inherit !important;
+  background: #151619 !important;
+  box-sizing: border-box !important;
+}
+
+.settingsCloseButton {
+  position: fixed !important;
+  right: max(24px, calc((100vw - 1120px) / 2)) !important;
+  top: 28px !important;
+}
+
+/* Restore the compact original message bar. Only alignment is locked down. */
+.messageComposer.composerForm {
+  position: absolute !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 12px !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: block !important;
+  overflow: visible !important;
+  border: 1px solid rgba(255,255,255,.07) !important;
+  border-radius: 9px !important;
+  background: #1e1f22 !important;
+  box-shadow: 0 5px 18px rgba(0,0,0,.18) !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerInputRow {
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 6px 7px 6px 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 34px 72px !important;
+  align-items: center !important;
+  gap: 7px !important;
+  overflow: hidden !important;
+  border-radius: inherit !important;
+  background: transparent !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerInputRow textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 112px !important;
+  margin: 0 !important;
+  padding: 6px 2px 6px 0 !important;
+  align-self: center !important;
+  resize: none !important;
+  line-height: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerPollButton,
+.messageComposer .composerInputRow > button[type="submit"] {
+  align-self: center !important;
+  margin: 0 !important;
+}
+
+.messageComposer .composerPollButton {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+}
+
+.messageComposer .composerInputRow > button[type="submit"] {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 10px !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+}
+
+/* Context/preview may appear above, but never resize or distort the bar. */
+.messageComposer .composerContext,
+.messageComposer .composerLivePreview {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: calc(100% + 7px) !important;
+  margin: 0 !important;
+  z-index: 4 !important;
+}
+
+/* Notes uses the same original compact geometry as chat. */
+.notesComposer {
+  position: absolute !important;
+  left: 16px !important;
+  right: 16px !important;
+  bottom: 12px !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: none !important;
+  padding: 6px 7px 6px 12px !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 72px !important;
+  grid-template-rows: auto !important;
+  align-items: center !important;
+  gap: 7px !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+.notesComposer textarea {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 116px !important;
+  margin: 0 !important;
+  padding: 6px 2px 6px 0 !important;
+  align-self: center !important;
+  resize: none !important;
+  line-height: 20px !important;
+  box-sizing: border-box !important;
+}
+
+.notesComposer > button {
+  width: 72px !important;
+  min-width: 72px !important;
+  max-width: 72px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  align-self: center !important;
+  display: grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+}
+
+.notesComposer .notesLivePreview {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: calc(100% + 7px) !important;
+  margin: 0 !important;
+  z-index: 4 !important;
+}
+
+@media (max-width: 760px) {
+  .settingsModal {
+    grid-template-columns: 150px minmax(0, 1fr) !important;
+    width: 100vw !important;
+    height: 100vh !important;
+  }
+
+  .settingsModalNav {
+    padding: 30px 8px !important;
+  }
+
+  .settingsNavUser {
+    display: none !important;
+  }
+
+  .settingsModalNav h2,
+  .settingsNavUser > div,
+  .settingsModalNav > button:not(.danger) {
+    font-size: revert !important;
+  }
+
+  .settingsModalNav > button {
+    justify-content: initial !important;
+    padding: 0 10px !important;
+  }
+
+  .settingsModalContent {
+    padding: 48px 18px !important;
+  }
+
+  .messageComposer.composerForm {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+  }
+
+  .messageComposer .composerInputRow {
+    grid-template-columns: minmax(0, 1fr) 32px 64px !important;
+    gap: 5px !important;
+    padding-left: 9px !important;
+    padding-right: 5px !important;
+  }
+
+  .messageComposer .composerInputRow > button[type="submit"] {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+
+  .notesComposer {
+    left: 8px !important;
+    right: 8px !important;
+    bottom: 8px !important;
+    grid-template-columns: minmax(0, 1fr) 64px !important;
+  }
+
+  .notesComposer > button {
+    width: 64px !important;
+    min-width: 64px !important;
+    max-width: 64px !important;
+  }
+}

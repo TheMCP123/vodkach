@@ -21,7 +21,9 @@ export class VodkachRealtime {
         connectedAt: Date.now(),
         userId: url.searchParams.get("user_id") || null,
         username: url.searchParams.get("username") || "",
-        displayName: url.searchParams.get("display_name") || "Someone"
+        displayName: url.searchParams.get("display_name") || "Someone",
+        sessionId: url.searchParams.get("session_id") || null,
+        status: "online"
       });
       server.send(JSON.stringify({ type: "realtime.ready" }));
 
@@ -74,7 +76,29 @@ export class VodkachRealtime {
     }
 
     if (payload?.type === "presence.heartbeat") {
-      socket.send(JSON.stringify({ type: "presence.ack", at: Date.now() }));
+      const attachment = socket.deserializeAttachment() || {};
+      if (!attachment.userId) return;
+      const requestedStatus = ["online", "offline", "sleeping", "dnd"].includes(payload.status)
+        ? payload.status
+        : "online";
+
+      await this.env.DB.batch([
+        this.env.DB.prepare(`UPDATE users SET last_seen_at = datetime('now') WHERE id = ?`).bind(attachment.userId),
+        this.env.DB.prepare(`UPDATE sessions SET last_seen_at = datetime('now') WHERE id = ?`).bind(attachment.sessionId || "")
+      ]);
+
+      socket.serializeAttachment({ ...attachment, status: requestedStatus });
+      socket.send(JSON.stringify({ type: "presence.ack", status: requestedStatus, at: Date.now() }));
+
+      const outgoing = JSON.stringify({
+        type: "presence.changed",
+        actorUserId: attachment.userId,
+        status: requestedStatus,
+        at: Date.now()
+      });
+      for (const peer of this.state.getWebSockets()) {
+        try { peer.send(outgoing); } catch {}
+      }
       return;
     }
 

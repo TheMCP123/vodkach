@@ -22,12 +22,35 @@ function IconBase({ children, className = "" }) {
 
 function CustomSelect({ value, onChange, options, ariaLabel }) {
   const [open, setOpen] = useState(false);
+  const [menuStyle, setMenuStyle] = useState(null);
   const rootRef = useRef(null);
+  const menuRef = useRef(null);
   const selected = options.find((option) => option.value === value) || options[0];
+
+  const updateMenuPosition = () => {
+    const trigger = rootRef.current?.querySelector(".vodkachSelectTrigger");
+    if (!trigger) return;
+    const rect = trigger.getBoundingClientRect();
+    const viewportGap = 8;
+    const estimatedHeight = Math.min(230, options.length * 44 + 12);
+    const spaceBelow = window.innerHeight - rect.bottom - viewportGap;
+    const placeAbove = spaceBelow < Math.min(estimatedHeight, 150) && rect.top > spaceBelow;
+    setMenuStyle({
+      position: "fixed",
+      left: `${Math.max(viewportGap, rect.left)}px`,
+      width: `${Math.max(180, rect.width)}px`,
+      top: placeAbove ? "auto" : `${rect.bottom + 6}px`,
+      bottom: placeAbove ? `${window.innerHeight - rect.top + 6}px` : "auto",
+      maxHeight: `${Math.max(96, Math.min(230, placeAbove ? rect.top - 18 : spaceBelow))}px`
+    });
+  };
 
   useEffect(() => {
     const close = (event) => {
-      if (!rootRef.current?.contains(event.target)) setOpen(false);
+      if (
+        !rootRef.current?.contains(event.target) &&
+        !menuRef.current?.contains(event.target)
+      ) setOpen(false);
     };
     const onKey = (event) => {
       if (event.key === "Escape") setOpen(false);
@@ -40,6 +63,45 @@ function CustomSelect({ value, onChange, options, ariaLabel }) {
     };
   }, []);
 
+  useEffect(() => {
+    if (!open) return undefined;
+    updateMenuPosition();
+    const update = () => updateMenuPosition();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open, options.length]);
+
+  const menu = open && menuStyle ? createPortal(
+    <div
+      ref={menuRef}
+      className="vodkachSelectMenu vodkachSelectPortalMenu"
+      role="listbox"
+      style={menuStyle}
+    >
+      {options.map((option) => (
+        <button
+          type="button"
+          role="option"
+          aria-selected={option.value === value}
+          className={option.value === value ? "selected" : ""}
+          key={option.value}
+          onClick={() => {
+            onChange(option.value);
+            setOpen(false);
+          }}
+        >
+          <span>{option.label}</span>
+          {option.value === value ? <span className="vodkachSelectCheck">✓</span> : null}
+        </button>
+      ))}
+    </div>,
+    document.body
+  ) : null;
+
   return (
     <div className={open ? "vodkachSelect open" : "vodkachSelect"} ref={rootRef}>
       <button
@@ -47,31 +109,15 @@ function CustomSelect({ value, onChange, options, ariaLabel }) {
         className="vodkachSelectTrigger"
         aria-label={ariaLabel}
         aria-expanded={open}
-        onClick={() => setOpen((current) => !current)}
+        onClick={() => {
+          setOpen((current) => !current);
+          window.requestAnimationFrame(updateMenuPosition);
+        }}
       >
         <span>{selected?.label || "Select"}</span>
         <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
       </button>
-      {open ? (
-        <div className="vodkachSelectMenu" role="listbox">
-          {options.map((option) => (
-            <button
-              type="button"
-              role="option"
-              aria-selected={option.value === value}
-              className={option.value === value ? "selected" : ""}
-              key={option.value}
-              onClick={() => {
-                onChange(option.value);
-                setOpen(false);
-              }}
-            >
-              <span>{option.label}</span>
-              {option.value === value ? <span className="vodkachSelectCheck">✓</span> : null}
-            </button>
-          ))}
-        </div>
-      ) : null}
+      {menu}
     </div>
   );
 }

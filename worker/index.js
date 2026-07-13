@@ -254,7 +254,7 @@ async function emitRealtimeMutation({ pathname, method, body, data, before, user
 
 export { VodkachRealtime };
 
-async function handleRealtimeConnect(request, env) {
+async function handleRealtimeConnect(request, env, executionContext) {
   if (request.headers.get("Upgrade") !== "websocket") {
     return new Response(JSON.stringify({ ok: false, error: "WebSocket upgrade required" }), {
       status: 426,
@@ -277,6 +277,19 @@ async function handleRealtimeConnect(request, env) {
   target.searchParams.set("user_id", user.id);
   target.searchParams.set("username", user.username || "");
   target.searchParams.set("display_name", user.display_name || user.username || "Someone");
+  target.searchParams.set("session_id", user.current_session_id || "");
+
+  await env.DB.batch([
+    env.DB.prepare(`UPDATE users SET last_seen_at = datetime('now') WHERE id = ?`).bind(user.id),
+    env.DB.prepare(`UPDATE sessions SET last_seen_at = datetime('now') WHERE id = ?`).bind(user.current_session_id)
+  ]);
+
+  executionContext?.waitUntil?.(publishRealtime(env, {
+    type: "presence.changed",
+    actorUserId: user.id,
+    status: user.status_preference || "online",
+    at: Date.now()
+  }).catch(() => {}));
 
   return stub.fetch(new Request(target, request));
 }
@@ -288,7 +301,7 @@ export default {
 
     if (pathname === "/api/realtime") {
       try {
-        return await handleRealtimeConnect(request, env);
+        return await handleRealtimeConnect(request, env, executionContext);
       } catch (error) {
         console.error("Vodkach realtime connection error", error);
         return new Response(JSON.stringify({ ok: false, error: "Realtime connection failed" }), {

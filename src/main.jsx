@@ -4363,7 +4363,7 @@ function WebApp() {
                     loadSessions();
                   }}
                 >
-                  <SessionDeviceIcon session={session} />
+                  <SettingsNavIcon type="sessions" />
                   Active Sessions
                 </button>
                 <div className="settingsNavDivider" />

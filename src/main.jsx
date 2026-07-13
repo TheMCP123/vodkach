@@ -9,6 +9,7 @@ import {
   Monitor,
   Smartphone,
   Box,
+  Compass,
   MoreVertical,
   Pin,
   Phone,
@@ -19,7 +20,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
-import { ServerCreateModal, ServerWorkspace } from "./servers.jsx";
+import { ServerCreateModal, ServerDiscovery, ServerWorkspace } from "./servers.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -27,7 +28,7 @@ import {
   ChatPollSystem,
   VoiceCameraSettings
 } from "./realtimeFeatures.jsx";
-import "./styles.css?vodkach=095";
+import "./styles.css?vodkach=096";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
@@ -3113,19 +3114,22 @@ function WebApp() {
 
   return (
     <main
-      className={`appShell ${
+      className={`appShell ${view === "server" || view === "discovery" ? "serverMode" : ""} ${
         view === "chat" && activeChat?.other_user
           ? "withProfile"
           : "withoutProfile"
       }`}
     >
       <aside className="appServers">
-        <button className={`serverButton homeButton ${view !== "server" ? "active" : ""}`} title="Home" onClick={() => { setView("friends"); setActiveServer(null); }}>
+        <button className={`serverButton homeButton ${view !== "server" && view !== "discovery" ? "active" : ""}`} title="Home" onClick={() => { setView("friends"); setActiveServer(null); }}>
           <Home size={18} />
+        </button>
+        <button className={`serverButton discoveryButton ${view === "discovery" ? "active" : ""}`} title="Discover servers" onClick={() => { setView("discovery"); setActiveServer(null); }}>
+          <Compass size={18} />
         </button>
         <div className="serverDivider" />
         {servers.map((server) => (
-          <button key={server.id} className={`serverButton serverIdentity ${activeServer?.id === server.id ? "active" : ""}`} title={server.name} onClick={() => { setActiveServer(server); setView("server"); }}>
+          <button key={server.id} className={`serverButton serverIdentity ${activeServer?.id === server.id && view === "server" ? "active" : ""}`} style={{"--server-color":server.icon_color || "#fc0303"}} title={server.name} onClick={() => { setActiveServer(server); setView("server"); }}>
             <span>{server.icon_text || server.name?.[0]?.toUpperCase() || "V"}</span>
           </button>
         ))}
@@ -3134,7 +3138,7 @@ function WebApp() {
         </button>
       </aside>
 
-      <aside className="appSidebar">
+      {view !== "server" && view !== "discovery" && <aside className="appSidebar">
         <div className="sidebarNav">
           <button
             className={view === "friends" ? "sidebarNavButton active" : "sidebarNavButton"}
@@ -3293,7 +3297,7 @@ function WebApp() {
             <Settings size={16} />
           </button>
         </div>
-      </aside>
+      </aside>}
 
       <section className="appChat">
         {view === "friends" && (
@@ -3508,8 +3512,27 @@ function WebApp() {
           </>
         )}
 
+        {view === "discovery" && (
+          <ServerDiscovery
+            onJoined={(joined) => loadServers().then(() => setActiveServer(joined))}
+            onOpenServer={(selected) => { setActiveServer(selected); setView("server"); }}
+          />
+        )}
+
         {view === "server" && activeServer && (
-          <ServerWorkspace server={activeServer} />
+          <ServerWorkspace
+            server={activeServer}
+            currentUser={auth.user}
+            onServerUpdated={(updated) => {
+              setServers((items) => items.map((item) => item.id === updated.id ? { ...item, ...updated } : item));
+              setActiveServer((current) => current?.id === updated.id ? { ...current, ...updated } : current);
+            }}
+            onServerRemoved={(serverId) => {
+              setServers((items) => items.filter((item) => item.id !== serverId));
+              setActiveServer(null);
+              setView("friends");
+            }}
+          />
         )}
 
         {view === "notes" && (

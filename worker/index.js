@@ -58,6 +58,10 @@ import * as r54 from "../functions/api/servers/index.js";
 import * as r55 from "../functions/api/servers/join.js";
 import * as r56 from "../functions/api/servers/channels.js";
 import * as r57 from "../functions/api/servers/messages.js";
+import * as r58 from "../functions/api/servers/discovery.js";
+import * as r59 from "../functions/api/servers/members.js";
+import * as r60 from "../functions/api/servers/invites.js";
+import * as r61 from "../functions/api/servers/settings.js";
 
 const ROUTES = new Map([
   ["/api/access/retry", r0],
@@ -117,7 +121,11 @@ const ROUTES = new Map([
   ["/api/servers", r54],
   ["/api/servers/join", r55],
   ["/api/servers/channels", r56],
-  ["/api/servers/messages", r57]
+  ["/api/servers/messages", r57],
+  ["/api/servers/discovery", r58],
+  ["/api/servers/members", r59],
+  ["/api/servers/invites", r60],
+  ["/api/servers/settings", r61]
 ]);
 
 function normalizePath(pathname) {

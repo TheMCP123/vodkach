@@ -2,7 +2,9 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "worker:deploy": "wrangler deploy",
+    "worker:dev": "vite build && wrangler dev"
   },
   "dependencies": {
     "@vitejs/plugin-react": "latest",
@@ -12,7 +14,8 @@
     "lucide-react": "latest"
   },
   "devDependencies": {
-    "typescript": "latest"
+    "typescript": "latest",
+    "wrangler": "latest"
   },
   "name": "vodkach"
 }

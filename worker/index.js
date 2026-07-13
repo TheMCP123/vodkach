@@ -1,3 +1,5 @@
+import { getCurrentUser } from "../functions/_shared/auth.js";
+import { VodkachRealtime } from "./VodkachRealtime.js";
 import * as r0 from "../functions/api/access/retry.js";
 import * as r1 from "../functions/api/admin/banned-emails/index.js";
 import * as r2 from "../functions/api/admin/banned-emails/unban.js";
@@ -143,10 +145,48 @@ async function runPagesHandler(module, request, env, executionContext) {
   });
 }
 
+export { VodkachRealtime };
+
+async function handleRealtimeConnect(request, env) {
+  if (request.headers.get("Upgrade") !== "websocket") {
+    return new Response(JSON.stringify({ ok: false, error: "WebSocket upgrade required" }), {
+      status: 426,
+      headers: { "content-type": "application/json; charset=utf-8" }
+    });
+  }
+
+  const user = await getCurrentUser(request, env);
+  if (!user) {
+    return new Response(JSON.stringify({ ok: false, error: "Not authenticated" }), {
+      status: 401,
+      headers: { "content-type": "application/json; charset=utf-8" }
+    });
+  }
+
+  const id = env.REALTIME.idFromName(String(user.id));
+  const stub = env.REALTIME.get(id);
+  const target = new URL(request.url);
+  target.pathname = "/connect";
+
+  return stub.fetch(new Request(target, request));
+}
+
 export default {
   async fetch(request, env, executionContext) {
     const url = new URL(request.url);
     const pathname = normalizePath(url.pathname);
+
+    if (pathname === "/api/realtime") {
+      try {
+        return await handleRealtimeConnect(request, env);
+      } catch (error) {
+        console.error("Vodkach realtime connection error", error);
+        return new Response(JSON.stringify({ ok: false, error: "Realtime connection failed" }), {
+          status: 500,
+          headers: { "content-type": "application/json; charset=utf-8" }
+        });
+      }
+    }
 
     if (pathname.startsWith("/api/")) {
       const route = ROUTES.get(pathname);

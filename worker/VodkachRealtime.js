@@ -17,6 +17,7 @@ export class VodkachRealtime {
 
       this.state.acceptWebSocket(server);
       server.serializeAttachment({ connectedAt: Date.now() });
+      server.send(JSON.stringify({ type: "realtime.ready" }));
 
       return new Response(null, {
         status: 101,

@@ -821,6 +821,9 @@ function WebApp() {
   const messagesEndRef = useRef(null);
   const lastOwnMessageIdRef = useRef(null);
   const callSystemRef = useRef(null);
+  const realtimeSocketRef = useRef(null);
+  const realtimeReconnectTimerRef = useRef(null);
+  const realtimePingTimerRef = useRef(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -1660,6 +1663,112 @@ function WebApp() {
       messageAudioRef.current = [];
     };
   }, []);
+
+  useEffect(() => {
+    if (
+      !auth.authenticated ||
+      auth.user?.access_status !== "approved" ||
+      !auth.user?.username
+    ) {
+      return;
+    }
+
+    let stopped = false;
+    let reconnectAttempt = 0;
+
+    function clearRealtimeTimers() {
+      if (realtimeReconnectTimerRef.current) {
+        window.clearTimeout(realtimeReconnectTimerRef.current);
+        realtimeReconnectTimerRef.current = null;
+      }
+
+      if (realtimePingTimerRef.current) {
+        window.clearInterval(realtimePingTimerRef.current);
+        realtimePingTimerRef.current = null;
+      }
+    }
+
+    function connectRealtime() {
+      if (stopped) return;
+
+      const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+      const socket = new WebSocket(`${protocol}//${window.location.host}/api/realtime`);
+      realtimeSocketRef.current = socket;
+
+      socket.addEventListener("open", () => {
+        reconnectAttempt = 0;
+
+        if (realtimePingTimerRef.current) {
+          window.clearInterval(realtimePingTimerRef.current);
+        }
+
+        realtimePingTimerRef.current = window.setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send("ping");
+          }
+        }, 30000);
+      });
+
+      socket.addEventListener("message", (event) => {
+        if (event.data === "pong") return;
+
+        try {
+          const payload = JSON.parse(event.data);
+          window.dispatchEvent(
+            new CustomEvent("vodkach:realtime", { detail: payload })
+          );
+        } catch {
+          // Ignore malformed realtime payloads.
+        }
+      });
+
+      socket.addEventListener("close", () => {
+        if (realtimeSocketRef.current === socket) {
+          realtimeSocketRef.current = null;
+        }
+
+        if (realtimePingTimerRef.current) {
+          window.clearInterval(realtimePingTimerRef.current);
+          realtimePingTimerRef.current = null;
+        }
+
+        if (stopped) return;
+
+        const delay = Math.min(30000, 1000 * 2 ** reconnectAttempt);
+        reconnectAttempt += 1;
+        realtimeReconnectTimerRef.current = window.setTimeout(
+          connectRealtime,
+          delay
+        );
+      });
+
+      socket.addEventListener("error", () => {
+        try {
+          socket.close();
+        } catch {
+          // The close handler performs reconnect.
+        }
+      });
+    }
+
+    connectRealtime();
+
+    return () => {
+      stopped = true;
+      clearRealtimeTimers();
+
+      const socket = realtimeSocketRef.current;
+      realtimeSocketRef.current = null;
+
+      if (socket) {
+        try {
+          socket.close(1000, "Client closed");
+        } catch {
+          // Socket may already be closed.
+        }
+      }
+    };
+  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
   useEffect(() => {
     if (!auth.authenticated) return;

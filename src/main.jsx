@@ -824,6 +824,8 @@ function WebApp() {
   const realtimeSocketRef = useRef(null);
   const realtimeReconnectTimerRef = useRef(null);
   const realtimePingTimerRef = useRef(null);
+  const realtimeMessageRefreshTimerRef = useRef(null);
+  const realtimeSocialRefreshTimerRef = useRef(null);
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -1702,11 +1704,22 @@ function WebApp() {
           window.clearInterval(realtimePingTimerRef.current);
         }
 
-        realtimePingTimerRef.current = window.setInterval(() => {
+        const sendHeartbeat = () => {
           if (socket.readyState === WebSocket.OPEN) {
-            socket.send("ping");
+            socket.send(JSON.stringify({
+              type: "presence.heartbeat",
+              userId: auth.user?.id,
+              status: auth.user?.status_preference || "online"
+            }));
           }
-        }, 30000);
+        };
+
+        sendHeartbeat();
+        realtimePingTimerRef.current = window.setInterval(sendHeartbeat, 30000);
+
+        loadSocial().catch(() => {});
+        if (activeChat?.id) loadMessages(activeChat).catch(() => {});
+        window.dispatchEvent(new CustomEvent("vodkach:realtime-connected"));
       });
 
       socket.addEventListener("message", (event) => {
@@ -1768,66 +1781,30 @@ function WebApp() {
         }
       }
     };
-  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
-
-  useEffect(() => {
-    if (!auth.authenticated) return;
-
-    const timer = window.setInterval(() => {
-      loadMe().catch(() => {});
-    }, 450);
-
-    return () => window.clearInterval(timer);
-  }, [auth.authenticated]);
-
-  useEffect(() => {
-    if (
-      !auth.authenticated ||
-      auth.user?.access_status !== "approved" ||
-      !auth.user?.username
-    ) {
-      return;
-    }
-
-    let stopped = false;
-
-    async function heartbeat() {
-      if (stopped) return;
-
-      try {
-        const data = await api("/api/presence/heartbeat", {
-          method: "POST",
-          body: JSON.stringify({})
-        });
-
-        setAuth((current) => ({
-          ...current,
-          user: current.user
-            ? {
-                ...current.user,
-                effective_status: data.effective_status,
-                last_seen_at: data.last_seen_at
-              }
-            : current.user
-        }));
-      } catch {
-        // Presence failures must not break the app.
-      }
-    }
-
-    heartbeat();
-    const timer = window.setInterval(heartbeat, 5000);
-
-    return () => {
-      stopped = true;
-      window.clearInterval(timer);
-    };
   }, [
     auth.authenticated,
     auth.user?.access_status,
     auth.user?.username,
-    auth.user?.status_preference
+    auth.user?.id,
+    auth.user?.status_preference,
+    activeChat?.id
   ]);
+
+  useEffect(() => {
+    if (!auth.authenticated) return undefined;
+
+    const refreshAccount = () => {
+      if (document.visibilityState === "visible") loadMe().catch(() => {});
+    };
+
+    window.addEventListener("focus", refreshAccount);
+    document.addEventListener("visibilitychange", refreshAccount);
+
+    return () => {
+      window.removeEventListener("focus", refreshAccount);
+      document.removeEventListener("visibilitychange", refreshAccount);
+    };
+  }, [auth.authenticated]);
 
   useEffect(() => {
     if (
@@ -1939,21 +1916,6 @@ function WebApp() {
     }
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
-  useEffect(() => {
-    if (
-      !auth.authenticated ||
-      auth.user?.access_status !== "approved" ||
-      !auth.user?.username
-    ) {
-      return;
-    }
-
-    const timer = window.setInterval(() => {
-      loadSocial().catch(() => {});
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
   useEffect(() => {
     function handlePollReply(event) {
@@ -1977,6 +1939,88 @@ function WebApp() {
   }, []);
 
   useEffect(() => {
+    function scheduleSocialRefresh() {
+      if (realtimeSocialRefreshTimerRef.current) {
+        window.clearTimeout(realtimeSocialRefreshTimerRef.current);
+      }
+      realtimeSocialRefreshTimerRef.current = window.setTimeout(() => {
+        loadSocial().catch(() => {});
+      }, 80);
+    }
+
+    function scheduleMessageRefresh(chatId) {
+      if (!chatId || activeChat?.id !== chatId) return;
+      if (realtimeMessageRefreshTimerRef.current) {
+        window.clearTimeout(realtimeMessageRefreshTimerRef.current);
+      }
+      realtimeMessageRefreshTimerRef.current = window.setTimeout(() => {
+        loadMessages({ id: chatId }).catch(() => {});
+      }, 60);
+    }
+
+    function handleRealtime(event) {
+      const payload = event.detail || {};
+
+      if (["message.created", "message.edited", "message.deleted"].includes(payload.type)) {
+        scheduleMessageRefresh(payload.chatId);
+        if (payload.chatId && activeChat?.id === payload.chatId) {
+          loadPinnedMessages(payload.chatId).catch(() => {});
+        }
+        scheduleSocialRefresh();
+        return;
+      }
+
+      if (payload.type === "pin.changed") {
+        if (!payload.chatId || activeChat?.id === payload.chatId) {
+          loadPinnedMessages(payload.chatId || activeChat?.id).catch(() => {});
+        }
+        return;
+      }
+
+      if (payload.type === "poll.changed") {
+        window.dispatchEvent(
+          new CustomEvent("vodkach:polls-changed", { detail: { chatId: payload.chatId } })
+        );
+        return;
+      }
+
+      if (["friend-request.changed", "friend.changed", "chat.changed", "presence.changed"].includes(payload.type)) {
+        scheduleSocialRefresh();
+        return;
+      }
+
+      if (payload.type === "note.changed") {
+        if (view === "notes") loadNotes().catch(() => {});
+        return;
+      }
+
+      if (payload.type === "session.changed") {
+        if (settingsOpen && settingsTab === "sessions") loadSessions().catch(() => {});
+        return;
+      }
+
+      if (["user.changed", "admin.changed"].includes(payload.type)) {
+        loadMe().catch(() => {});
+        scheduleSocialRefresh();
+        return;
+      }
+
+      if (payload.type === "app.changed") {
+        scheduleSocialRefresh();
+        if (activeChat?.id) scheduleMessageRefresh(activeChat.id);
+      }
+    }
+
+    window.addEventListener("vodkach:realtime", handleRealtime);
+
+    return () => {
+      window.removeEventListener("vodkach:realtime", handleRealtime);
+      if (realtimeMessageRefreshTimerRef.current) window.clearTimeout(realtimeMessageRefreshTimerRef.current);
+      if (realtimeSocialRefreshTimerRef.current) window.clearTimeout(realtimeSocialRefreshTimerRef.current);
+    };
+  }, [activeChat?.id, view, settingsOpen, settingsTab]);
+
+  useEffect(() => {
     if (!activeChat?.id) {
       setMessages([]);
       setPinnedMessages([]);
@@ -1994,15 +2038,6 @@ function WebApp() {
     loadNotes().catch((error) => setUiError(error.message));
   }, [view]);
 
-  useEffect(() => {
-    if (!activeChat?.id) return;
-
-    const timer = window.setInterval(() => {
-      loadMessages(activeChat).catch(() => {});
-    }, 1000);
-
-    return () => window.clearInterval(timer);
-  }, [activeChat?.id]);
 
   useEffect(() => {
     if (!activeChat?.id) {

@@ -1009,15 +1009,21 @@ export const CallSystem = forwardRef(function CallSystem(
       }
     }
 
+    const handleRealtimeCall = (event) => {
+      if (event.detail?.type === "call.changed") checkCalls();
+    };
+    const handleRealtimeConnected = () => checkCalls();
+
     checkCalls();
-    const timer = setInterval(
-      checkCalls,
-      currentCallRef.current || incoming ? 500 : 700
-    );
+    window.addEventListener("vodkach:realtime", handleRealtimeCall);
+    window.addEventListener("vodkach:realtime-connected", handleRealtimeConnected);
+    document.addEventListener("visibilitychange", checkCalls);
 
     return () => {
       stopped = true;
-      clearInterval(timer);
+      window.removeEventListener("vodkach:realtime", handleRealtimeCall);
+      window.removeEventListener("vodkach:realtime-connected", handleRealtimeConnected);
+      document.removeEventListener("visibilitychange", checkCalls);
     };
   }, [user?.id, call?.id, incoming?.id]);
 
@@ -1686,12 +1692,12 @@ export function ChatPollFeed({ api, chatId, currentUserId }) {
     };
 
     loadPolls();
-    const timer = window.setInterval(loadPolls, 3500);
     window.addEventListener("vodkach:polls-changed", onChanged);
+    window.addEventListener("vodkach:realtime-connected", loadPolls);
 
     return () => {
-      window.clearInterval(timer);
       window.removeEventListener("vodkach:polls-changed", onChanged);
+      window.removeEventListener("vodkach:realtime-connected", loadPolls);
     };
   }, [chatId]);
 
@@ -1747,9 +1753,17 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
 
     if (!chatId) return undefined;
 
+    const onChanged = (event) => {
+      if (!event.detail?.chatId || event.detail.chatId === chatId) loadPolls();
+    };
+
     loadPolls();
-    const timer = window.setInterval(loadPolls, 3500);
-    return () => window.clearInterval(timer);
+    window.addEventListener("vodkach:polls-changed", onChanged);
+    window.addEventListener("vodkach:realtime-connected", loadPolls);
+    return () => {
+      window.removeEventListener("vodkach:polls-changed", onChanged);
+      window.removeEventListener("vodkach:realtime-connected", loadPolls);
+    };
   }, [chatId]);
 
   function updateOption(index, value) {

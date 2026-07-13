@@ -145,6 +145,104 @@ async function runPagesHandler(module, request, env, executionContext) {
   });
 }
 
+
+async function parseJsonClone(response) {
+  try {
+    return await response.clone().json();
+  } catch {
+    return null;
+  }
+}
+
+async function readRequestBody(request) {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) return {};
+  try {
+    return await request.clone().json();
+  } catch {
+    return {};
+  }
+}
+
+async function publishRealtime(env, payload) {
+  const id = env.REALTIME.idFromName("vodkach-global");
+  const stub = env.REALTIME.get(id);
+  await stub.fetch("https://realtime.internal/publish", {
+    method: "POST",
+    headers: { "content-type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+}
+
+async function beforeMutation(pathname, body, env) {
+  if (["/api/messages/edit", "/api/messages/delete", "/api/pins/toggle"].includes(pathname) && body.message_id) {
+    const row = await env.DB.prepare(
+      `SELECT id, chat_id FROM messages WHERE id = ? LIMIT 1`
+    ).bind(body.message_id).first();
+    return { message: row || null };
+  }
+  if (pathname.startsWith("/api/polls/") && body.poll_id) {
+    const row = await env.DB.prepare(
+      `SELECT id, chat_id FROM polls WHERE id = ? LIMIT 1`
+    ).bind(body.poll_id).first();
+    return { poll: row || null };
+  }
+  if (pathname.startsWith("/api/calls/") && body.call_id) {
+    const row = await env.DB.prepare(
+      `SELECT id, chat_id FROM calls WHERE id = ? LIMIT 1`
+    ).bind(body.call_id).first();
+    return { call: row || null };
+  }
+  return {};
+}
+
+function realtimeEventFor(pathname, method) {
+  if (method === "GET") return null;
+  if (pathname === "/api/messages") return "message.created";
+  if (pathname === "/api/messages/edit") return "message.edited";
+  if (pathname === "/api/messages/delete") return "message.deleted";
+  if (pathname === "/api/pins/toggle") return "pin.changed";
+  if (pathname.startsWith("/api/polls")) return "poll.changed";
+  if (pathname.startsWith("/api/calls")) return "call.changed";
+  if (pathname.startsWith("/api/friends/requests")) return "friend-request.changed";
+  if (pathname.startsWith("/api/friends")) return "friend.changed";
+  if (pathname.startsWith("/api/chats")) return "chat.changed";
+  if (pathname.startsWith("/api/presence")) return "presence.changed";
+  if (pathname.startsWith("/api/notes")) return "note.changed";
+  if (pathname.startsWith("/api/sessions")) return "session.changed";
+  if (pathname.startsWith("/api/user/") || pathname.startsWith("/api/users/")) return "user.changed";
+  if (pathname.startsWith("/api/admin/")) return "admin.changed";
+  if (pathname.startsWith("/api/device/")) return "device.changed";
+  return "app.changed";
+}
+
+async function emitRealtimeMutation({ pathname, method, body, data, before, user, env }) {
+  if (!data?.ok) return;
+  const type = realtimeEventFor(pathname, method);
+  if (!type) return;
+
+  const chatId =
+    body.chat_id ||
+    data.message?.chat_id ||
+    data.call?.chat_id ||
+    data.poll?.chat_id ||
+    before.message?.chat_id ||
+    before.poll?.chat_id ||
+    before.call?.chat_id ||
+    null;
+
+  await publishRealtime(env, {
+    type,
+    path: pathname,
+    chatId,
+    messageId: body.message_id || data.message?.id || data.message_id || null,
+    pollId: body.poll_id || data.poll?.id || null,
+    callId: body.call_id || data.call?.id || null,
+    noteId: body.note_id || data.note?.id || null,
+    actorUserId: user?.id || null,
+    at: Date.now()
+  });
+}
+
 export { VodkachRealtime };
 
 async function handleRealtimeConnect(request, env) {
@@ -163,7 +261,7 @@ async function handleRealtimeConnect(request, env) {
     });
   }
 
-  const id = env.REALTIME.idFromName(String(user.id));
+  const id = env.REALTIME.idFromName("vodkach-global");
   const stub = env.REALTIME.get(id);
   const target = new URL(request.url);
   target.pathname = "/connect";
@@ -198,7 +296,27 @@ export default {
       }
 
       try {
-        return await runPagesHandler(route, request, env, executionContext);
+        const body = await readRequestBody(request);
+        const user = request.method === "GET" ? null : await getCurrentUser(request, env);
+        const before = await beforeMutation(pathname, body, env);
+        const response = await runPagesHandler(route, request, env, executionContext);
+
+        if (response.ok && request.method !== "GET") {
+          const data = await parseJsonClone(response);
+          executionContext.waitUntil(
+            emitRealtimeMutation({
+              pathname,
+              method: request.method,
+              body,
+              data,
+              before,
+              user,
+              env
+            }).catch((error) => console.error("Vodkach realtime publish error", pathname, error))
+          );
+        }
+
+        return response;
       } catch (error) {
         console.error("Vodkach API error", pathname, error);
         return new Response(JSON.stringify({ ok: false, error: "Internal server error" }), {

@@ -36,12 +36,11 @@ function CustomSelect({ value, onChange, options, ariaLabel }) {
     const spaceBelow = window.innerHeight - rect.bottom - viewportGap;
     const placeAbove = spaceBelow < Math.min(estimatedHeight, 150) && rect.top > spaceBelow;
     setMenuStyle({
-      position: "fixed",
-      left: `${Math.max(viewportGap, rect.left)}px`,
-      width: `${Math.max(180, rect.width)}px`,
-      top: placeAbove ? "auto" : `${rect.bottom + 6}px`,
-      bottom: placeAbove ? `${window.innerHeight - rect.top + 6}px` : "auto",
-      maxHeight: `${Math.max(96, Math.min(230, placeAbove ? rect.top - 18 : spaceBelow))}px`
+      "--select-left": `${Math.max(viewportGap, rect.left)}px`,
+      "--select-width": `${Math.max(180, rect.width)}px`,
+      "--select-top": placeAbove ? "auto" : `${rect.bottom + 6}px`,
+      "--select-bottom": placeAbove ? `${window.innerHeight - rect.top + 6}px` : "auto",
+      "--select-max-height": `${Math.max(96, Math.min(230, placeAbove ? rect.top - 18 : spaceBelow))}px`
     });
   };
 

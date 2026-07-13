@@ -19,6 +19,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
+import { ServerCreateModal, ServerWorkspace } from "./servers.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -26,7 +27,7 @@ import {
   ChatPollSystem,
   VoiceCameraSettings
 } from "./realtimeFeatures.jsx";
-import "./styles.css?vodkach=074";
+import "./styles.css?vodkach=095";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
@@ -761,6 +762,9 @@ function WebApp() {
   const [outgoing, setOutgoing] = useState([]);
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
+  const [servers, setServers] = useState([]);
+  const [activeServer, setActiveServer] = useState(null);
+  const [serverModalOpen, setServerModalOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [chatPolls, setChatPolls] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -864,6 +868,12 @@ function WebApp() {
     }
 
     return data;
+  }
+
+  async function loadServers() {
+    const data = await api("/api/servers");
+    setServers(data.servers || []);
+    setActiveServer((current) => current && (data.servers || []).some((server) => server.id === current.id) ? current : null);
   }
 
   function getAvatar(user) {
@@ -1958,6 +1968,7 @@ function WebApp() {
       auth.user?.username
     ) {
       loadSocial().catch((error) => setUiError(error.message));
+      loadServers().catch(() => {});
     }
   }, [auth.authenticated, auth.user?.access_status, auth.user?.username]);
 
@@ -2051,6 +2062,11 @@ function WebApp() {
             setTypingUsers((current) => current.filter((entry) => entry.id !== user.id));
           }, 5500));
         }
+        return;
+      }
+
+      if (payload.type === "server.changed") {
+        loadServers().catch(() => {});
         return;
       }
 
@@ -3104,15 +3120,17 @@ function WebApp() {
       }`}
     >
       <aside className="appServers">
-        <button className="serverButton homeButton" title="Home">
+        <button className={`serverButton homeButton ${view !== "server" ? "active" : ""}`} title="Home" onClick={() => { setView("friends"); setActiveServer(null); }}>
           <Home size={18} />
         </button>
         <div className="serverDivider" />
-        <button className="serverButton" title="Add server">
+        {servers.map((server) => (
+          <button key={server.id} className={`serverButton serverIdentity ${activeServer?.id === server.id ? "active" : ""}`} title={server.name} onClick={() => { setActiveServer(server); setView("server"); }}>
+            <span>{server.icon_text || server.name?.[0]?.toUpperCase() || "V"}</span>
+          </button>
+        ))}
+        <button className="serverButton addServerButton" title="Create or join server" onClick={() => setServerModalOpen(true)}>
           <Plus size={19} />
-        </button>
-        <button className="serverButton" title="Search servers">
-          <Search size={18} />
         </button>
       </aside>
 
@@ -3488,6 +3506,10 @@ function WebApp() {
               )}
             </div>
           </>
+        )}
+
+        {view === "server" && activeServer && (
+          <ServerWorkspace server={activeServer} />
         )}
 
         {view === "notes" && (
@@ -4640,6 +4662,14 @@ function WebApp() {
         )}
       </section>
 
+      <ServerCreateModal
+        open={serverModalOpen}
+        onClose={() => setServerModalOpen(false)}
+        onChanged={(server) => {
+          loadServers().then(() => { setActiveServer(server); setView("server"); }).catch(() => {});
+        }}
+      />
+
       {view === "chat" && activeChat?.other_user && (
       <aside className="memberProfilePanel">
         {activeChat?.other_user ? (
@@ -4785,6 +4815,12 @@ function AdminApp() {
       throw new Error(data.error || `Request failed (${response.status})`);
     }
     return data;
+  }
+
+  async function loadServers() {
+    const data = await api("/api/servers");
+    setServers(data.servers || []);
+    setActiveServer((current) => current && (data.servers || []).some((server) => server.id === current.id) ? current : null);
   }
 
   function getAvatar(user) {

@@ -54,6 +54,10 @@ import * as r50 from "../functions/api/user/profile.js";
 import * as r51 from "../functions/api/user/username.js";
 import * as r52 from "../functions/api/users/block.js";
 import * as r53 from "../functions/api/users/search.js";
+import * as r54 from "../functions/api/servers/index.js";
+import * as r55 from "../functions/api/servers/join.js";
+import * as r56 from "../functions/api/servers/channels.js";
+import * as r57 from "../functions/api/servers/messages.js";
 
 const ROUTES = new Map([
   ["/api/access/retry", r0],
@@ -109,7 +113,11 @@ const ROUTES = new Map([
   ["/api/user/profile", r50],
   ["/api/user/username", r51],
   ["/api/users/block", r52],
-  ["/api/users/search", r53]
+  ["/api/users/search", r53],
+  ["/api/servers", r54],
+  ["/api/servers/join", r55],
+  ["/api/servers/channels", r56],
+  ["/api/servers/messages", r57]
 ]);
 
 function normalizePath(pathname) {
@@ -211,6 +219,7 @@ function realtimeEventFor(pathname, method) {
   if (pathname.startsWith("/api/sessions")) return "session.changed";
   if (pathname.startsWith("/api/user/") || pathname.startsWith("/api/users/")) return "user.changed";
   if (pathname.startsWith("/api/admin/")) return "admin.changed";
+  if (pathname.startsWith("/api/servers/" ) || pathname === "/api/servers") return "server.changed";
   if (pathname.startsWith("/api/device/")) return "device.changed";
   return "app.changed";
 }
@@ -231,10 +240,18 @@ async function emitRealtimeMutation({ pathname, method, body, data, before, user
     null;
 
   let recipientUserIds = null;
+  let serverId = body.server_id || data.server?.id || data.message?.server_id || null;
+  if (!serverId && body.channel_id) {
+    const serverRow = await env.DB.prepare(`SELECT server_id FROM server_channels WHERE id = ? LIMIT 1`).bind(body.channel_id).first();
+    serverId = serverRow?.server_id || null;
+  }
   if (chatId) {
     const members = await env.DB.prepare(
       `SELECT user_id FROM chat_members WHERE chat_id = ? AND left_at IS NULL`
     ).bind(chatId).all();
+    recipientUserIds = (members.results || []).map((row) => row.user_id);
+  } else if (serverId) {
+    const members = await env.DB.prepare(`SELECT user_id FROM server_members WHERE server_id = ?`).bind(serverId).all();
     recipientUserIds = (members.results || []).map((row) => row.user_id);
   }
 
@@ -242,6 +259,8 @@ async function emitRealtimeMutation({ pathname, method, body, data, before, user
     type,
     path: pathname,
     chatId,
+    serverId,
+    channelId: body.channel_id || data.message?.channel_id || data.channel?.id || null,
     recipientUserIds,
     messageId: body.message_id || data.message?.id || data.message_id || null,
     pollId: body.poll_id || data.poll?.id || null,

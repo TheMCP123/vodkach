@@ -10847,3 +10847,345 @@ a.authGoogleButton {
   user-select: none !important;
   -webkit-user-drag: none !important;
 }
+
+/* Patch 092: timeline polls, fixed composers, custom selects, responsive layout, refined calls */
+:root {
+  --vodkach-composer-height: 58px;
+  --vodkach-panel: #17181b;
+  --vodkach-panel-2: #1d1f23;
+  --vodkach-border: rgba(255,255,255,.075);
+  --vodkach-muted: #8e939c;
+  --vodkach-red: #fc0303;
+}
+
+/* Stable composer geometry across viewport sizes */
+.messageComposer.composerForm,
+.notesComposer {
+  box-sizing: border-box !important;
+  width: auto !important;
+}
+
+.composerInputRow {
+  grid-template-columns: minmax(0, 1fr) 42px 108px !important;
+  align-items: center !important;
+  min-height: var(--vodkach-composer-height) !important;
+  height: var(--vodkach-composer-height) !important;
+  max-height: var(--vodkach-composer-height) !important;
+  padding: 7px 8px 7px 14px !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+.composerInputRow textarea {
+  box-sizing: border-box !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  padding: 10px 4px !important;
+  line-height: 22px !important;
+  overflow-y: auto !important;
+  resize: none !important;
+}
+
+.composerInputRow > button[type="submit"] {
+  width: 108px !important;
+  min-width: 108px !important;
+  height: 42px !important;
+  align-self: center !important;
+}
+
+.composerPollButton {
+  width: 42px !important;
+  min-width: 42px !important;
+  height: 42px !important;
+  align-self: center !important;
+}
+
+.notesComposer {
+  min-height: var(--vodkach-composer-height) !important;
+  height: var(--vodkach-composer-height) !important;
+  max-height: var(--vodkach-composer-height) !important;
+  grid-template-columns: minmax(0, 1fr) 88px !important;
+  align-items: center !important;
+  padding: 7px 8px 7px 14px !important;
+  gap: 8px !important;
+}
+
+.notesComposer textarea {
+  box-sizing: border-box !important;
+  height: 42px !important;
+  min-height: 42px !important;
+  max-height: 42px !important;
+  padding: 10px 2px !important;
+  line-height: 22px !important;
+  overflow-y: auto !important;
+}
+
+.notesComposer button {
+  width: 88px !important;
+  height: 42px !important;
+}
+
+/* Typing indicator */
+.typingIndicator {
+  position: absolute !important;
+  left: 22px !important;
+  right: 22px !important;
+  bottom: 77px !important;
+  height: 22px !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  color: #a9adb5 !important;
+  font-size: .72rem !important;
+  pointer-events: none !important;
+  z-index: 12 !important;
+}
+
+.typingIndicator > span:last-child {
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
+
+.typingDots { display: inline-flex !important; gap: 3px !important; }
+.typingDots i {
+  width: 4px !important;
+  height: 4px !important;
+  border-radius: 50% !important;
+  background: #b9bdc5 !important;
+  animation: vodkachTyping 1.05s ease-in-out infinite !important;
+}
+.typingDots i:nth-child(2) { animation-delay: .14s !important; }
+.typingDots i:nth-child(3) { animation-delay: .28s !important; }
+@keyframes vodkachTyping { 0%, 60%, 100% { transform: translateY(0); opacity: .45; } 30% { transform: translateY(-3px); opacity: 1; } }
+
+/* Polls are true timeline entries */
+.timelinePoll {
+  margin: 9px 18px 11px 62px !important;
+  max-width: min(620px, calc(100% - 86px)) !important;
+}
+
+.timelinePoll .chatPollCard {
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 1px solid var(--vodkach-border) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  background: #18191d !important;
+  box-shadow: 0 10px 26px rgba(0,0,0,.22) !important;
+}
+
+.timelinePoll .inlinePollHeader {
+  min-height: 54px !important;
+  padding: 10px 13px !important;
+  border-bottom: 1px solid rgba(255,255,255,.055) !important;
+  background: #1d1f23 !important;
+}
+
+.timelinePoll .inlinePollAuthor > img {
+  width: 34px !important;
+  height: 34px !important;
+  border-radius: 9px !important;
+}
+
+.timelinePoll .chatPollCard > h3 {
+  margin: 0 !important;
+  padding: 15px 15px 10px !important;
+  color: #f5f6f7 !important;
+  font-size: 1rem !important;
+  line-height: 1.35 !important;
+}
+
+.timelinePoll .chatPollOptions {
+  padding: 0 15px 12px !important;
+  gap: 8px !important;
+}
+
+.timelinePoll .chatPollOptions > button {
+  min-height: 43px !important;
+  padding: 0 12px !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 10px !important;
+  color: #dadde2 !important;
+  background: #22242a !important;
+  overflow: hidden !important;
+}
+
+.timelinePoll .chatPollOptions > button:hover:not(:disabled) {
+  border-color: rgba(252,3,3,.45) !important;
+  background: #282a30 !important;
+}
+
+.timelinePoll .chatPollOptions > button.selected {
+  border-color: rgba(252,3,3,.68) !important;
+  background: #2a2023 !important;
+}
+
+.timelinePoll .pollOptionFill {
+  background: rgba(252,3,3,.12) !important;
+}
+
+.timelinePoll .pollCheck {
+  border: 1px solid rgba(255,255,255,.19) !important;
+  background: #15161a !important;
+}
+
+.timelinePoll .selected .pollCheck {
+  border-color: #fc0303 !important;
+  background: #fc0303 !important;
+  color: #fff !important;
+}
+
+.timelinePoll .chatPollCard > footer {
+  min-height: 42px !important;
+  padding: 8px 14px !important;
+  border-top: 1px solid rgba(255,255,255,.055) !important;
+  background: #15161a !important;
+}
+
+/* Vodkach select */
+.vodkachSelect { position: relative !important; width: 100% !important; }
+.vodkachSelectTrigger {
+  width: 100% !important;
+  height: 42px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--vodkach-border) !important;
+  border-radius: 9px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  gap: 10px !important;
+  color: #e8e9ec !important;
+  background: #202228 !important;
+  text-align: left !important;
+}
+.vodkachSelectTrigger:hover,
+.vodkachSelect.open .vodkachSelectTrigger { border-color: rgba(252,3,3,.48) !important; background: #25272d !important; }
+.vodkachSelectTrigger > span { overflow: hidden !important; text-overflow: ellipsis !important; white-space: nowrap !important; }
+.vodkachSelectTrigger svg { width: 18px !important; height: 18px !important; fill: none !important; stroke: currentColor !important; stroke-width: 1.8 !important; transition: transform .16s ease !important; }
+.vodkachSelect.open .vodkachSelectTrigger svg { transform: rotate(180deg) !important; }
+.vodkachSelectMenu {
+  position: absolute !important;
+  left: 0 !important;
+  right: 0 !important;
+  top: calc(100% + 6px) !important;
+  max-height: 230px !important;
+  padding: 6px !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 10px !important;
+  overflow-y: auto !important;
+  background: #111216 !important;
+  box-shadow: 0 16px 42px rgba(0,0,0,.52) !important;
+  z-index: 10020 !important;
+}
+.vodkachSelectMenu > button {
+  width: 100% !important;
+  min-height: 38px !important;
+  padding: 8px 10px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  color: #cdd0d6 !important;
+  background: transparent !important;
+  text-align: left !important;
+}
+.vodkachSelectMenu > button:hover { color: #fff !important; background: #24262c !important; }
+.vodkachSelectMenu > button.selected { color: #fff !important; background: rgba(252,3,3,.14) !important; }
+.vodkachSelectCheck { color: #fc0303 !important; font-weight: 800 !important; }
+.pollDurationField .vodkachSelect { min-width: 176px !important; }
+
+/* Session device icons */
+.sessionDeviceIcon svg {
+  width: 25px !important;
+  height: 25px !important;
+  fill: none !important;
+  stroke: #d5d8de !important;
+  stroke-width: 1.7 !important;
+  stroke-linecap: round !important;
+  stroke-linejoin: round !important;
+}
+
+/* Refined call surface */
+.finalCallDock {
+  min-height: 180px !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  border-radius: 14px !important;
+  overflow: hidden !important;
+  background: #111216 !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.38) !important;
+}
+.finalCallMedia {
+  min-height: 122px !important;
+  background: radial-gradient(circle at 50% 15%, #27292f 0, #18191d 48%, #111216 100%) !important;
+}
+.finalVoiceInfo { gap: 20px !important; }
+.finalAvatarPair { gap: 14px !important; }
+.finalCallAvatar {
+  width: clamp(68px, 8vw, 96px) !important;
+  height: clamp(68px, 8vw, 96px) !important;
+  border: 3px solid #2b2d33 !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.34) !important;
+}
+.finalCallAvatar.speaking { border-color: #fc0303 !important; }
+.finalCallControls {
+  min-height: 64px !important;
+  padding: 10px 14px !important;
+  gap: 10px !important;
+  border-top: 1px solid rgba(255,255,255,.06) !important;
+  background: #17181c !important;
+}
+.finalCallButton {
+  width: 44px !important;
+  height: 44px !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 12px !important;
+  background: #25272d !important;
+  transition: transform .14s ease, background .14s ease, border-color .14s ease !important;
+}
+.finalCallButton:hover:not(:disabled) { transform: translateY(-1px) !important; background: #303239 !important; border-color: rgba(255,255,255,.14) !important; }
+.finalCallButton.active { color: #fff !important; border-color: rgba(252,3,3,.55) !important; background: #9e1118 !important; }
+.finalCallButton.disconnect { min-width: 54px !important; margin-left: 8px !important; background: #d3151d !important; }
+.finalCameraGrid { gap: 10px !important; padding: 12px !important; }
+.finalCameraGrid article,
+.finalShareVideos article { border: 1px solid rgba(255,255,255,.075) !important; border-radius: 12px !important; overflow: hidden !important; background: #0d0e11 !important; }
+.finalIncomingCall {
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 14px !important;
+  background: #17181c !important;
+  box-shadow: 0 18px 50px rgba(0,0,0,.45) !important;
+}
+
+/* Responsive application geometry */
+.appShell,
+.appMain,
+.appChat,
+.notesView,
+.settingsLayout { min-width: 0 !important; min-height: 0 !important; }
+
+@media (max-width: 1100px) {
+  .appRightProfile { display: none !important; }
+  .appLayout { grid-template-columns: 72px minmax(220px, 280px) minmax(0, 1fr) !important; }
+  .timelinePoll { max-width: min(620px, calc(100% - 78px)) !important; }
+}
+
+@media (max-width: 760px) {
+  .appLayout { grid-template-columns: 62px minmax(0, 1fr) !important; }
+  .appSidebarSecondary { display: none !important; }
+  .composerInputRow { grid-template-columns: minmax(0, 1fr) 40px 78px !important; padding-left: 10px !important; }
+  .composerInputRow > button[type="submit"] { width: 78px !important; min-width: 78px !important; }
+  .timelinePoll { margin-left: 12px !important; margin-right: 12px !important; max-width: none !important; }
+  .finalCameraGrid { grid-template-columns: 1fr !important; }
+  .voiceSettingsGrid { grid-template-columns: 1fr !important; }
+}
+
+@media (max-width: 520px) {
+  .composerInputRow { grid-template-columns: minmax(0, 1fr) 38px 68px !important; gap: 5px !important; }
+  .composerInputRow > button[type="submit"] { width: 68px !important; min-width: 68px !important; font-size: .72rem !important; }
+  .typingIndicator { left: 14px !important; right: 14px !important; }
+  .pollCreateModal { width: calc(100vw - 18px) !important; max-height: calc(100vh - 18px) !important; }
+}

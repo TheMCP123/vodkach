@@ -20,6 +20,62 @@ function IconBase({ children, className = "" }) {
   );
 }
 
+function CustomSelect({ value, onChange, options, ariaLabel }) {
+  const [open, setOpen] = useState(false);
+  const rootRef = useRef(null);
+  const selected = options.find((option) => option.value === value) || options[0];
+
+  useEffect(() => {
+    const close = (event) => {
+      if (!rootRef.current?.contains(event.target)) setOpen(false);
+    };
+    const onKey = (event) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("pointerdown", close);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("pointerdown", close);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  return (
+    <div className={open ? "vodkachSelect open" : "vodkachSelect"} ref={rootRef}>
+      <button
+        type="button"
+        className="vodkachSelectTrigger"
+        aria-label={ariaLabel}
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+      >
+        <span>{selected?.label || "Select"}</span>
+        <svg viewBox="0 0 20 20" aria-hidden="true"><path d="m6 8 4 4 4-4" /></svg>
+      </button>
+      {open ? (
+        <div className="vodkachSelectMenu" role="listbox">
+          {options.map((option) => (
+            <button
+              type="button"
+              role="option"
+              aria-selected={option.value === value}
+              className={option.value === value ? "selected" : ""}
+              key={option.value}
+              onClick={() => {
+                onChange(option.value);
+                setOpen(false);
+              }}
+            >
+              <span>{option.label}</span>
+              {option.value === value ? <span className="vodkachSelectCheck">✓</span> : null}
+            </button>
+          ))}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function CallIcon() {
   return (
     <IconBase>
@@ -729,7 +785,11 @@ export const CallSystem = forwardRef(function CallSystem(
         sharing: false
       });
 
-      await meetingRef.current?.leave?.();
+      const meeting = meetingRef.current;
+      await meeting?.self?.disableVideo?.().catch?.(() => {});
+      await meeting?.self?.disableScreenShare?.().catch?.(() => {});
+      await meeting?.self?.disableAudio?.().catch?.(() => {});
+      await meeting?.leave?.();
     } catch {
       // Server cleanup still runs.
     }
@@ -1367,6 +1427,8 @@ export function VoiceCameraSettings() {
 
   async function startPreview() {
     cleanupRef.current?.();
+    cleanupRef.current = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
     setError("");
 
     try {
@@ -1426,12 +1488,14 @@ export function VoiceCameraSettings() {
           cancelAnimationFrame(frame);
           context.close().catch(() => {});
           stream.getTracks().forEach((track) => track.stop());
+          if (videoRef.current) videoRef.current.srcObject = null;
           setPreviewStream(null);
           setMicLevel(0);
         };
       } else {
         cleanupRef.current = () => {
           stream.getTracks().forEach((track) => track.stop());
+          if (videoRef.current) videoRef.current.srcObject = null;
           setPreviewStream(null);
           setMicLevel(0);
         };
@@ -1452,6 +1516,22 @@ export function VoiceCameraSettings() {
       cleanupRef.current = null;
     };
   }, [microphone, camera]);
+
+  useEffect(() => {
+    const stopWhenHidden = () => {
+      if (document.visibilityState === "hidden") {
+        cleanupRef.current?.();
+        cleanupRef.current = null;
+        if (videoRef.current) videoRef.current.srcObject = null;
+      }
+    };
+    window.addEventListener("pagehide", stopWhenHidden);
+    document.addEventListener("visibilitychange", stopWhenHidden);
+    return () => {
+      window.removeEventListener("pagehide", stopWhenHidden);
+      document.removeEventListener("visibilitychange", stopWhenHidden);
+    };
+  }, []);
 
   function saveDevice(key, value, setter) {
     setter(value);
@@ -1474,44 +1554,28 @@ export function VoiceCameraSettings() {
         <section className="voiceDevicePanel">
           <label>
             <span>Input Device</span>
-            <select
+            <CustomSelect
+              ariaLabel="Input device"
               value={microphone}
-              onChange={(event) =>
-                saveDevice(
-                  "vodkach_voice_input",
-                  event.target.value,
-                  setMicrophone
-                )
-              }
-            >
-              <option value="">Default microphone</option>
-              {devices.audioinput.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Microphone"}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => saveDevice("vodkach_voice_input", value, setMicrophone)}
+              options={[
+                { value: "", label: "Default microphone" },
+                ...devices.audioinput.map((device) => ({ value: device.deviceId, label: device.label || "Microphone" }))
+              ]}
+            />
           </label>
 
           <label>
             <span>Output Device</span>
-            <select
+            <CustomSelect
+              ariaLabel="Output device"
               value={speaker}
-              onChange={(event) =>
-                saveDevice(
-                  "vodkach_voice_output",
-                  event.target.value,
-                  setSpeaker
-                )
-              }
-            >
-              <option value="">Default speakers</option>
-              {devices.audiooutput.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Speakers"}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => saveDevice("vodkach_voice_output", value, setSpeaker)}
+              options={[
+                { value: "", label: "Default speakers" },
+                ...devices.audiooutput.map((device) => ({ value: device.deviceId, label: device.label || "Speakers" }))
+              ]}
+            />
           </label>
 
           <div className="microphoneTest">
@@ -1528,23 +1592,15 @@ export function VoiceCameraSettings() {
         <section className="cameraDevicePanel">
           <label>
             <span>Camera</span>
-            <select
+            <CustomSelect
+              ariaLabel="Camera"
               value={camera}
-              onChange={(event) =>
-                saveDevice(
-                  "vodkach_camera_input",
-                  event.target.value,
-                  setCamera
-                )
-              }
-            >
-              <option value="">Default camera</option>
-              {devices.videoinput.map((device) => (
-                <option key={device.deviceId} value={device.deviceId}>
-                  {device.label || "Camera"}
-                </option>
-              ))}
-            </select>
+              onChange={(value) => saveDevice("vodkach_camera_input", value, setCamera)}
+              options={[
+                { value: "", label: "Default camera" },
+                ...devices.videoinput.map((device) => ({ value: device.deviceId, label: device.label || "Camera" }))
+              ]}
+            />
           </label>
 
           <div className="cameraPreview">
@@ -1559,7 +1615,7 @@ export function VoiceCameraSettings() {
   );
 }
 
-function PollCard({ poll, api, reload, currentUserId }) {
+export function PollCard({ poll, api, reload, currentUserId }) {
   const totalVotes = poll.options.reduce(
     (sum, option) => sum + Number(option.vote_count || 0),
     0
@@ -1943,17 +1999,19 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
 
               <label className="pollDurationField">
                 <span>Duration</span>
-                <select
+                <CustomSelect
+                  ariaLabel="Poll duration"
                   value={duration}
-                  onChange={(event) => setDuration(event.target.value)}
-                >
-                  <option value="0">No time limit</option>
-                  <option value="5">5 minutes</option>
-                  <option value="15">15 minutes</option>
-                  <option value="60">1 hour</option>
-                  <option value="1440">24 hours</option>
-                  <option value="10080">7 days</option>
-                </select>
+                  onChange={setDuration}
+                  options={[
+                    { value: "0", label: "No time limit" },
+                    { value: "5", label: "5 minutes" },
+                    { value: "15", label: "15 minutes" },
+                    { value: "60", label: "1 hour" },
+                    { value: "1440", label: "24 hours" },
+                    { value: "10080", label: "7 days" }
+                  ]}
+                />
               </label>
             </div>
 

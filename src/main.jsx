@@ -6,6 +6,9 @@ import {
   Home,
   LockKeyhole,
   MessageCircle,
+  Monitor,
+  Smartphone,
+  Box,
   MoreVertical,
   Pin,
   Phone,
@@ -19,7 +22,7 @@ import {
 import {
   CallIcon,
   CallSystem,
-  ChatPollFeed,
+  PollCard,
   ChatPollSystem,
   VoiceCameraSettings
 } from "./realtimeFeatures.jsx";
@@ -420,6 +423,16 @@ function SettingsNavIcon({ type }) {
   );
 }
 
+function SessionDeviceIcon({ session }) {
+  const value = `${session?.device_name || ""} ${session?.user_agent || ""}`.toLowerCase();
+  const isPhone = /(iphone|ipad|ipod|android|samsung|pixel|mobile|phone)/.test(value);
+  const isComputer = /(windows|macintosh|mac os|linux|chrome os|x11|laptop|desktop|pc)/.test(value);
+
+  if (isPhone) return <Smartphone aria-hidden="true" />;
+  if (isComputer) return <Monitor aria-hidden="true" />;
+  return <Box aria-hidden="true" />;
+}
+
 function AvatarWithStatus({
   user,
   className = "",
@@ -749,6 +762,8 @@ function WebApp() {
   const [chats, setChats] = useState([]);
   const [activeChat, setActiveChat] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [chatPolls, setChatPolls] = useState([]);
+  const [typingUsers, setTypingUsers] = useState([]);
   const [notes, setNotes] = useState([]);
   const [noteText, setNoteText] = useState("");
   const [loadingNotes, setLoadingNotes] = useState(false);
@@ -826,6 +841,8 @@ function WebApp() {
   const realtimePingTimerRef = useRef(null);
   const realtimeMessageRefreshTimerRef = useRef(null);
   const realtimeSocialRefreshTimerRef = useRef(null);
+  const typingStopTimerRef = useRef(null);
+  const typingExpiryTimersRef = useRef(new Map());
 
   async function api(path, options = {}) {
     const response = await fetch(path, {
@@ -1595,6 +1612,31 @@ function WebApp() {
     });
   }
 
+  async function loadChatPolls(chatId = activeChat?.id) {
+    if (!chatId) {
+      setChatPolls([]);
+      return;
+    }
+
+    const data = await api(`/api/polls?chat_id=${encodeURIComponent(chatId)}`);
+    setChatPolls(data.polls || []);
+  }
+
+  function sendRealtimeClientEvent(payload) {
+    const socket = realtimeSocketRef.current;
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify(payload));
+    }
+  }
+
+  function publishTyping(active) {
+    if (!activeChat?.id || !auth.user?.id) return;
+    sendRealtimeClientEvent({
+      type: active ? "typing.start" : "typing.stop",
+      chatId: activeChat.id
+    });
+  }
+
   useEffect(() => {
     loadMe().catch(() => {
       setAuth({ loading: false, authenticated: false, user: null });
@@ -1718,7 +1760,10 @@ function WebApp() {
         realtimePingTimerRef.current = window.setInterval(sendHeartbeat, 30000);
 
         loadSocial().catch(() => {});
-        if (activeChat?.id) loadMessages(activeChat).catch(() => {});
+        if (activeChat?.id) {
+          loadMessages(activeChat).catch(() => {});
+          loadChatPolls(activeChat.id).catch(() => {});
+        }
         window.dispatchEvent(new CustomEvent("vodkach:realtime-connected"));
       });
 
@@ -1978,9 +2023,34 @@ function WebApp() {
       }
 
       if (payload.type === "poll.changed") {
+        if (!payload.chatId || activeChat?.id === payload.chatId) {
+          loadChatPolls(payload.chatId || activeChat?.id).catch(() => {});
+        }
         window.dispatchEvent(
           new CustomEvent("vodkach:polls-changed", { detail: { chatId: payload.chatId } })
         );
+        return;
+      }
+
+      if ((payload.type === "typing.start" || payload.type === "typing.stop") && payload.chatId === activeChat?.id && payload.actorUserId !== auth.user?.id) {
+        const user = {
+          id: payload.actorUserId,
+          name: payload.actorDisplayName || payload.actorUsername || "Someone"
+        };
+        const timers = typingExpiryTimersRef.current;
+        const previous = timers.get(user.id);
+        if (previous) window.clearTimeout(previous);
+
+        if (payload.type === "typing.stop") {
+          timers.delete(user.id);
+          setTypingUsers((current) => current.filter((entry) => entry.id !== user.id));
+        } else {
+          setTypingUsers((current) => [...current.filter((entry) => entry.id !== user.id), user].slice(-3));
+          timers.set(user.id, window.setTimeout(() => {
+            timers.delete(user.id);
+            setTypingUsers((current) => current.filter((entry) => entry.id !== user.id));
+          }, 5500));
+        }
         return;
       }
 
@@ -2023,12 +2093,15 @@ function WebApp() {
   useEffect(() => {
     if (!activeChat?.id) {
       setMessages([]);
+      setChatPolls([]);
+      setTypingUsers([]);
       setPinnedMessages([]);
       setPinsOpen(false);
       return;
     }
 
     loadMessages(activeChat).catch((error) => setUiError(error.message));
+    loadChatPolls(activeChat.id).catch(() => {});
     loadPinnedMessages(activeChat.id).catch(() => {});
   }, [activeChat?.id]);
 
@@ -3486,12 +3559,7 @@ function WebApp() {
                 maxLength={4000}
                 rows={1}
                 placeholder="Write a private note"
-                onChange={(event) => {
-                  setNoteText(event.target.value);
-                  const element = event.currentTarget;
-                  element.style.height = "auto";
-                  element.style.height = `${Math.min(element.scrollHeight, 116)}px`;
-                }}
+                onChange={(event) => setNoteText(event.target.value)}
                 onKeyDown={(event) => {
                   if (
                     event.key === "Enter" &&
@@ -3708,44 +3776,55 @@ function WebApp() {
                 </div>
               )}
 
-              {messages
-                .filter((message) => !message.deleted_at)
-                .map((message, index, visibleMessages) => (
-                <AppMessage
-                  key={message.id}
-                  message={message}
-                  grouped={shouldGroupMessage(visibleMessages[index - 1], message)}
-                  avatarUrl={getAvatar(message.sender)}
-                  name={message.sender?.display_name || message.sender?.username || "User"}
-                  verified={Boolean(message.sender?.verified)}
-                  time={formatLocalTime(message.created_at)}
-                  text={message.body_ciphertext}
-                  onOpenLink={(link) => setLinkWarning(link)}
-                  onOpenProfile={() => openProfile(message.sender)}
-                  onJumpToReply={() =>
-                    message.reply_to_message_id
-                      ? jumpToMessage(message.reply_to_message_id)
-                      : null
+              {[
+                ...messages
+                  .filter((message) => !message.deleted_at)
+                  .map((message) => ({ kind: "message", created_at: message.created_at, item: message })),
+                ...chatPolls.map((poll) => ({ kind: "poll", created_at: poll.created_at, item: poll }))
+              ]
+                .sort((a, b) => parseServerDate(a.created_at) - parseServerDate(b.created_at))
+                .map((entry, index, timeline) => {
+                  if (entry.kind === "poll") {
+                    return (
+                      <div className="timelinePoll" key={`poll_${entry.item.id}`}>
+                        <PollCard
+                          poll={entry.item}
+                          api={api}
+                          reload={() => loadChatPolls(activeChat.id)}
+                          currentUserId={auth.user.id}
+                        />
+                      </div>
+                    );
                   }
-                  pinned={messageIsPinned(message.id)}
-                  onContextMenu={(event) => {
-                    event.preventDefault();
-                    event.stopPropagation();
 
-                    setMessageMenu({
-                      message,
-                      x: Math.min(event.clientX, window.innerWidth - 210),
-                      y: Math.min(event.clientY, window.innerHeight - 170)
-                    });
-                  }}
-                />
-              ))}
-
-              <ChatPollFeed
-                api={api}
-                chatId={activeChat.id}
-                currentUserId={auth.user.id}
-              />
+                  const message = entry.item;
+                  const previousMessage = [...timeline.slice(0, index)].reverse().find((row) => row.kind === "message")?.item;
+                  return (
+                    <AppMessage
+                      key={message.id}
+                      message={message}
+                      grouped={shouldGroupMessage(previousMessage, message)}
+                      avatarUrl={getAvatar(message.sender)}
+                      name={message.sender?.display_name || message.sender?.username || "User"}
+                      verified={Boolean(message.sender?.verified)}
+                      time={formatLocalTime(message.created_at)}
+                      text={message.body_ciphertext}
+                      onOpenLink={(link) => setLinkWarning(link)}
+                      onOpenProfile={() => openProfile(message.sender)}
+                      onJumpToReply={() => message.reply_to_message_id ? jumpToMessage(message.reply_to_message_id) : null}
+                      pinned={messageIsPinned(message.id)}
+                      onContextMenu={(event) => {
+                        event.preventDefault();
+                        event.stopPropagation();
+                        setMessageMenu({
+                          message,
+                          x: Math.min(event.clientX, window.innerWidth - 210),
+                          y: Math.min(event.clientY, window.innerHeight - 170)
+                        });
+                      }}
+                    />
+                  );
+                })}
 
               <div ref={messagesEndRef} className="messagesEndAnchor" />
 
@@ -3755,6 +3834,19 @@ function WebApp() {
                 </div>
               )}
             </div>
+
+            {typingUsers.length > 0 && (
+              <div className="typingIndicator" aria-live="polite">
+                <span className="typingDots"><i /><i /><i /></span>
+                <span>{
+                  typingUsers.length === 1
+                    ? `${typingUsers[0].name} is typing...`
+                    : typingUsers.length === 2
+                      ? `${typingUsers[0].name} and ${typingUsers[1].name} are typing...`
+                      : `${typingUsers[0].name}, ${typingUsers[1].name}, and ${typingUsers[2].name} are typing...`
+                }</span>
+              </div>
+            )}
 
             <form className="messageComposer composerForm" onSubmit={sendMessage}>
               {(replyingTo || replyingToPoll || editingMessage) && (
@@ -3802,18 +3894,11 @@ function WebApp() {
                 <textarea
                   value={chatText}
                   onChange={(event) => {
-                    setChatText(event.target.value);
-
-                    const element = event.currentTarget;
-                    element.style.height = "auto";
-                    const lineHeight = 20;
-                    const maxHeight = lineHeight * 5 + 12;
-                    element.style.height = `${Math.min(
-                      element.scrollHeight,
-                      maxHeight
-                    )}px`;
-                    element.style.overflowY =
-                      element.scrollHeight > maxHeight ? "auto" : "hidden";
+                    const value = event.target.value;
+                    setChatText(value);
+                    publishTyping(Boolean(value.trim()));
+                    if (typingStopTimerRef.current) window.clearTimeout(typingStopTimerRef.current);
+                    typingStopTimerRef.current = window.setTimeout(() => publishTyping(false), 1800);
                   }}
                   onKeyDown={(event) => {
                     if (
@@ -4278,7 +4363,7 @@ function WebApp() {
                     loadSessions();
                   }}
                 >
-                  <SettingsNavIcon type="sessions" />
+                  <SessionDeviceIcon session={session} />
                   Active Sessions
                 </button>
                 <div className="settingsNavDivider" />
@@ -4479,7 +4564,7 @@ function WebApp() {
                       {sessions.map((session) => (
                         <article className="sessionCard" key={session.id}>
                           <div className="sessionDeviceIcon">
-                            <SettingsNavIcon type="sessions" />
+                            <SessionDeviceIcon session={session} />
                           </div>
                           <div className="sessionDetails">
                             <strong>

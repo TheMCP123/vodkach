@@ -230,10 +230,19 @@ async function emitRealtimeMutation({ pathname, method, body, data, before, user
     before.call?.chat_id ||
     null;
 
+  let recipientUserIds = null;
+  if (chatId) {
+    const members = await env.DB.prepare(
+      `SELECT user_id FROM chat_members WHERE chat_id = ? AND left_at IS NULL`
+    ).bind(chatId).all();
+    recipientUserIds = (members.results || []).map((row) => row.user_id);
+  }
+
   await publishRealtime(env, {
     type,
     path: pathname,
     chatId,
+    recipientUserIds,
     messageId: body.message_id || data.message?.id || data.message_id || null,
     pollId: body.poll_id || data.poll?.id || null,
     callId: body.call_id || data.call?.id || null,
@@ -265,6 +274,9 @@ async function handleRealtimeConnect(request, env) {
   const stub = env.REALTIME.get(id);
   const target = new URL(request.url);
   target.pathname = "/connect";
+  target.searchParams.set("user_id", user.id);
+  target.searchParams.set("username", user.username || "");
+  target.searchParams.set("display_name", user.display_name || user.username || "Someone");
 
   return stub.fetch(new Request(target, request));
 }

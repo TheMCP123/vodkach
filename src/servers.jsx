@@ -176,7 +176,7 @@ function ServerPollSystem({ channelId, onCreated }) {
 
   return (
     <>
-      <button type="button" className="composerPollButton" onClick={() => setOpen(true)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.png" alt="" /></button>
+      <button type="button" className="composerPollButton" onClick={() => setOpen(true)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.svg" alt="" /></button>
       {open ? (
         <div className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
             <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" onClick={() => setOpen(false)}><X /></button></header>
@@ -299,7 +299,7 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <textarea rows={1} value={text} onChange={(event) => setText(event.target.value)} placeholder={`Message #${activeChannel?.name || "channel"}`} />
-                <button type="button" className="gifButton dmGifButton" onClick={() => setGifOpen((value) => !value)} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.png" alt="" /></button>
+                <button type="button" className="gifButton dmGifButton" onClick={() => setGifOpen((value) => !value)} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>
                 <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} />
                 <button type="submit" disabled={!text.trim()}>Send</button>
               </div>

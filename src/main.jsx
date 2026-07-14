@@ -316,12 +316,7 @@ function Landing() {
 
 
 function ReplyActionIcon() {
-  return (
-    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M9.2 7.2 4.5 12l4.7 4.8" />
-      <path d="M5 12h7.4c4.2 0 6.6 2.1 7.1 5.8-.9-2-2.8-3-5.8-3H9.8" />
-    </svg>
-  );
+  return <img className="contextActionIcon contextActionImage" src="/ui/reply.svg" alt="" aria-hidden="true" />;
 }
 
 function EditActionIcon() {
@@ -3179,7 +3174,7 @@ function WebApp() {
           title="Discover servers"
           onClick={() => { setView("discovery"); setActiveServer(null); setActiveChat(null); setServerContext(null); }}
         >
-          <Compass size={18} />
+          <img className="serverRailIcon" src="/ui/discover.svg" alt="" />
         </button>
       </aside>
 
@@ -4077,7 +4072,7 @@ function WebApp() {
                   onClick={() => setChatGifOpen((value) => !value)}
                   aria-label="Open GIF picker"
                 >
-                  <img className="composerActionIcon" src="/ui/gif.png" alt="" />
+                  <img className="composerActionIcon" src="/ui/gif.svg" alt="" />
                 </button>
                 <ChatPollSystem
                   api={api}

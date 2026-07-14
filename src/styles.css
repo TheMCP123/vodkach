@@ -12683,3 +12683,96 @@ body:has(.serverContextMenuInline)::after {
   .gifPickerPortal,
   .pollCreatePopover { width: 100% !important; max-width: 100% !important; right: 0 !important; }
 }
+
+/* Patch 106: compact unified composer + final SVG icon set */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  min-height: 52px !important;
+  padding: 2px 0 4px !important;
+}
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  grid-template-columns: minmax(0,1fr) 34px 34px 88px !important;
+  column-gap: 8px !important;
+  height: 48px !important;
+  min-height: 48px !important;
+  max-height: 48px !important;
+  padding: 6px 8px 6px 14px !important;
+  border-radius: 11px !important;
+}
+.messageComposer .composerInputRow textarea,
+.serverMessageComposer .composerInputRow textarea {
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 6px 0 !important;
+  font-size: .96rem !important;
+  line-height: 22px !important;
+}
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton {
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  border-radius: 7px !important;
+}
+.composerActionIcon {
+  width: 21px !important;
+  height: 21px !important;
+}
+.messageComposer .composerInputRow > button[type="submit"],
+.serverMessageComposer .composerInputRow > button[type="submit"] {
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  line-height: 34px !important;
+  padding: 0 12px !important;
+  font-size: .88rem !important;
+}
+.serverRailIcon {
+  width: 19px;
+  height: 19px;
+  display: block;
+  filter: invert(75%) sepia(5%) saturate(250%) hue-rotate(180deg) brightness(92%);
+  pointer-events: none;
+}
+.serverButton:hover .serverRailIcon,
+.serverButton.active .serverRailIcon { filter: invert(100%); }
+.contextActionImage {
+  width: 16px !important;
+  height: 16px !important;
+  object-fit: contain;
+  filter: invert(82%) sepia(4%) saturate(250%) hue-rotate(180deg) brightness(95%);
+}
+.pollTrashIcon { filter: invert(73%) sepia(38%) saturate(4860%) hue-rotate(328deg) brightness(104%) contrast(104%) !important; }
+@media (max-width: 720px) {
+  .messageComposer .composerInputRow,
+  .serverMessageComposer .composerInputRow {
+    grid-template-columns: minmax(0,1fr) 32px 32px 68px !important;
+    column-gap: 5px !important;
+    height: 46px !important;
+    min-height: 46px !important;
+    max-height: 46px !important;
+  }
+  .messageComposer .gifButton,
+  .serverMessageComposer .gifButton,
+  .messageComposer .composerPollButton,
+  .serverMessageComposer .composerPollButton {
+    width: 32px !important; min-width: 32px !important; max-width: 32px !important;
+    height: 32px !important; min-height: 32px !important; max-height: 32px !important;
+  }
+  .messageComposer .composerInputRow > button[type="submit"],
+  .serverMessageComposer .composerInputRow > button[type="submit"] {
+    width: 68px !important; min-width: 68px !important; max-width: 68px !important;
+    height: 32px !important; min-height: 32px !important; max-height: 32px !important;
+    line-height: 32px !important;
+  }
+}

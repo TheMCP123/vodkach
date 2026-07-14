@@ -4,7 +4,7 @@ function inviteCode(){const c="ABCDEFGHJKLMNPQRSTUVWXYZ23456789",b=new Uint8Arra
 async function body(request){try{return await request.json();}catch{return null;}}
 export async function onRequestGet({request,env}){
  const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});
- const rows=await env.DB.prepare(`SELECT s.id,s.name,s.description,s.icon_text,s.icon_color,s.icon_data,s.is_public,s.invite_code,s.owner_user_id,s.created_at,s.rules_text,s.verification_level,s.default_notifications,sm.role,(SELECT COUNT(*) FROM server_members x WHERE x.server_id=s.id) member_count FROM servers s JOIN server_members sm ON sm.server_id=s.id WHERE sm.user_id=? ORDER BY datetime(s.created_at)`).bind(user.id).all();
+ const rows=await env.DB.prepare(`SELECT s.id,s.name,s.description,s.icon_text,s.icon_color,s.icon_data,s.banner_data,s.is_public,s.invite_code,s.owner_user_id,s.created_at,s.rules_text,s.verification_level,s.default_notifications,sm.role,(SELECT COUNT(*) FROM server_members x WHERE x.server_id=s.id) member_count FROM servers s JOIN server_members sm ON sm.server_id=s.id WHERE sm.user_id=? ORDER BY datetime(s.created_at)`).bind(user.id).all();
  return json({ok:true,servers:rows.results||[]});
 }
 export async function onRequestPost({request,env}){

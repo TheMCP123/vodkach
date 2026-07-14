@@ -271,6 +271,7 @@
 
       <button class="nav-button active" data-tab="requests">Requests</button>
       <button class="nav-button" data-tab="users">Users</button>
+      <button class="nav-button" data-tab="servers">Servers</button>
       <button class="nav-button" data-tab="bans">Bans</button>
     </aside>
 
@@ -296,6 +297,7 @@
         <div id="users-list" class="list"></div>
       </section>
 
+      <section id="servers-view" class="hidden"><div class="toolbar"><input id="server-search" placeholder="Search servers" /></div><div id="servers-list" class="list"></div></section>
       <section id="bans-view" class="hidden">
         <form id="ban-form" class="ban-form">
           <input id="ban-email" type="email" placeholder="email@example.com" required />
@@ -385,10 +387,11 @@
       $("requests-view").classList.toggle("hidden", tab !== "requests");
       $("users-view").classList.toggle("hidden", tab !== "users");
       $("bans-view").classList.toggle("hidden", tab !== "bans");
+      $("servers-view").classList.toggle("hidden", tab !== "servers");
 
       $("page-title").textContent =
         tab === "requests" ? "Access Requests" :
-        tab === "users" ? "Users" :
+        tab === "users" ? "Users" : tab === "servers" ? "Servers" :
         "Banned Emails";
 
       loadCurrentTab();
@@ -401,6 +404,7 @@
         if (state.tab === "requests") await loadRequests();
         if (state.tab === "users") await loadUsers();
         if (state.tab === "bans") await loadBans();
+        if (state.tab === "servers") await loadServers();
       } catch (error) {
         setError(error.message);
       }
@@ -482,6 +486,23 @@
         : `<div class="empty">No users found.</div>`;
     }
 
+
+    async function loadServers() {
+      const query = $("server-search")?.value.trim() || "";
+      const data = await api(`/api/admin/servers?q=${encodeURIComponent(query)}`);
+      const rows = data.servers || [];
+      $("servers-list").innerHTML = rows.length ? rows.map((server) => `
+        <article class="row">
+          <div class="identity"><strong>${escapeHtml(server.name)}</strong><span>${escapeHtml(server.owner_email)} • ${server.member_count} members • ${server.channel_count} channels</span></div>
+          <div class="meta">${server.is_public ? "Public" : "Private"}</div>
+          <div class="actions">
+            <button data-action="server-open" data-server="${escapeHtml(server.id)}">Open</button>
+            <button class="secondary" data-action="server-edit" data-server="${escapeHtml(server.id)}" data-name="${escapeHtml(server.name)}">Edit</button>
+            <button class="danger" data-action="server-delete" data-server="${escapeHtml(server.id)}">Delete</button>
+          </div>
+        </article>`).join("") : `<div class="empty">No servers found.</div>`;
+    }
+
     async function loadBans() {
       const data = await api("/api/admin/banned-emails");
       const rows = data.banned_emails || [];
@@ -526,6 +547,10 @@
       }
       if (action === "unban-email") return post("/api/admin/banned-emails/unban", { email: button.dataset.email });
 
+      if (action === "server-open") { await api("/api/admin/servers",{method:"POST",body:JSON.stringify({server_id:button.dataset.server})}); location.href = "/"; return; }
+      if (action === "server-edit") { const name=prompt("Server name:",button.dataset.name); if(name) return post("/api/admin/servers",{server_id:button.dataset.server,name}); }
+      if (action === "server-delete") { if(confirm("Delete this server permanently?")) return api("/api/admin/servers",{method:"DELETE",body:JSON.stringify({server_id:button.dataset.server})}).then(loadServers); return; }
+
       if (action === "temp-ban") {
         const hours = Number(prompt("Ban duration in hours:", "24"));
         if (!Number.isFinite(hours) || hours <= 0) return;
@@ -534,6 +559,8 @@
     });
 
     let searchTimer;
+    $("server-search")?.addEventListener("input", () => { clearTimeout(searchTimer); searchTimer=setTimeout(()=>loadServers().catch(e=>setError(e.message)),250); });
+
     $("user-search").addEventListener("input", () => {
       clearTimeout(searchTimer);
       searchTimer = setTimeout(() => loadUsers().catch((error) => setError(error.message)), 250);

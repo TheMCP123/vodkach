@@ -66,6 +66,7 @@ import * as r62 from "../functions/api/servers/roles.js";
 import * as r63 from "../functions/api/servers/moderation.js";
 import * as r64 from "../functions/api/gifs.js";
 import * as r65 from "../functions/api/admin/servers/index.js";
+import * as r66 from "../functions/api/servers/polls.js";
 
 const ROUTES = new Map([
   ["/api/access/retry", r0],
@@ -133,7 +134,8 @@ const ROUTES = new Map([
   ["/api/servers/roles", r62],
   ["/api/servers/moderation", r63],
   ["/api/gifs", r64],
-  ["/api/admin/servers", r65]
+  ["/api/admin/servers", r65],
+  ["/api/servers/polls", r66]
 ]);
 
 function normalizePath(pathname) {

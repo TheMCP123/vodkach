@@ -5,6 +5,7 @@ import {
   ArrowRight,
   FileText,
   Home,
+  Hash,
   LockKeyhole,
   MessageCircle,
   Monitor,

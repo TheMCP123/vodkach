@@ -14010,3 +14010,281 @@ button.active .inlineUiIcon {
     max-height: 112px !important;
   }
 }
+
+
+/* Patch 116 — full Noto set, selectable emoji, and stable unified popovers. */
+
+/* Selectable Unicode with a Noto SVG visual layer. */
+.notoEmojiGlyph {
+  display: inline-block !important;
+  width: 1.18em !important;
+  height: 1.18em !important;
+  margin: 0 .035em !important;
+  overflow: visible !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  vertical-align: -.19em !important;
+  background-image: var(--noto-emoji-image) !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  font-family: monospace !important;
+  font-size: 1em !important;
+  line-height: 1.18em !important;
+  white-space: nowrap !important;
+  user-select: text !important;
+  -webkit-user-select: text !important;
+}
+
+.notoEmojiGlyph::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: rgba(48, 109, 246, .72) !important;
+}
+
+/* Keep the native input text invisible even while selected; Noto overlay stays visible. */
+.messageComposer .composerTextField > textarea::selection,
+.serverMessageComposer .composerTextField > textarea::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  background: rgba(48, 109, 246, .72) !important;
+}
+
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  font-family: "Noto Sans", sans-serif !important;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+}
+
+/* Every panel uses one identical, backgroundless close control. */
+.composerPopoverClose,
+.gifPickerPortal .composerPopoverClose,
+.emojiPicker .composerPopoverClose,
+.pollCreatePopover .composerPopoverClose,
+.pollCreatePopover > header > .composerPopoverClose {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #9298a3 !important;
+  font-size: 25px !important;
+  font-weight: 350 !important;
+  line-height: 1 !important;
+}
+
+.composerPopoverClose:hover,
+.gifPickerPortal .composerPopoverClose:hover,
+.emojiPicker .composerPopoverClose:hover,
+.pollCreatePopover .composerPopoverClose:hover,
+.pollCreatePopover > header > .composerPopoverClose:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.composerPopoverClose svg {
+  width: 19px !important;
+  height: 19px !important;
+}
+
+/* GIF layout: categories own their row and body can never overlap them. */
+.gifPickerPortal {
+  display: grid !important;
+  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+  height: min(570px, calc(100vh - 125px)) !important;
+  max-height: min(570px, calc(100vh - 125px)) !important;
+  overflow: hidden !important;
+}
+
+.gifPickerPortal .composerPopoverHeader,
+.gifSearchField,
+.gifCategoryTabs {
+  position: relative !important;
+  z-index: 4 !important;
+  flex: 0 0 auto !important;
+}
+
+.gifCategoryTabs {
+  min-height: 38px !important;
+  box-sizing: border-box !important;
+  background: #17181c !important;
+}
+
+.gifPickerBody {
+  position: relative !important;
+  z-index: 1 !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 10px 12px 12px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border-top: 1px solid rgba(255,255,255,.045) !important;
+  background: #17181c !important;
+}
+
+.gifGrid {
+  align-items: stretch !important;
+  width: 100% !important;
+  margin: 0 !important;
+}
+
+.gifGrid button {
+  height: 118px !important;
+  min-height: 118px !important;
+  max-height: 118px !important;
+}
+
+/* Full emoji dataset with incremental rendering. */
+.emojiPicker {
+  display: grid !important;
+  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+  height: min(570px, calc(100vh - 125px)) !important;
+  max-height: min(570px, calc(100vh - 125px)) !important;
+  overflow: hidden !important;
+}
+
+.emojiCategoryTabs {
+  min-height: 38px !important;
+  overscroll-behavior: contain !important;
+}
+
+.emojiGrid {
+  grid-template-columns: repeat(9, minmax(0, 1fr)) !important;
+  align-content: start !important;
+  min-height: 0 !important;
+  padding: 10px 12px 14px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border-top: 1px solid rgba(255,255,255,.045) !important;
+}
+
+.emojiGrid button {
+  position: relative !important;
+  display: grid !important;
+  place-items: center !important;
+  aspect-ratio: 1 / 1 !important;
+  min-width: 0 !important;
+  padding: 6px !important;
+  overflow: visible !important;
+}
+
+.emojiGrid .notoEmojiGlyph {
+  width: 29px !important;
+  height: 29px !important;
+  margin: 0 !important;
+  font-size: 24px !important;
+  line-height: 29px !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+}
+
+.emojiPickerLoading {
+  grid-column: 1 / -1 !important;
+  padding: 15px 8px !important;
+  color: #858b96 !important;
+  font-size: .72rem !important;
+  text-align: center !important;
+}
+
+/* Poll: one scroll container, no horizontal bar, footer never clipped. */
+.pollCreatePopover,
+.pollCreateModal,
+.serverPollCreateModal {
+  display: flex !important;
+  flex-direction: column !important;
+  width: min(460px, calc(100vw - 24px)) !important;
+  max-width: min(460px, calc(100vw - 24px)) !important;
+  height: auto !important;
+  max-height: min(650px, calc(100vh - 105px)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-gutter: auto !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreatePopover > header {
+  position: sticky !important;
+  top: 0 !important;
+  z-index: 20 !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  box-sizing: border-box !important;
+  background: #191a1f !important;
+}
+
+.pollCreatePopover > label,
+.pollCreatePopover > .pollOptionEditor,
+.pollCreatePopover > .pollSettingsGrid,
+.pollCreatePopover > .serverPollOptionInputs,
+.pollCreatePopover > .serverPollToggles,
+.pollCreatePopover > .serverAddPollOption,
+.pollCreatePopover > .serverInlineError,
+.pollCreatePopover > .pollFormError,
+.pollCreatePopover > .pollActionError {
+  width: auto !important;
+  max-width: none !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreatePopover > footer {
+  position: sticky !important;
+  bottom: 0 !important;
+  z-index: 20 !important;
+  flex: 0 0 auto !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 12px 0 0 !important;
+  padding: 10px 14px !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  background: #17181c !important;
+}
+
+.pollCreatePopover > footer button {
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 96px !important;
+  max-width: none !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+}
+
+.pollCreatePopover input,
+.pollCreatePopover textarea,
+.pollCreatePopover select,
+.pollCreatePopover .customSelectTrigger {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+@media (max-width: 700px) {
+  .emojiGrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+
+  .gifGrid button {
+    height: 126px !important;
+    min-height: 126px !important;
+    max-height: 126px !important;
+  }
+}

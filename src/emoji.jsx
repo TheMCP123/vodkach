@@ -1,247 +1,101 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import emojiData from "emojibase-data/en/compact.json";
+import githubShortcodes from "emojibase-data/en/shortcodes/github.json";
 
 const NOTO_EMOJI_CDN =
   "https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/svg";
 
-const EMOJI_GROUPS = [
-  {
-    id: "smileys",
-    label: "Smileys",
-    items: [
-      ["😀", "grinning", ["happy", "smile"]],
-      ["😃", "smiley", ["happy"]],
-      ["😄", "smile", ["happy"]],
-      ["😁", "grin", ["happy"]],
-      ["😂", "joy", ["laugh", "tears"]],
-      ["🤣", "rofl", ["laugh"]],
-      ["😊", "blush", ["happy"]],
-      ["🙂", "slightly_smiling", ["smile"]],
-      ["🙃", "upside_down", ["silly"]],
-      ["😉", "wink", []],
-      ["😍", "heart_eyes", ["love"]],
-      ["🥰", "smiling_hearts", ["love"]],
-      ["😘", "kissing_heart", ["kiss"]],
-      ["😋", "yum", ["food"]],
-      ["😎", "sunglasses", ["cool"]],
-      ["🤩", "star_struck", ["wow"]],
-      ["🥳", "partying", ["party", "celebration"]],
-      ["😏", "smirk", []],
-      ["😒", "unamused", []],
-      ["😔", "pensive", ["sad"]],
-      ["😢", "cry", ["sad"]],
-      ["😭", "sob", ["sad"]],
-      ["😡", "rage", ["angry"]],
-      ["🤬", "cursing", ["angry"]],
-      ["😱", "scream", ["shock"]],
-      ["🤔", "thinking", []],
-      ["🫡", "salute", []],
-      ["🫠", "melting", []],
-      ["💀", "skull", ["dead"]],
-      ["🤡", "clown", []]
-    ]
-  },
-  {
-    id: "people",
-    label: "People",
-    items: [
-      ["👋", "wave", ["hello", "bye"]],
-      ["🤚", "raised_back_hand", []],
-      ["🖐️", "hand", []],
-      ["✋", "raised_hand", []],
-      ["👌", "ok_hand", ["okay"]],
-      ["🤌", "pinched_fingers", []],
-      ["🤏", "pinching_hand", []],
-      ["✌️", "v", ["peace"]],
-      ["🤞", "crossed_fingers", ["luck"]],
-      ["🤟", "love_you_gesture", []],
-      ["🤘", "metal", ["rock"]],
-      ["👍", "thumbsup", ["like", "+1"]],
-      ["👎", "thumbsdown", ["dislike", "-1"]],
-      ["👏", "clap", ["applause"]],
-      ["🙌", "raised_hands", ["hooray"]],
-      ["🫶", "heart_hands", ["love"]],
-      ["🙏", "pray", ["please", "thanks"]],
-      ["💪", "muscle", ["strong"]],
-      ["🫵", "you", ["point"]],
-      ["👀", "eyes", ["look"]],
-      ["🧠", "brain", ["smart"]],
-      ["🫂", "people_hugging", ["hug"]]
-    ]
-  },
-  {
-    id: "nature",
-    label: "Nature",
-    items: [
-      ["🐶", "dog", []],
-      ["🐱", "cat", []],
-      ["🐭", "mouse", []],
-      ["🐹", "hamster", []],
-      ["🐰", "rabbit", []],
-      ["🦊", "fox", []],
-      ["🐻", "bear", []],
-      ["🐼", "panda", []],
-      ["🐸", "frog", []],
-      ["🐵", "monkey", []],
-      ["🦁", "lion", []],
-      ["🐯", "tiger", []],
-      ["🐺", "wolf", []],
-      ["🦄", "unicorn", []],
-      ["🐝", "bee", []],
-      ["🦋", "butterfly", []],
-      ["🌸", "cherry_blossom", ["flower"]],
-      ["🌹", "rose", ["flower"]],
-      ["🌻", "sunflower", ["flower"]],
-      ["🔥", "fire", ["lit"]],
-      ["✨", "sparkles", ["shine"]],
-      ["⭐", "star", []],
-      ["🌙", "crescent_moon", ["night"]],
-      ["☀️", "sunny", ["sun"]]
-    ]
-  },
-  {
-    id: "food",
-    label: "Food",
-    items: [
-      ["🍎", "apple", []],
-      ["🍓", "strawberry", []],
-      ["🍒", "cherries", []],
-      ["🍉", "watermelon", []],
-      ["🍕", "pizza", []],
-      ["🍔", "hamburger", ["burger"]],
-      ["🍟", "fries", []],
-      ["🌭", "hotdog", []],
-      ["🍿", "popcorn", []],
-      ["🍣", "sushi", []],
-      ["🍩", "doughnut", ["donut"]],
-      ["🍪", "cookie", []],
-      ["🎂", "birthday", ["cake"]],
-      ["☕", "coffee", []],
-      ["🥤", "cup_with_straw", ["soda"]],
-      ["🍺", "beer", []],
-      ["🍷", "wine_glass", ["wine"]],
-      ["🍸", "cocktail", []]
-    ]
-  },
-  {
-    id: "activities",
-    label: "Activities",
-    items: [
-      ["⚽", "soccer", ["football"]],
-      ["🏀", "basketball", []],
-      ["🏈", "football", []],
-      ["⚾", "baseball", []],
-      ["🎾", "tennis", []],
-      ["🏐", "volleyball", []],
-      ["🎮", "video_game", ["gaming"]],
-      ["🕹️", "joystick", ["gaming"]],
-      ["🎲", "game_die", ["dice"]],
-      ["🎯", "dart", ["target"]],
-      ["🏆", "trophy", ["win"]],
-      ["🥇", "first_place", ["gold"]],
-      ["🎵", "musical_note", ["music"]],
-      ["🎧", "headphones", ["music"]],
-      ["🎸", "guitar", ["music"]],
-      ["🎨", "art", ["palette"]],
-      ["🎬", "clapper", ["movie"]]
-    ]
-  },
-  {
-    id: "travel",
-    label: "Travel",
-    items: [
-      ["🚗", "car", []],
-      ["🏎️", "racing_car", []],
-      ["🚕", "taxi", []],
-      ["🚌", "bus", []],
-      ["🚓", "police_car", []],
-      ["🚑", "ambulance", []],
-      ["🚒", "fire_engine", []],
-      ["✈️", "airplane", ["plane"]],
-      ["🚀", "rocket", []],
-      ["🛸", "flying_saucer", ["ufo"]],
-      ["🏠", "house", ["home"]],
-      ["🏙️", "cityscape", ["city"]],
-      ["🌍", "earth_africa", ["world"]],
-      ["🌎", "earth_americas", ["world"]],
-      ["🌏", "earth_asia", ["world"]]
-    ]
-  },
-  {
-    id: "objects",
-    label: "Objects",
-    items: [
-      ["💡", "bulb", ["idea"]],
-      ["📱", "iphone", ["phone"]],
-      ["💻", "computer", ["laptop"]],
-      ["⌨️", "keyboard", []],
-      ["🖥️", "desktop", ["monitor"]],
-      ["📷", "camera", []],
-      ["🎥", "movie_camera", ["video"]],
-      ["📺", "tv", ["television"]],
-      ["🔔", "bell", ["notification"]],
-      ["🔒", "lock", ["secure"]],
-      ["🔑", "key", []],
-      ["🛠️", "tools", []],
-      ["⚙️", "gear", ["settings"]],
-      ["🗑️", "wastebasket", ["trash"]],
-      ["📌", "pushpin", ["pin"]],
-      ["📎", "paperclip", ["attachment"]],
-      ["💊", "pill", []],
-      ["🧸", "teddy_bear", []]
-    ]
-  },
-  {
-    id: "symbols",
-    label: "Symbols",
-    items: [
-      ["❤️", "heart", ["love"]],
-      ["🧡", "orange_heart", []],
-      ["💛", "yellow_heart", []],
-      ["💚", "green_heart", []],
-      ["💙", "blue_heart", []],
-      ["💜", "purple_heart", []],
-      ["🖤", "black_heart", []],
-      ["🤍", "white_heart", []],
-      ["💔", "broken_heart", []],
-      ["💯", "100", ["hundred"]],
-      ["✅", "white_check_mark", ["check"]],
-      ["❌", "x", ["cross"]],
-      ["⚠️", "warning", []],
-      ["❓", "question", []],
-      ["❗", "exclamation", []],
-      ["‼️", "bangbang", []],
-      ["♻️", "recycle", []],
-      ["➕", "heavy_plus_sign", ["plus"]],
-      ["➖", "heavy_minus_sign", ["minus"]],
-      ["♾️", "infinity", []]
-    ]
-  }
+const GROUPS = [
+  { id: "all", label: "All", group: null },
+  { id: "smileys", label: "Smileys", group: 0 },
+  { id: "people", label: "People", group: 1 },
+  { id: "components", label: "Components", group: 2 },
+  { id: "nature", label: "Nature", group: 3 },
+  { id: "food", label: "Food", group: 4 },
+  { id: "travel", label: "Travel", group: 5 },
+  { id: "activities", label: "Activities", group: 6 },
+  { id: "objects", label: "Objects", group: 7 },
+  { id: "symbols", label: "Symbols", group: 8 },
+  { id: "flags", label: "Flags", group: 9 }
 ];
 
-const ALL_EMOJIS = EMOJI_GROUPS.flatMap((group) =>
-  group.items.map(([emoji, shortcode, aliases]) => ({
-    emoji,
-    shortcode,
-    aliases,
-    group: group.id
-  }))
-);
+function normalizeShortcode(value) {
+  return String(value || "")
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^\p{Letter}\p{Number}+\-]+/gu, "_")
+    .replace(/^_+|_+$/g, "");
+}
 
+function expandData() {
+  const result = [];
+
+  for (const item of emojiData) {
+    const shortcodes = githubShortcodes[item.hexcode];
+    const aliases = Array.isArray(shortcodes)
+      ? shortcodes
+      : shortcodes
+        ? [shortcodes]
+        : [];
+
+    const shortcode = normalizeShortcode(
+      aliases[0] || item.label || item.hexcode
+    );
+
+    result.push({
+      emoji: item.unicode,
+      hexcode: item.hexcode,
+      label: item.label,
+      shortcode,
+      aliases: [
+        ...aliases.map(normalizeShortcode),
+        ...(item.tags || []).map(normalizeShortcode)
+      ].filter(Boolean),
+      group: item.group,
+      order: Number(item.order || 0)
+    });
+
+    for (const skin of item.skins || []) {
+      result.push({
+        emoji: skin.unicode,
+        hexcode: skin.hexcode,
+        label: skin.label,
+        shortcode: normalizeShortcode(skin.label),
+        aliases: [
+          shortcode,
+          ...(item.tags || []).map(normalizeShortcode)
+        ].filter(Boolean),
+        group: item.group,
+        order: Number(skin.order || item.order || 0)
+      });
+    }
+  }
+
+  return result
+    .filter((item) => item.emoji && item.hexcode)
+    .sort((a, b) => a.order - b.order);
+}
+
+const ALL_EMOJIS = expandData();
 const SHORTCODE_MAP = new Map();
+
 for (const item of ALL_EMOJIS) {
-  SHORTCODE_MAP.set(item.shortcode.toLowerCase(), item.emoji);
+  if (item.shortcode) SHORTCODE_MAP.set(item.shortcode, item.emoji);
   for (const alias of item.aliases) {
-    SHORTCODE_MAP.set(String(alias).toLowerCase(), item.emoji);
+    if (alias && !SHORTCODE_MAP.has(alias)) {
+      SHORTCODE_MAP.set(alias, item.emoji);
+    }
   }
 }
 
-/* A friendly alias explicitly requested for :happy:. */
 SHORTCODE_MAP.set("happy", "😊");
 SHORTCODE_MAP.set("lol", "😂");
 SHORTCODE_MAP.set("laugh", "😂");
 SHORTCODE_MAP.set("sad", "😢");
 SHORTCODE_MAP.set("angry", "😡");
 SHORTCODE_MAP.set("cool", "😎");
+SHORTCODE_MAP.set("fire", "🔥");
 
 const emojiSegmenter =
   typeof Intl !== "undefined" && Intl.Segmenter
@@ -266,35 +120,41 @@ function emojiCodepoints(emoji) {
     .join("_");
 }
 
-export function notoEmojiUrl(emoji) {
-  return `${NOTO_EMOJI_CDN}/emoji_u${emojiCodepoints(emoji)}.svg`;
+export function notoEmojiUrl(emoji, hexcode = "") {
+  const normalized = hexcode
+    ? String(hexcode)
+        .split("-")
+        .filter((part) => !/^FE0[EF]$/i.test(part))
+        .map((part) => part.toLowerCase())
+        .join("_")
+    : emojiCodepoints(emoji);
+
+  return `${NOTO_EMOJI_CDN}/emoji_u${normalized}.svg`;
 }
 
 export function expandEmojiShortcodes(value) {
   return String(value || "").replace(
-    /:([a-zA-Z0-9_+\-]{1,40}):/g,
+    /:([a-zA-Z0-9_+\-]{1,80}):/g,
     (match, name) => SHORTCODE_MAP.get(name.toLowerCase()) || match
   );
 }
 
-export function NotoEmoji({ emoji, className = "", title }) {
-  const [failed, setFailed] = useState(false);
-
-  if (failed) {
-    return <span className={`notoEmojiFallback ${className}`}>{emoji}</span>;
-  }
-
+/*
+ * The real Unicode character stays inside the DOM so selecting/copying chat
+ * text keeps the emoji. It is visually transparent and the Noto SVG is painted
+ * as its background, so Windows/Linux emoji glyphs are never the visible layer.
+ */
+export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
   return (
-    <img
-      className={`notoEmoji ${className}`}
-      src={notoEmojiUrl(emoji)}
-      alt={emoji}
+    <span
+      className={`notoEmoji notoEmojiGlyph ${className}`}
       title={title}
-      loading="lazy"
-      decoding="async"
-      draggable="false"
-      onError={() => setFailed(true)}
-    />
+      role="img"
+      aria-label={emoji}
+      style={{ "--noto-emoji-image": `url("${notoEmojiUrl(emoji, hexcode)}")` }}
+    >
+      {emoji}
+    </span>
   );
 }
 
@@ -317,8 +177,10 @@ export function NotoEmojiText({ text, className = "" }) {
 
 export function EmojiPicker({ onPick, onClose }) {
   const [query, setQuery] = useState("");
-  const [group, setGroup] = useState("all");
+  const [groupId, setGroupId] = useState("all");
+  const [visibleCount, setVisibleCount] = useState(240);
   const categoryRef = useRef(null);
+  const bodyRef = useRef(null);
   const panelRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -342,30 +204,80 @@ export function EmojiPicker({ onPick, onClose }) {
     };
   }, [onClose]);
 
-  const visible = useMemo(() => {
-    const normalized = query.trim().toLowerCase();
-    const source = normalized || group === "all"
-      ? ALL_EMOJIS
-      : ALL_EMOJIS.filter((item) => item.group === group);
+  useEffect(() => {
+    setVisibleCount(240);
+    if (bodyRef.current) bodyRef.current.scrollTop = 0;
+  }, [groupId, query]);
 
-    if (!normalized) return source;
+  const filtered = useMemo(() => {
+    const normalized = normalizeShortcode(query);
+    const selectedGroup = GROUPS.find((group) => group.id === groupId);
 
-    return source.filter((item) =>
-      [item.shortcode, ...item.aliases, item.group]
+    return ALL_EMOJIS.filter((item) => {
+      if (selectedGroup?.group !== null && item.group !== selectedGroup.group) {
+        return false;
+      }
+
+      if (!normalized) return true;
+
+      return [
+        item.shortcode,
+        item.label,
+        ...item.aliases
+      ]
         .join(" ")
         .toLowerCase()
-        .includes(normalized)
-    );
-  }, [group, query]);
+        .includes(normalized);
+    });
+  }, [groupId, query]);
+
+  const visible = filtered.slice(0, visibleCount);
+
+  function onCategoryWheel(event) {
+    const node = categoryRef.current;
+    if (!node || node.scrollWidth <= node.clientWidth) return;
+
+    const delta =
+      Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+        ? event.deltaY
+        : event.deltaX;
+
+    if (!delta) return;
+    event.preventDefault();
+    event.stopPropagation();
+    node.scrollBy({ left: delta, behavior: "auto" });
+  }
+
+  function onBodyScroll(event) {
+    const node = event.currentTarget;
+    if (
+      visibleCount < filtered.length &&
+      node.scrollHeight - node.scrollTop - node.clientHeight < 220
+    ) {
+      setVisibleCount((current) =>
+        Math.min(current + 240, filtered.length)
+      );
+    }
+  }
 
   return (
-    <section className="emojiPicker composerPopover" ref={panelRef}>
+    <section
+      className="emojiPicker composerPopover"
+      ref={panelRef}
+      role="dialog"
+      aria-label="Emoji picker"
+    >
       <header className="composerPopoverHeader">
         <div>
           <span className="composerPopoverEyebrow">NOTO EMOJI</span>
           <strong>Emoji</strong>
         </div>
-        <button type="button" onClick={onClose} aria-label="Close emoji picker">
+        <button
+          type="button"
+          className="composerPopoverClose"
+          onClick={onClose}
+          aria-label="Close emoji picker"
+        >
           ×
         </button>
       </header>
@@ -383,59 +295,53 @@ export function EmojiPicker({ onPick, onClose }) {
       <nav
         className="emojiCategoryTabs"
         ref={categoryRef}
-        onWheel={(event) => {
-          const node = categoryRef.current;
-          if (!node || node.scrollWidth <= node.clientWidth) return;
-          const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
-            ? event.deltaY
-            : event.deltaX;
-          if (!delta) return;
-          event.preventDefault();
-          event.stopPropagation();
-          node.scrollBy({ left: delta, behavior: "auto" });
-        }}
+        onWheel={onCategoryWheel}
         aria-label="Emoji categories"
       >
-        <button
-          type="button"
-          className={group === "all" && !query ? "active" : ""}
-          onClick={() => {
-            setGroup("all");
-            setQuery("");
-          }}
-        >
-          All
-        </button>
-        {EMOJI_GROUPS.map((category) => (
+        {GROUPS.map((group) => (
           <button
             type="button"
-            className={group === category.id && !query ? "active" : ""}
+            className={groupId === group.id && !query ? "active" : ""}
             onClick={() => {
-              setGroup(category.id);
+              setGroupId(group.id);
               setQuery("");
             }}
-            key={category.id}
+            key={group.id}
           >
-            {category.label}
+            {group.label}
           </button>
         ))}
       </nav>
 
-      <div className="emojiGrid">
+      <div
+        className="emojiGrid"
+        ref={bodyRef}
+        onScroll={onBodyScroll}
+      >
         {visible.map((item) => (
           <button
             type="button"
             onClick={() => onPick?.(item.emoji)}
             title={`:${item.shortcode}:`}
-            aria-label={`Insert ${item.shortcode}`}
-            key={`${item.group}-${item.shortcode}`}
+            aria-label={`Insert ${item.label}`}
+            key={`${item.hexcode}-${item.order}`}
           >
-            <NotoEmoji emoji={item.emoji} />
-            <span>:{item.shortcode}:</span>
+            <NotoEmoji
+              emoji={item.emoji}
+              hexcode={item.hexcode}
+              title={`:${item.shortcode}:`}
+            />
           </button>
         ))}
+
         {!visible.length && (
           <div className="emojiPickerEmpty">No emoji found</div>
+        )}
+
+        {visibleCount < filtered.length && (
+          <div className="emojiPickerLoading">
+            Loading more emoji…
+          </div>
         )}
       </div>
     </section>

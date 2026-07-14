@@ -1960,7 +1960,7 @@ export function ChatPollSystem({ api, chatId, currentUserId, open, onOpenChange 
                 </span>
                 <h2>Ask the chat</h2>
               </div>
-              <button type="button" onClick={() => onOpenChange?.(false)}>
+              <button type="button" className="composerPopoverClose" onClick={() => onOpenChange?.(false)} aria-label="Close poll creator">
                 <CloseIcon />
               </button>
             </header>

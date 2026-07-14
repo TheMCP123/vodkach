@@ -126,7 +126,6 @@ export function GifPicker({ onPick, onClose }) {
         </div>
         {loadingMore ? <div className="gifLoadMore">Loading more…</div> : null}
       </div>
-      <footer>Powered by KLIPY</footer>
     </section>
   );
 }

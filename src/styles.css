@@ -13106,3 +13106,282 @@ button.active .inlineUiIcon {
   .gifPickerPortal,
   .pollCreatePopover { width: 100% !important; max-width: 100% !important; }
 }
+
+
+/* Patch 109: preserve the approved composer; repair popovers and short-chat spacing only. */
+.appMessages {
+  display: flex !important;
+  flex-direction: column !important;
+  min-height: 0 !important;
+}
+.appMessages > :first-child {
+  margin-top: auto !important;
+}
+.appMessages > .chatStart:first-child {
+  margin-top: auto !important;
+  margin-bottom: auto !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  position: relative !important;
+  overflow: visible !important;
+}
+
+.messageComposer .composerInputRow > .gifPickerPortal,
+.messageComposer .composerInputRow > .pollCreatePopover,
+.serverMessageComposer .composerInputRow > .gifPickerPortal,
+.serverMessageComposer .composerInputRow > .pollCreatePopover {
+  position: absolute !important;
+  inset: auto 0 calc(100% + 10px) auto !important;
+  width: min(440px, calc(100vw - 24px)) !important;
+  max-width: min(440px, calc(100vw - 24px)) !important;
+  max-height: min(560px, calc(100vh - 150px)) !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 900 !important;
+}
+
+.gifPickerPortal,
+.pollCreatePopover {
+  border: 1px solid rgba(255,255,255,.085) !important;
+  border-radius: 13px !important;
+  background: #17181c !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.46) !important;
+}
+
+.composerPopoverHeader,
+.gifPickerHeader,
+.pollCreatePopover > header {
+  min-height: 58px !important;
+  padding: 11px 13px !important;
+  background: #191a1f !important;
+}
+.composerPopoverHeader strong,
+.pollCreatePopover > header h2 {
+  font-size: .98rem !important;
+}
+.composerPopoverEyebrow,
+.chatPollEyebrow {
+  font-size: .69rem !important;
+}
+
+.gifPickerPortal {
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+}
+.gifPickerPortal > footer {
+  display: none !important;
+}
+.gifSearchField {
+  height: 38px !important;
+  margin: 11px 12px 8px !important;
+  border-radius: 9px !important;
+}
+.gifSearchField input {
+  font-size: .88rem !important;
+}
+.gifCategoryTabs {
+  gap: 5px !important;
+  padding: 0 12px 9px !important;
+}
+.gifCategoryTabs button {
+  min-height: 28px !important;
+  padding: 0 10px !important;
+  font-size: .72rem !important;
+}
+.gifPickerBody {
+  min-height: 230px !important;
+  max-height: min(390px, 48vh) !important;
+  padding: 0 10px 10px !important;
+}
+.gifGrid {
+  gap: 6px !important;
+}
+.gifGrid button,
+.gifGrid img {
+  min-height: 104px !important;
+}
+
+.pollCreatePopover {
+  display: flex !important;
+  flex-direction: column !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+}
+.pollCreatePopover > label,
+.pollCreatePopover > .pollOptionEditor,
+.pollCreatePopover > .pollSettingsGrid,
+.pollCreatePopover > .serverPollOptionInputs,
+.pollCreatePopover > .serverPollToggles,
+.pollCreatePopover > .serverAddPollOption,
+.pollCreatePopover > .serverInlineError,
+.pollCreatePopover > .pollFormError,
+.pollCreatePopover > .pollActionError {
+  margin-left: 13px !important;
+  margin-right: 13px !important;
+}
+.pollCreatePopover > label:first-of-type {
+  margin-top: 12px !important;
+}
+.pollCreatePopover > label > span,
+.pollOptionEditor > span,
+.pollDurationField > span {
+  display: block !important;
+  margin-bottom: 6px !important;
+  color: #c9cdd5 !important;
+  font-size: .74rem !important;
+  font-weight: 750 !important;
+}
+.pollCreatePopover textarea,
+.pollCreatePopover input,
+.pollCreatePopover select {
+  width: 100% !important;
+  min-width: 0 !important;
+  box-sizing: border-box !important;
+  font-size: .86rem !important;
+}
+.pollCreatePopover textarea {
+  min-height: 58px !important;
+  max-height: 82px !important;
+  padding: 10px 11px !important;
+  resize: none !important;
+}
+.pollOptionEditor {
+  display: grid !important;
+  gap: 7px !important;
+  margin-top: 12px !important;
+}
+.pollOptionEditor > div {
+  display: grid !important;
+  grid-template-columns: 22px minmax(0,1fr) 34px !important;
+  align-items: center !important;
+  gap: 7px !important;
+}
+.pollOptionEditor > div > span {
+  color: #8f95a0 !important;
+  font-size: .76rem !important;
+  text-align: center !important;
+}
+.pollOptionEditor input {
+  height: 38px !important;
+  padding: 0 10px !important;
+}
+.pollOptionEditor .addPollOption,
+.serverAddPollOption {
+  justify-self: start !important;
+  min-height: 34px !important;
+  margin-top: 1px !important;
+  padding: 0 11px !important;
+  border-radius: 8px !important;
+  font-size: .76rem !important;
+}
+.pollSettingsGrid,
+.serverPollToggles {
+  display: grid !important;
+  gap: 0 !important;
+  margin-top: 12px !important;
+  border-top: 1px solid rgba(255,255,255,.07) !important;
+}
+.pollToggleRow,
+.serverPollToggles label {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 34px !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 8px 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.065) !important;
+}
+.pollToggleRow strong {
+  display: block !important;
+  color: #f1f2f5 !important;
+  font-size: .79rem !important;
+}
+.pollToggleRow span {
+  display: block !important;
+  margin-top: 2px !important;
+  color: #8f95a0 !important;
+  font-size: .69rem !important;
+}
+.pollToggleRow input,
+.serverPollToggles input {
+  width: 18px !important;
+  height: 18px !important;
+  justify-self: end !important;
+}
+.pollDurationField {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) minmax(150px,190px) !important;
+  align-items: center !important;
+  gap: 12px !important;
+  min-height: 56px !important;
+  margin-top: 0 !important;
+  padding: 9px 0 !important;
+}
+.pollDurationField > span {
+  margin: 0 !important;
+}
+.pollCreatePopover > footer {
+  flex: 0 0 auto !important;
+  margin-top: 10px !important;
+  padding: 10px 13px !important;
+}
+.pollCreatePopover > footer button {
+  min-height: 34px !important;
+  padding: 0 13px !important;
+  border-radius: 8px !important;
+  font-size: .76rem !important;
+}
+
+.serverPollCreateModal .serverPollOptionInputs {
+  display: grid !important;
+  gap: 8px !important;
+  margin-top: 11px !important;
+}
+.serverPollCreateModal .serverPollOptionInputs label {
+  display: grid !important;
+  gap: 5px !important;
+}
+.serverPollCreateModal .serverPollOptionInputs input {
+  height: 38px !important;
+  padding: 0 10px !important;
+}
+
+/* Lock the exact current Type Bar measurements. */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  min-height: 50px !important;
+  margin: 0 14px 12px !important;
+  padding: 0 !important;
+}
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  padding: 6px 8px 6px 14px !important;
+}
+.messageComposer .composerInputRow textarea,
+.serverMessageComposer .composerInputRow textarea {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 5px 0 !important;
+}
+
+@media (max-width: 560px) {
+  .messageComposer .composerInputRow > .gifPickerPortal,
+  .messageComposer .composerInputRow > .pollCreatePopover,
+  .serverMessageComposer .composerInputRow > .gifPickerPortal,
+  .serverMessageComposer .composerInputRow > .pollCreatePopover {
+    right: -4px !important;
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+  }
+  .pollDurationField {
+    grid-template-columns: 1fr !important;
+  }
+}

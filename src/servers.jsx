@@ -197,7 +197,7 @@ function ServerPollSystem({ channelId, onCreated }) {
   );
 }
 
-export function ServerWorkspace({ server, currentUser, onServerUpdated, onServerRemoved }) {
+export function ServerWorkspace({ server, currentUser, onServerUpdated, onServerRemoved, profileBar = null }) {
   const [channels, setChannels] = useState([]);
   const [activeChannel, setActiveChannel] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -277,7 +277,7 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
         <div className="serverChannelHeading"><span>VOICE CHANNELS</span>{["owner", "admin"].includes(server.role) ? <button type="button" onClick={() => { setNewChannel(true); setChannelType("voice"); }}><Plus /></button> : null}</div>
         <nav>{channels.filter((channel) => channel.type === "voice").map((channel) => <button type="button" className={activeChannel?.id === channel.id ? "active" : ""} onClick={() => setActiveChannel(channel)} key={channel.id}><Volume2 /><span>{channel.name}</span></button>)}</nav>
         {newChannel ? <form className="serverNewChannel" onSubmit={async (event) => { event.preventDefault(); const data = await api("/api/servers/channels", { method: "POST", body: JSON.stringify({ server_id: server.id, name: channelName, type: channelType }) }); setNewChannel(false); setChannelName(""); await loadChannels(); setActiveChannel(data.channel); }}><input autoFocus value={channelName} onChange={(event) => setChannelName(event.target.value)} placeholder={`${channelType} channel`} /><button>+</button></form> : null}
-        <div className="serverUserBar"><img src={currentUser?.avatar_url || "/default-avatar.png"} alt="" /><div><strong>{currentUser?.display_name || currentUser?.username}</strong><span>@{currentUser?.username}</span></div></div>
+        {profileBar || <div className="serverUserBar"><img src={currentUser?.avatar_url || "/default-avatar.png"} alt="" /><div><strong>{currentUser?.display_name || currentUser?.username}</strong><span>@{currentUser?.username}</span></div></div>}
       </aside>
 
       <section className="serverChatPane">

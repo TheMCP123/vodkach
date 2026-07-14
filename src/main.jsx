@@ -3577,6 +3577,62 @@ function WebApp() {
               setActiveServer(null);
               setView("friends");
             }}
+            profileBar={(
+              <div className="bottomProfileBar serverBottomProfileBar">
+                <button
+                  className="profileIdentityButton"
+                  type="button"
+                  title="Profile"
+                  onClick={() => openProfile(auth.user)}
+                >
+                  <AvatarWithStatus
+                    user={auth.user}
+                    className="sidebarProfileAvatarWrap"
+                    alt="Profile avatar"
+                    clickableStatus
+                    onStatusClick={(event) => {
+                      event.stopPropagation();
+                      setStatusMenuOpen((open) => !open);
+                    }}
+                  />
+                  <span className="sidebarProfileText">
+                    <strong className="nameWithBadge">
+                      <span className="displayNameText">{currentDisplayName}</span>
+                      {auth.user.verified ? <VerifiedBadge /> : null}
+                    </strong>
+                    <span>@{auth.user.username}</span>
+                  </span>
+                </button>
+                {statusMenuOpen && (
+                  <div className="statusPicker serverStatusPicker" onMouseDown={(event) => { event.preventDefault(); event.stopPropagation(); }} onClick={(event) => event.stopPropagation()}>
+                    {[["online", "Online"], ["sleeping", "Sleeping"], ["dnd", "Do Not Disturb"], ["offline", "Invisible"]].map(([value, label]) => (
+                      <button key={value} type="button" className={auth.user.status_preference === value ? "active" : ""} onClick={() => updateStatus(value)}>
+                        <StatusGlyph status={value} /><span>{label}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+                <button
+                  className="profileSettingsButton"
+                  type="button"
+                  aria-label="Settings"
+                  onClick={() => {
+                    setProfileForm({
+                      username: auth.user.username || "",
+                      display_name: auth.user.display_name || "",
+                      pronouns: auth.user.pronouns || "",
+                      bio: auth.user.bio || "",
+                      avatar_url: auth.user.avatar_url || null,
+                      banner_color: auth.user.banner_color || "#5b1115"
+                    });
+                    setProfileFormInitialized(true);
+                    setSettingsOpen(true);
+                  }}
+                >
+                  <Settings size={16} />
+                </button>
+              </div>
+            )}
           />
         )}
 

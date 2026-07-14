@@ -12249,3 +12249,149 @@ body:has(.serverContextMenuInline)::after {
   .messageComposer .composerInputRow > button[type="submit"],
   .serverMessageComposer .composerInputRow > button[type="submit"] { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 }
+
+/* Patch 103: restore shared profile bar and lock both composers to one stable layout */
+.serverChannelRail > .serverBottomProfileBar {
+  margin-top: auto !important;
+  position: relative !important;
+  inset: auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  box-sizing: border-box !important;
+  border-top: 1px solid rgba(255,255,255,.055) !important;
+  background: #101115 !important;
+  z-index: 20 !important;
+}
+.serverChannelRail > .serverUserBar { display: none !important; }
+.serverBottomProfileBar .serverStatusPicker,
+.serverBottomProfileBar .statusPicker {
+  position: absolute !important;
+  left: 8px !important;
+  right: 8px !important;
+  bottom: calc(100% + 8px) !important;
+  z-index: 2147483000 !important;
+}
+
+/* One identical bar for DMs and server text channels. */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  position: relative !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 72px !important;
+  min-height: 72px !important;
+  max-height: 72px !important;
+  margin: 0 14px !important;
+  padding: 7px 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  z-index: 30 !important;
+}
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  position: relative !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  display: flex !important;
+  flex-flow: row nowrap !important;
+  align-items: center !important;
+  gap: 6px !important;
+  padding: 8px 10px 8px 16px !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 12px !important;
+  background: #202126 !important;
+  box-shadow: none !important;
+}
+.messageComposer .composerInputRow textarea,
+.serverMessageComposer .composerInputRow textarea {
+  flex: 1 1 auto !important;
+  order: 0 !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  padding: 9px 0 !important;
+  margin: 0 !important;
+  box-sizing: border-box !important;
+  border: 0 !important;
+  outline: 0 !important;
+  resize: none !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  color: #eef0f4 !important;
+  line-height: 22px !important;
+  font-size: 1rem !important;
+}
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton {
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border-radius: 8px !important;
+  order: initial !important;
+}
+.messageComposer .composerInputRow > button[type="submit"],
+.serverMessageComposer .composerInputRow > button[type="submit"] {
+  flex: 0 0 88px !important;
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  box-sizing: border-box !important;
+  position: static !important;
+  transform: none !important;
+  line-height: 40px !important;
+}
+.serverChatPane {
+  grid-template-rows: 58px minmax(0, 1fr) 72px !important;
+}
+.serverMessageList {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding-bottom: 8px !important;
+}
+.serverMessageComposer {
+  grid-row: 3 !important;
+  align-self: stretch !important;
+}
+
+@media (max-width: 700px) {
+  .messageComposer.composerForm,
+  .serverMessageComposer.messageComposer.composerForm { margin: 0 8px !important; }
+  .messageComposer .composerInputRow,
+  .serverMessageComposer .composerInputRow { padding-left: 11px !important; gap: 4px !important; }
+  .messageComposer .gifButton,
+  .serverMessageComposer .gifButton,
+  .messageComposer .composerPollButton,
+  .serverMessageComposer .composerPollButton { flex-basis: 34px !important; width: 34px !important; min-width: 34px !important; max-width: 34px !important; }
+  .messageComposer .composerInputRow > button[type="submit"],
+  .serverMessageComposer .composerInputRow > button[type="submit"] { flex-basis: 68px !important; width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
+}

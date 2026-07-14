@@ -27,6 +27,7 @@ import {
   Images
 } from "lucide-react";
 import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark, GifPicker } from "./servers.jsx";
+import { EmojiPicker, NotoEmojiText, expandEmojiShortcodes } from "./emoji.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -593,7 +594,7 @@ function renderFormattedText(text, onOpenLink, keyPrefix = "part") {
     }
   }
 
-  if (!winner) return [value];
+  if (!winner) return [<NotoEmojiText key={`${keyPrefix}_emoji`} text={value} />];
 
   const before = value.slice(0, winner.match.index);
   const after = value.slice(
@@ -611,15 +612,15 @@ function renderFormattedText(text, onOpenLink, keyPrefix = "part") {
   const key = `${keyPrefix}_${winner.match.index}_${winner.type}`;
 
   if (winner.type === "bold") {
-    nodes.push(<strong key={key} className="formattedBold">{content}</strong>);
+    nodes.push(<strong key={key} className="formattedBold"><NotoEmojiText text={content} /></strong>);
   } else if (winner.type === "italic") {
-    nodes.push(<em key={key}>{content}</em>);
+    nodes.push(<em key={key}><NotoEmojiText text={content} /></em>);
   } else if (winner.type === "strike") {
-    nodes.push(<s key={key}>{content}</s>);
+    nodes.push(<s key={key}><NotoEmojiText text={content} /></s>);
   } else if (winner.type === "underline") {
-    nodes.push(<u key={key}>{content}</u>);
+    nodes.push(<u key={key}><NotoEmojiText text={content} /></u>);
   } else if (winner.type === "spoiler") {
-    nodes.push(<SpoilerText key={key}>{content}</SpoilerText>);
+    nodes.push(<SpoilerText key={key}><NotoEmojiText text={content} /></SpoilerText>);
   } else if (winner.type === "link") {
     const href = /^https?:\/\//i.test(content)
       ? content
@@ -682,7 +683,7 @@ function renderLiveFormatting(text, keyPrefix = "preview") {
     }
   }
 
-  if (!winner) return [value];
+  if (!winner) return [<NotoEmojiText key={`${keyPrefix}_emoji`} text={value} />];
 
   const before = value.slice(0, winner.match.index);
   const after = value.slice(winner.match.index + winner.match[0].length);
@@ -709,13 +710,13 @@ function renderLiveFormatting(text, keyPrefix = "preview") {
   );
 
   if (winner.type === "bold") {
-    nodes.push(<strong key={key}>{content}</strong>);
+    nodes.push(<strong key={key}><NotoEmojiText text={content} /></strong>);
   } else if (winner.type === "italic") {
-    nodes.push(<em key={key}>{content}</em>);
+    nodes.push(<em key={key}><NotoEmojiText text={content} /></em>);
   } else if (winner.type === "strike") {
-    nodes.push(<s key={key}>{content}</s>);
+    nodes.push(<s key={key}><NotoEmojiText text={content} /></s>);
   } else if (winner.type === "underline") {
-    nodes.push(<u key={key}>{content}</u>);
+    nodes.push(<u key={key}><NotoEmojiText text={content} /></u>);
   } else {
     nodes.push(
       <span key={key} className="livePreviewSpoiler">
@@ -3688,7 +3689,7 @@ function WebApp() {
                 maxLength={4000}
                 rows={1}
                 placeholder="Write a private note"
-                onChange={(event) => setNoteText(event.target.value)}
+                onChange={(event) => setNoteText(expandEmojiShortcodes(event.target.value))}
                 onKeyDown={(event) => {
                   if (
                     event.key === "Enter" &&
@@ -4025,7 +4026,7 @@ function WebApp() {
                 <textarea
                   value={chatText}
                   onChange={(event) => {
-                    const value = event.target.value;
+                    const value = expandEmojiShortcodes(event.target.value);
                     setChatText(value);
                     publishTyping(Boolean(value.trim()));
                     if (typingStopTimerRef.current) window.clearTimeout(typingStopTimerRef.current);
@@ -4058,6 +4059,15 @@ function WebApp() {
                 />
                 <button
                   type="button"
+                  className="composerIconButton emojiButton"
+                  onClick={() => setChatComposerPanel((value) => value === "emoji" ? null : "emoji")}
+                  aria-label="Open emoji picker"
+                  title="Emoji"
+                >
+                  <img className="composerActionIcon" src="/ui/emojis.svg" alt="" />
+                </button>
+                <button
+                  type="button"
                   className="gifButton dmGifButton"
                   onClick={() => setChatComposerPanel((value) => value === "gif" ? null : "gif")}
                   aria-label="Open GIF picker"
@@ -4071,6 +4081,14 @@ function WebApp() {
                   open={chatComposerPanel === "poll"}
                   onOpenChange={(open) => setChatComposerPanel(open ? "poll" : null)}
                 />
+                {chatComposerPanel === "emoji" && (
+                  <EmojiPicker
+                    onClose={() => setChatComposerPanel(null)}
+                    onPick={(emoji) => {
+                      setChatText((value) => `${value}${emoji}`);
+                    }}
+                  />
+                )}
                 {chatComposerPanel === "gif" && (
                   <GifPicker
                     onClose={() => setChatComposerPanel(null)}

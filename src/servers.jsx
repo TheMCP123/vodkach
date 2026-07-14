@@ -214,6 +214,28 @@ function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
   const [duration, setDuration] = useState("0");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const pollPanelRef = useRef(null);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    const closeOutside = (event) => {
+      if (!pollPanelRef.current?.contains(event.target)) onOpenChange?.(false);
+    };
+    const closeEscape = (event) => {
+      if (event.key === "Escape") onOpenChange?.(false);
+    };
+    const timer = window.setTimeout(() => {
+      document.addEventListener("pointerdown", closeOutside);
+    }, 0);
+    document.addEventListener("keydown", closeEscape);
+
+    return () => {
+      window.clearTimeout(timer);
+      document.removeEventListener("pointerdown", closeOutside);
+      document.removeEventListener("keydown", closeEscape);
+    };
+  }, [open, onOpenChange]);
 
   async function submit(event) {
     event?.preventDefault?.();
@@ -235,7 +257,7 @@ function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
     <>
       <button type="button" className="composerPollButton" onClick={() => onOpenChange?.(!open)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.svg" alt="" /></button>
       {open ? (
-        <div className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
+        <div ref={pollPanelRef} className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
             <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" onClick={() => onOpenChange?.(false)}><X /></button></header>
             <label><span>Question</span><input autoFocus value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={300} /></label>
             <div className="serverPollOptionInputs">
@@ -355,7 +377,12 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             </div>
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
-                <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder={`Message #${activeChannel?.name || "channel"}`} />
+                <div className="composerTextField">
+                  <div className={`composerTextOverlay ${text ? "" : "placeholder"}`} aria-hidden="true">
+                    {text ? <NotoEmojiText text={text} /> : `Message #${activeChannel?.name || "channel"}`}
+                  </div>
+                  <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder="" aria-label={`Message #${activeChannel?.name || "channel"}`} />
+                </div>
                 <div className="composerActions">
                   <button type="button" className="composerIconButton emojiButton" onClick={() => setComposerPanel((value) => value === "emoji" ? null : "emoji")} aria-label="Open emoji picker" title="Emoji"><img className="composerActionIcon" src="/ui/emojis.svg" alt="" /></button>
                   <button type="button" className="gifButton dmGifButton" onClick={() => setComposerPanel((value) => value === "gif" ? null : "gif")} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>

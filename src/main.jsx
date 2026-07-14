@@ -4023,40 +4023,48 @@ function WebApp() {
               ) : null}
 
               <div className="composerInputRow">
-                <textarea
-                  value={chatText}
-                  onChange={(event) => {
-                    const value = expandEmojiShortcodes(event.target.value);
-                    setChatText(value);
-                    publishTyping(Boolean(value.trim()));
-                    if (typingStopTimerRef.current) window.clearTimeout(typingStopTimerRef.current);
-                    typingStopTimerRef.current = window.setTimeout(() => publishTyping(false), 1800);
-                  }}
-                  onKeyDown={(event) => {
-                    if (
-                      event.key === "Enter" &&
-                      !event.shiftKey &&
-                      !event.nativeEvent.isComposing
-                    ) {
-                      event.preventDefault();
-                      event.currentTarget.form?.requestSubmit();
-                    }
-                  }}
-                  onContextMenu={updateTextSelectionMenu}
-                  onBlur={() => {
-                    window.setTimeout(() => {
-                      const active = document.activeElement;
-                      if (!active?.closest?.(".textFormatMenu")) {
-                        setTextFormatMenu(null);
+                <div className="composerTextField">
+                  <div className={`composerTextOverlay ${chatText ? "" : "placeholder"}`} aria-hidden="true">
+                    {chatText ? (
+                      <NotoEmojiText text={chatText} />
+                    ) : (
+                      editingMessage ? "Edit message" : `Message ${activeTitle}`
+                    )}
+                  </div>
+                  <textarea
+                    value={chatText}
+                    onChange={(event) => {
+                      const value = expandEmojiShortcodes(event.target.value);
+                      setChatText(value);
+                      publishTyping(Boolean(value.trim()));
+                      if (typingStopTimerRef.current) window.clearTimeout(typingStopTimerRef.current);
+                      typingStopTimerRef.current = window.setTimeout(() => publishTyping(false), 1800);
+                    }}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        !event.shiftKey &&
+                        !event.nativeEvent.isComposing
+                      ) {
+                        event.preventDefault();
+                        event.currentTarget.form?.requestSubmit();
                       }
-                    }, 80);
-                  }}
-                  placeholder={
-                    editingMessage ? "Edit message" : `Message ${activeTitle}`
-                  }
-                  maxLength={2000}
-                  rows={1}
-                />
+                    }}
+                    onContextMenu={updateTextSelectionMenu}
+                    onBlur={() => {
+                      window.setTimeout(() => {
+                        const active = document.activeElement;
+                        if (!active?.closest?.(".textFormatMenu")) {
+                          setTextFormatMenu(null);
+                        }
+                      }, 80);
+                    }}
+                    placeholder=""
+                    aria-label={editingMessage ? "Edit message" : `Message ${activeTitle}`}
+                    maxLength={2000}
+                    rows={1}
+                  />
+                </div>
                 <div className="composerActions">
                   <button
                     type="button"

@@ -317,7 +317,8 @@ export function NotoEmojiText({ text, className = "" }) {
 
 export function EmojiPicker({ onPick, onClose }) {
   const [query, setQuery] = useState("");
-  const [group, setGroup] = useState("smileys");
+  const [group, setGroup] = useState("all");
+  const categoryRef = useRef(null);
   const panelRef = useRef(null);
   const searchRef = useRef(null);
 
@@ -343,7 +344,7 @@ export function EmojiPicker({ onPick, onClose }) {
 
   const visible = useMemo(() => {
     const normalized = query.trim().toLowerCase();
-    const source = normalized
+    const source = normalized || group === "all"
       ? ALL_EMOJIS
       : ALL_EMOJIS.filter((item) => item.group === group);
 
@@ -379,7 +380,32 @@ export function EmojiPicker({ onPick, onClose }) {
         />
       </label>
 
-      <nav className="emojiCategoryTabs" aria-label="Emoji categories">
+      <nav
+        className="emojiCategoryTabs"
+        ref={categoryRef}
+        onWheel={(event) => {
+          const node = categoryRef.current;
+          if (!node || node.scrollWidth <= node.clientWidth) return;
+          const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX)
+            ? event.deltaY
+            : event.deltaX;
+          if (!delta) return;
+          event.preventDefault();
+          event.stopPropagation();
+          node.scrollBy({ left: delta, behavior: "auto" });
+        }}
+        aria-label="Emoji categories"
+      >
+        <button
+          type="button"
+          className={group === "all" && !query ? "active" : ""}
+          onClick={() => {
+            setGroup("all");
+            setQuery("");
+          }}
+        >
+          All
+        </button>
         {EMOJI_GROUPS.map((category) => (
           <button
             type="button"

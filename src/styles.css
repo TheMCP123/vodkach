@@ -13745,3 +13745,268 @@ button.active .inlineUiIcon {
     max-width: 68px !important;
   }
 }
+
+
+/* Patch 115 — unified Emoji/GIF/Poll behavior and final composer emoji rendering. */
+
+/* The actual textarea keeps input, selection and caret. The visible layer renders Noto SVG. */
+.composerTextField {
+  position: relative !important;
+  flex: 1 1 auto !important;
+  align-self: stretch !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  overflow: hidden !important;
+}
+
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 2 !important;
+  display: block !important;
+  width: 100% !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 5px 0 !important;
+  overflow: hidden !important;
+  resize: none !important;
+  color: transparent !important;
+  caret-color: #f1f2f5 !important;
+  -webkit-text-fill-color: transparent !important;
+  background: transparent !important;
+  white-space: pre-wrap !important;
+}
+
+.composerTextOverlay {
+  position: absolute !important;
+  inset: 0 !important;
+  z-index: 1 !important;
+  display: block !important;
+  height: 32px !important;
+  padding: 5px 0 !important;
+  overflow: hidden !important;
+  color: #eef0f3 !important;
+  font: inherit !important;
+  font-size: inherit !important;
+  line-height: 22px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  pointer-events: none !important;
+}
+
+.composerTextOverlay.placeholder {
+  color: #858b96 !important;
+}
+
+.composerTextOverlay .notoEmoji {
+  width: 1.16em !important;
+  height: 1.16em !important;
+  margin: 0 .025em !important;
+  vertical-align: -.18em !important;
+}
+
+/* Same shell geometry for all three composer panels. */
+.emojiPicker,
+.gifPickerPortal,
+.pollCreatePopover {
+  width: min(460px, calc(100vw - 24px)) !important;
+  max-width: min(460px, calc(100vw - 24px)) !important;
+  border-radius: 7px !important;
+}
+
+.emojiPicker .composerPopoverHeader,
+.gifPickerPortal .composerPopoverHeader,
+.pollCreatePopover > header {
+  min-height: 62px !important;
+  border-radius: 6px 6px 0 0 !important;
+}
+
+/* Emoji categories now support horizontal wheel scrolling and include All. */
+.emojiCategoryTabs {
+  position: relative !important;
+  z-index: 3 !important;
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  overscroll-behavior-x: contain !important;
+  background: #17181c !important;
+  background-image: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  scrollbar-width: none !important;
+}
+
+.emojiCategoryTabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.emojiCategoryTabs::before,
+.emojiCategoryTabs::after {
+  content: none !important;
+  display: none !important;
+}
+
+.emojiCategoryTabs button {
+  flex: 0 0 auto !important;
+}
+
+/* Emoji panel matches the spacing language of GIF/Poll. */
+.emojiPicker {
+  height: min(520px, calc(100vh - 130px)) !important;
+  grid-template-rows: auto auto auto minmax(0, 1fr) !important;
+}
+
+.emojiSearchField {
+  margin: 12px 14px 9px !important;
+}
+
+.emojiCategoryTabs {
+  padding: 0 14px 10px !important;
+  gap: 6px !important;
+}
+
+.emojiGrid {
+  grid-template-columns: repeat(8, minmax(0, 1fr)) !important;
+  gap: 5px !important;
+  padding: 10px 13px 13px !important;
+}
+
+.emojiGrid button {
+  min-width: 0 !important;
+  aspect-ratio: 1 / 1 !important;
+  padding: 7px !important;
+  border-radius: 6px !important;
+}
+
+.emojiGrid .notoEmoji {
+  width: 29px !important;
+  height: 29px !important;
+}
+
+/* GIFs use the available panel width instead of tiny thumbnail islands. */
+.gifPickerBody {
+  min-height: 300px !important;
+  max-height: min(450px, calc(100vh - 260px)) !important;
+  padding: 0 12px 12px !important;
+}
+
+.gifGrid {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 8px !important;
+  width: 100% !important;
+}
+
+.gifGrid button {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 102px !important;
+  min-height: 102px !important;
+  max-height: 102px !important;
+  aspect-ratio: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border-radius: 6px !important;
+  background: #0f1013 !important;
+}
+
+.gifGrid img {
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  object-fit: cover !important;
+}
+
+/* Poll body remains scrollable, while actions are always fully visible. */
+.pollCreatePopover {
+  display: flex !important;
+  flex-direction: column !important;
+  max-height: min(650px, calc(100vh - 105px)) !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  padding-bottom: 0 !important;
+  scrollbar-gutter: stable !important;
+}
+
+.pollCreatePopover > footer {
+  position: sticky !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  z-index: 12 !important;
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  min-height: 56px !important;
+  margin-top: 12px !important;
+  padding: 10px 14px !important;
+  border-top: 1px solid rgba(255,255,255,.075) !important;
+  background: #17181c !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreatePopover > footer button {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 92px !important;
+  max-width: none !important;
+  min-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  overflow: visible !important;
+  white-space: nowrap !important;
+}
+
+.pollCreatePopover .pollDurationField,
+.pollCreatePopover > label:last-of-type {
+  margin-bottom: 8px !important;
+}
+
+.serverPollCreateModal .serverPollToggles {
+  margin-bottom: 4px !important;
+}
+
+/* Absolute anchor is the same for Emoji, GIF and Poll in both DM/server composers. */
+.messageComposer .composerInputRow > .emojiPicker,
+.messageComposer .composerInputRow > .gifPickerPortal,
+.messageComposer .composerActions .pollCreatePopover,
+.serverMessageComposer > .emojiPicker,
+.serverMessageComposer > .gifPickerPortal,
+.serverMessageComposer .composerActions .pollCreatePopover {
+  position: absolute !important;
+  left: auto !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 920 !important;
+}
+
+@media (max-width: 700px) {
+  .emojiGrid {
+    grid-template-columns: repeat(7, minmax(0, 1fr)) !important;
+  }
+
+  .gifGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+
+  .gifGrid button {
+    height: 112px !important;
+    min-height: 112px !important;
+    max-height: 112px !important;
+  }
+}

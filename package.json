@@ -12,7 +12,8 @@
     "lucide-react": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "vite": "latest"
+    "vite": "latest",
+    "@fontsource/noto-color-emoji": "5.2.12"
   },
   "devDependencies": {
     "typescript": "latest",

@@ -384,10 +384,7 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <div className="composerTextField">
-                  <div className={`composerTextOverlay ${text ? "" : "placeholder"}`} aria-hidden="true">
-                    {text ? <NotoEmojiText text={text} /> : `Message #${activeChannel?.name || "channel"}`}
-                  </div>
-                  <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder="" aria-label={`Message #${activeChannel?.name || "channel"}`} />
+                  <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder={`Message #${activeChannel?.name || "channel"}`} aria-label={`Message #${activeChannel?.name || "channel"}`} />
                 </div>
                 <div className="composerActions">
                   <button type="button" className="composerIconButton emojiButton" onClick={() => setComposerPanel((value) => value === "emoji" ? null : "emoji")} aria-label="Open emoji picker" title="Emoji"><img className="composerActionIcon" src="/ui/emojis.svg" alt="" /></button>

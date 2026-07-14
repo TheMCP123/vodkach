@@ -15360,3 +15360,81 @@ button.active .inlineUiIcon {
 }
 
 /* Do not touch the approved GIF layout. */
+
+
+/* Patch 123 — remove the broken dual-layer editor entirely. */
+
+/*
+ * The previous transparent textarea + SVG overlay could never preserve native
+ * caret width: one Unicode emoji and one 24px SVG occupied different geometry.
+ * Editable controls now render directly with the bundled Noto Color Emoji font.
+ */
+.composerTextOverlay {
+  display: none !important;
+}
+
+.composerTextField {
+  position: relative !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  overflow: hidden !important;
+  isolation: auto !important;
+}
+
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  overflow: hidden !important;
+  resize: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: #f4f5f7 !important;
+  -webkit-text-fill-color: #f4f5f7 !important;
+  caret-color: #ffffff !important;
+  text-shadow: none !important;
+
+  font-family: "Noto Sans", "Noto Color Emoji", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 450 !important;
+  line-height: 24px !important;
+  white-space: pre-wrap !important;
+}
+
+.messageComposer .composerTextField > textarea::placeholder,
+.serverMessageComposer .composerTextField > textarea::placeholder {
+  color: #858b96 !important;
+  -webkit-text-fill-color: #858b96 !important;
+  opacity: 1 !important;
+}
+
+.messageComposer .composerTextField > textarea::selection,
+.serverMessageComposer .composerTextField > textarea::selection {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #315fc9 !important;
+  text-shadow: none !important;
+}
+
+/*
+ * Stop old overlay-era rules from affecting editable emoji metrics.
+ * Each emoji is now one native grapheme/caret position, exactly like Discord.
+ */
+.messageComposer .composerTextField .notoEmojiGlyph,
+.serverMessageComposer .composerTextField .notoEmojiGlyph {
+  display: none !important;
+}

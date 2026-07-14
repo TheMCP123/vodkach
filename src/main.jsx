@@ -4024,13 +4024,6 @@ function WebApp() {
 
               <div className="composerInputRow">
                 <div className="composerTextField">
-                  <div className={`composerTextOverlay ${chatText ? "" : "placeholder"}`} aria-hidden="true">
-                    {chatText ? (
-                      <NotoEmojiText text={chatText} />
-                    ) : (
-                      editingMessage ? "Edit message" : `Message ${activeTitle}`
-                    )}
-                  </div>
                   <textarea
                     value={chatText}
                     onChange={(event) => {
@@ -4059,7 +4052,7 @@ function WebApp() {
                         }
                       }, 80);
                     }}
-                    placeholder=""
+                    placeholder={editingMessage ? "Edit message" : `Message ${activeTitle}`}
                     aria-label={editingMessage ? "Edit message" : `Message ${activeTitle}`}
                     maxLength={2000}
                     rows={1}

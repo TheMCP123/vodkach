@@ -11728,3 +11728,89 @@ a.authGoogleButton {
 @media(max-width:1050px){.serverWorkspaceV2{grid-template-columns:210px minmax(0,1fr) 190px !important}.serverMemberRail{padding-left:6px;padding-right:6px}}
 @media(max-width:800px){.serverWorkspaceV2{grid-template-columns:190px minmax(0,1fr) !important}.serverMemberRail{display:none}.serverDiscoveryPage>header{align-items:stretch;flex-direction:column}.serverDiscoveryPage>header label{width:100%}}
 @media(max-width:620px){.serverWorkspaceV2{grid-template-columns:1fr !important}.serverChannelRail{display:none}.serverSettingsModal{grid-template-columns:74px minmax(0,1fr)}.serverSettingsIdentity>div,.serverSettingsModal>aside>button{font-size:0}.serverSettingsModal>main{padding:38px 18px}.discoveryCard{grid-template-columns:48px minmax(0,1fr)}.discoveryCard>.serverMark{width:48px!important;height:48px!important}.discoveryCard>button{grid-column:1/-1}}
+
+/* Patch 097: Servers mega update — restored rail, fullscreen settings, context actions */
+.appServers {
+  background:#0b0c0e !important;
+  border-right:1px solid rgba(255,255,255,.06) !important;
+  gap:10px !important;
+}
+.serverButton,
+.homeButton {
+  width:38px !important;
+  height:38px !important;
+  border-radius:10px !important;
+  background:#1e1f22 !important;
+  color:#b5bac1 !important;
+  box-shadow:none !important;
+}
+.serverButton:hover,.homeButton:hover { background:#2b2d31 !important;color:#fff !important; }
+.serverButton.active { background:#2b2d31 !important;color:#fff !important;border-radius:10px !important;box-shadow:none !important; }
+.serverButton.serverIdentity { padding:0 !important;overflow:visible !important;filter:none !important;transform:none !important;background:transparent !important; }
+.serverButton.serverIdentity:hover { transform:none !important;filter:none !important;border-radius:10px !important; }
+.serverButton.serverIdentity.active { background:transparent !important;box-shadow:none !important; }
+.serverButton.serverIdentity.active::before { left:-9px !important;height:24px !important;background:#e7e9ed !important;box-shadow:none !important; }
+.serverMark { border-radius:10px !important;background:var(--server-color,#2b2d31) !important;box-shadow:none !important;color:#e9eaed !important;font-weight:800 !important;overflow:hidden; }
+.serverMark img { width:100%;height:100%;object-fit:cover;display:block; }
+.serverMark.hasImage { background:#202126 !important; }
+.serverDivider { background:rgba(255,255,255,.1) !important; }
+.discoveryButton,.discoveryButton.active { box-shadow:none !important;filter:none !important; }
+
+/* Discovery lives in the regular navigation again and has no glow. */
+.serverDiscoveryPage { background:#15161a !important; }
+.discoveryTitle>svg { color:#c6c9cf !important;background:#24262b !important;box-shadow:none !important; }
+.discoveryCard { background:#1c1d21 !important;box-shadow:none !important; }
+.discoveryCard:hover { border-color:rgba(255,255,255,.12);background:#202126 !important; }
+
+/* Server workspace and composer remain pinned to the bottom. */
+.serverWorkspaceV3 { grid-template-columns:240px minmax(0,1fr) 238px !important;min-width:0;min-height:0;height:100vh;overflow:hidden; }
+.serverChannelRail { min-height:0;display:flex !important;flex-direction:column; }
+.serverChannelRail>header { min-height:58px;padding:0 14px !important;display:flex;align-items:center;border-bottom:1px solid rgba(255,255,255,.055); }
+.serverChannelRail>header>div { min-width:0;display:grid;gap:2px; }
+.serverChannelRail>header strong,.serverChannelRail>header span { overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.serverChannelRail>header span { color:#777c86;font-size:.68rem; }
+.serverChatPane { min-height:0;height:100%;grid-template-rows:58px minmax(0,1fr) auto 78px !important;overflow:hidden; }
+.serverMessageList { min-height:0; }
+.serverComposer { align-self:end;margin:12px 14px 14px !important;height:52px !important;min-height:52px !important;max-height:52px !important; }
+.serverComposer input { height:50px !important;line-height:50px !important; }
+.serverComposer button { height:40px !important;align-self:center; }
+
+/* Server right-click menu. */
+.serverContextScrim { position:fixed;inset:0;z-index:20000;background:transparent; }
+.serverContextMenu { position:fixed;z-index:20001;width:218px;padding:7px;border:1px solid rgba(255,255,255,.08);border-radius:10px;background:#111216;box-shadow:0 18px 54px rgba(0,0,0,.58); }
+.serverContextMenu>strong { display:block;padding:7px 9px 8px;color:#777c86;font-size:.66rem;text-transform:uppercase;letter-spacing:.05em;overflow:hidden;text-overflow:ellipsis;white-space:nowrap; }
+.serverContextMenu>button { width:100%;height:36px;padding:0 9px;border:0;border-radius:7px;display:flex;align-items:center;gap:9px;color:#d1d4da;background:transparent;text-align:left; }
+.serverContextMenu>button:hover { color:#fff;background:#292b31; }
+
+/* Fullscreen server settings, matching the main settings shell. */
+.serverSettingsFullscreen { position:fixed;inset:0;z-index:18000;background:#111216; }
+.serverSettingsFrame { width:100vw;height:100vh;display:grid;grid-template-columns:minmax(220px,calc(50vw - 360px)) minmax(0,1fr);overflow:hidden;background:#17181c; }
+.serverSettingsFrame>aside { min-width:220px;padding:42px 12px 26px max(18px,calc(100% - 220px));display:flex;flex-direction:column;gap:4px;border-right:1px solid rgba(255,255,255,.055);background:#101115; }
+.serverSettingsFrame>aside>button { width:210px;min-height:40px;padding:0 11px;border:0;border-radius:8px;display:flex;align-items:center;gap:9px;color:#a7abb4;background:transparent;text-align:left; }
+.serverSettingsFrame>aside>button:hover,.serverSettingsFrame>aside>button.active { color:#fff;background:#292b31; }
+.serverSettingsFrame>aside>button.danger { color:#ff6d73; }
+.serverSettingsFrame>main { position:relative;min-width:0;overflow-y:auto;padding:54px clamp(28px,5vw,74px) 80px;background:#1b1c20;scrollbar-width:thin;scrollbar-color:#525660 #1b1c20; }
+.serverSettingsFrame>main::-webkit-scrollbar { width:10px; }.serverSettingsFrame>main::-webkit-scrollbar-track{background:#1b1c20}.serverSettingsFrame>main::-webkit-scrollbar-thumb{border:2px solid #1b1c20;border-radius:10px;background:#50545d}
+.serverSettingsFrame section { width:min(720px,100%); }
+.serverSettingsFrame h2 { margin:0 0 5px;font-size:1.35rem; }.serverSettingsFrame section>p { margin:0 0 26px;color:#858a94; }
+.serverSettingsIdentity { width:210px; }
+.serverSettingsClose { position:fixed !important;right:28px !important;top:24px !important;z-index:4;border-radius:50% !important; }
+.serverSettingsFrame label { display:grid;gap:8px;margin:18px 0;color:#c8cbd2;font-size:.68rem;font-weight:850; }
+.serverSettingsFrame input:not([type=checkbox]):not([type=color]):not([type=file]),.serverSettingsFrame textarea,.serverSettingsFrame select { width:100%;box-sizing:border-box;border:1px solid rgba(255,255,255,.08);border-radius:9px;color:#fff;background:#0e0f12;outline:0; }
+.serverSettingsFrame input:not([type=checkbox]):not([type=color]):not([type=file]),.serverSettingsFrame select { height:42px;padding:0 12px; }
+.serverSettingsFrame textarea { min-height:112px;padding:11px 12px;resize:vertical; }
+.serverIconEditor { display:grid;grid-template-columns:96px minmax(0,1fr);gap:18px;align-items:center;padding:18px;border:1px solid rgba(255,255,255,.07);border-radius:13px;background:#111216; }
+.serverIconEditor>div { display:flex;align-items:center;gap:8px;flex-wrap:wrap; }.serverIconEditor span { width:100%;color:#777c86;font-size:.68rem; }
+.serverUploadButton,.serverIconEditor button { min-height:36px;padding:0 12px !important;border:0;border-radius:8px;display:flex !important;align-items:center;gap:7px;color:#fff !important;background:#292b31 !important;cursor:pointer; }
+.serverUploadButton input { display:none; }
+.serverPrimaryAction { display:inline-flex;align-items:center;gap:8px; }
+.serverSettingsChannelList,.serverBanList { display:grid;gap:7px; }
+.serverSettingsChannelList>div,.serverBanList>div { min-height:54px;padding:7px 9px 7px 13px;display:grid;grid-template-columns:20px minmax(0,1fr) 34px 34px;gap:8px;align-items:center;border:1px solid rgba(255,255,255,.07);border-radius:10px;background:#111216; }
+.serverSettingsChannelList>div>div,.serverBanList>div>div { min-width:0;display:grid;gap:3px; }.serverSettingsChannelList strong,.serverSettingsChannelList span,.serverBanList strong,.serverBanList span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.serverSettingsChannelList span,.serverBanList span{color:#777c86;font-size:.68rem}.serverSettingsChannelList button,.serverBanList button{height:34px;border:0;border-radius:8px;color:#b5b9c1;background:#25272c}.serverSettingsChannelList button.danger{color:#ff7479}.serverBanList img{width:36px;height:36px;border-radius:10px;object-fit:cover}.serverBanList>div{grid-template-columns:36px minmax(0,1fr) auto}
+.serverInlineEditor { margin-top:14px;padding:15px;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:#111216; }.serverInlineEditor>div{display:flex;justify-content:flex-end;gap:8px}.serverInlineEditor button{height:36px;padding:0 13px;border:0;border-radius:8px;color:#fff;background:#292b31}.serverInlineEditor button.primary{background:#fc0303}
+.serverInviteBuilder { margin-bottom:18px;padding:14px;display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end;border:1px solid rgba(255,255,255,.07);border-radius:11px;background:#111216; }.serverInviteBuilder label{margin:0}.serverInviteBuilder>button{height:42px;padding:0 13px;border:0;border-radius:9px;display:flex;align-items:center;gap:7px;color:#fff;background:#fc0303;font-weight:800}
+.serverSettingsMembers.expanded>div { grid-template-columns:36px minmax(0,1fr) auto 110px 34px 34px; }.serverSettingsMembers select { height:34px !important;padding:0 8px !important; }.serverSettingsMembers button { width:34px;height:34px;border:0;border-radius:8px;color:#b7bbc3;background:#25272c; }.serverSettingsMembers button.danger { color:#ff7379; }
+
+@media(max-width:1050px){.serverWorkspaceV3{grid-template-columns:210px minmax(0,1fr) 190px !important}.serverSettingsFrame{grid-template-columns:230px minmax(0,1fr)}.serverSettingsFrame>aside{padding-left:10px}.serverSettingsMembers.expanded>div{grid-template-columns:36px minmax(0,1fr) auto 34px 34px}.serverSettingsMembers select{display:none}}
+@media(max-width:800px){.serverWorkspaceV3{grid-template-columns:190px minmax(0,1fr) !important}.serverMemberRail{display:none}.serverSettingsFrame{grid-template-columns:76px minmax(0,1fr)}.serverSettingsFrame>aside{min-width:76px;padding:42px 8px}.serverSettingsIdentity{width:60px}.serverSettingsIdentity>div{display:none}.serverSettingsFrame>aside>button{width:60px;font-size:0;justify-content:center}.serverSettingsFrame>aside>button svg{width:18px;height:18px}.serverInviteBuilder{grid-template-columns:1fr}.serverDiscoveryPage>header{align-items:stretch;flex-direction:column}.serverDiscoveryPage>header label{width:100%}}
+@media(max-width:620px){.serverWorkspaceV3{grid-template-columns:1fr !important}.serverChannelRail{display:none !important}.serverSettingsFrame>main{padding:52px 16px 70px}.serverIconEditor{grid-template-columns:72px minmax(0,1fr)}.serverIconEditor .serverMark{width:72px!important;height:72px!important}.serverSettingsMembers.expanded>div{grid-template-columns:36px minmax(0,1fr) auto}.serverSettingsMembers.expanded em,.serverSettingsMembers.expanded select,.serverSettingsMembers.expanded button{display:none}}

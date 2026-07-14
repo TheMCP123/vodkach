@@ -1,21 +1,8 @@
 import { getCurrentUser, json } from "../../_shared/auth.js";
-function id(prefix) { const b = new Uint8Array(16); crypto.getRandomValues(b); return `${prefix}_${[...b].map(x=>x.toString(16).padStart(2,'0')).join('')}`; }
-async function member(env, serverId, userId) { return env.DB.prepare(`SELECT role FROM server_members WHERE server_id=? AND user_id=? LIMIT 1`).bind(serverId,userId).first(); }
-export async function onRequestGet({ request, env }) {
-  const user = await getCurrentUser(request, env); if (!user) return json({ok:false,error:"Not authenticated"},{status:401});
-  const serverId = new URL(request.url).searchParams.get("server_id") || "";
-  if (!await member(env,serverId,user.id)) return json({ok:false,error:"Server not found"},{status:404});
-  const rows = await env.DB.prepare(`SELECT id, server_id, name, position FROM server_channels WHERE server_id=? ORDER BY position, created_at`).bind(serverId).all();
-  return json({ok:true,channels:rows.results||[]});
-}
-export async function onRequestPost({ request, env }) {
-  const user = await getCurrentUser(request, env); if (!user) return json({ok:false,error:"Not authenticated"},{status:401});
-  let data; try { data=await request.json(); } catch { data={}; }
-  const serverId=String(data.server_id||""); const name=String(data.name||"").trim().toLowerCase().replace(/[^a-z0-9-_ ]/g,"").replace(/\s+/g,"-").slice(0,30);
-  const membership=await member(env,serverId,user.id); if (!membership || membership.role!=="owner") return json({ok:false,error:"Only the owner can create channels"},{status:403});
-  if (!name) return json({ok:false,error:"Channel name is required"},{status:400});
-  const row=await env.DB.prepare(`SELECT COALESCE(MAX(position),-1)+1 AS p FROM server_channels WHERE server_id=?`).bind(serverId).first();
-  const channel={id:id("sch"),server_id:serverId,name,position:Number(row?.p||0)};
-  await env.DB.prepare(`INSERT INTO server_channels (id,server_id,name,position) VALUES (?,?,?,?)`).bind(channel.id,serverId,name,channel.position).run();
-  return json({ok:true,channel});
-}
+function id(prefix){const b=new Uint8Array(16);crypto.getRandomValues(b);return `${prefix}_${[...b].map(x=>x.toString(16).padStart(2,'0')).join('')}`;}
+async function member(env,s,u){return env.DB.prepare(`SELECT role FROM server_members WHERE server_id=? AND user_id=?`).bind(s,u).first();}
+function cleanName(v){return String(v||"").trim().toLowerCase().replace(/[^a-z0-9-_ ]/g,"").replace(/\s+/g,"-").slice(0,30);}
+export async function onRequestGet({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});const s=new URL(request.url).searchParams.get("server_id")||"";if(!await member(env,s,user.id))return json({ok:false,error:"Server not found"},{status:404});const rows=await env.DB.prepare(`SELECT id,server_id,name,position,topic FROM server_channels WHERE server_id=? ORDER BY position,created_at`).bind(s).all();return json({ok:true,channels:rows.results||[]});}
+export async function onRequestPost({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const s=String(d.server_id||""),m=await member(env,s,user.id);if(!m||!["owner","admin"].includes(m.role))return json({ok:false,error:"Missing permission"},{status:403});const name=cleanName(d.name);if(!name)return json({ok:false,error:"Channel name is required"},{status:400});const p=await env.DB.prepare(`SELECT COALESCE(MAX(position),-1)+1 p FROM server_channels WHERE server_id=?`).bind(s).first();const c={id:id("sch"),server_id:s,name,topic:String(d.topic||"").slice(0,160),position:Number(p?.p||0)};await env.DB.prepare(`INSERT INTO server_channels(id,server_id,name,position,topic) VALUES(?,?,?,?,?)`).bind(c.id,s,name,c.position,c.topic).run();return json({ok:true,channel:c});}
+export async function onRequestPatch({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const row=await env.DB.prepare(`SELECT sc.server_id,sm.role FROM server_channels sc JOIN server_members sm ON sm.server_id=sc.server_id AND sm.user_id=? WHERE sc.id=?`).bind(user.id,String(d.channel_id||"")).first();if(!row||!["owner","admin"].includes(row.role))return json({ok:false,error:"Missing permission"},{status:403});const name=cleanName(d.name);if(!name)return json({ok:false,error:"Channel name is required"},{status:400});const topic=String(d.topic||"").slice(0,160);await env.DB.prepare(`UPDATE server_channels SET name=?,topic=? WHERE id=?`).bind(name,topic,String(d.channel_id)).run();return json({ok:true,channel:{id:String(d.channel_id),server_id:row.server_id,name,topic}});}
+export async function onRequestDelete({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const idv=String(d.channel_id||""),row=await env.DB.prepare(`SELECT sc.server_id,sm.role,(SELECT COUNT(*) FROM server_channels x WHERE x.server_id=sc.server_id) channel_count FROM server_channels sc JOIN server_members sm ON sm.server_id=sc.server_id AND sm.user_id=? WHERE sc.id=?`).bind(user.id,idv).first();if(!row||!["owner","admin"].includes(row.role))return json({ok:false,error:"Missing permission"},{status:403});if(Number(row.channel_count)<=1)return json({ok:false,error:"A server must keep at least one channel"},{status:400});await env.DB.prepare(`DELETE FROM server_channels WHERE id=?`).bind(idv).run();return json({ok:true,server_id:row.server_id,channel_id:idv});}

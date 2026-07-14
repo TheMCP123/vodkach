@@ -20,7 +20,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
-import { ServerCreateModal, ServerDiscovery, ServerWorkspace } from "./servers.jsx";
+import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark } from "./servers.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -28,7 +28,7 @@ import {
   ChatPollSystem,
   VoiceCameraSettings
 } from "./realtimeFeatures.jsx";
-import "./styles.css?vodkach=096";
+import "./styles.css?vodkach=097";
 
 const isWebApp =
   typeof window !== "undefined" && window.location.hostname.startsWith("web.");
@@ -766,6 +766,7 @@ function WebApp() {
   const [servers, setServers] = useState([]);
   const [activeServer, setActiveServer] = useState(null);
   const [serverModalOpen, setServerModalOpen] = useState(false);
+  const [serverContext, setServerContext] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatPolls, setChatPolls] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -3114,7 +3115,7 @@ function WebApp() {
 
   return (
     <main
-      className={`appShell ${view === "server" || view === "discovery" ? "serverMode" : ""} ${
+      className={`appShell ${view === "server" ? "serverMode" : ""} ${
         view === "chat" && activeChat?.other_user
           ? "withProfile"
           : "withoutProfile"
@@ -3124,13 +3125,21 @@ function WebApp() {
         <button className={`serverButton homeButton ${view !== "server" && view !== "discovery" ? "active" : ""}`} title="Home" onClick={() => { setView("friends"); setActiveServer(null); }}>
           <Home size={18} />
         </button>
-        <button className={`serverButton discoveryButton ${view === "discovery" ? "active" : ""}`} title="Discover servers" onClick={() => { setView("discovery"); setActiveServer(null); }}>
-          <Compass size={18} />
-        </button>
         <div className="serverDivider" />
         {servers.map((server) => (
-          <button key={server.id} className={`serverButton serverIdentity ${activeServer?.id === server.id && view === "server" ? "active" : ""}`} style={{"--server-color":server.icon_color || "#fc0303"}} title={server.name} onClick={() => { setActiveServer(server); setView("server"); }}>
-            <span>{server.icon_text || server.name?.[0]?.toUpperCase() || "V"}</span>
+          <button
+            key={server.id}
+            className={`serverButton serverIdentity ${activeServer?.id === server.id && view === "server" ? "active" : ""}`}
+            title={server.name}
+            onClick={() => { setActiveServer(server); setView("server"); setServerContext(null); }}
+            onContextMenu={(event) => {
+              event.preventDefault();
+              setActiveServer(server);
+              setView("server");
+              setServerContext({ server, x: event.clientX, y: event.clientY });
+            }}
+          >
+            <ServerMark server={server} size={38} />
           </button>
         ))}
         <button className="serverButton addServerButton" title="Create or join server" onClick={() => setServerModalOpen(true)}>
@@ -3138,7 +3147,7 @@ function WebApp() {
         </button>
       </aside>
 
-      {view !== "server" && view !== "discovery" && <aside className="appSidebar">
+      {view !== "server" && <aside className="appSidebar">
         <div className="sidebarNav">
           <button
             className={view === "friends" ? "sidebarNavButton active" : "sidebarNavButton"}
@@ -3148,6 +3157,15 @@ function WebApp() {
             <UserRound size={16} />
             Friends
             {incoming.length > 0 && <span className="navBadge">{incoming.length}</span>}
+          </button>
+
+          <button
+            className={view === "discovery" ? "sidebarNavButton active" : "sidebarNavButton"}
+            type="button"
+            onClick={() => { setView("discovery"); setActiveServer(null); setActiveChat(null); }}
+          >
+            <Compass size={16} />
+            Discovery
           </button>
 
           <button className="sidebarNavButton" type="button">
@@ -3175,7 +3193,7 @@ function WebApp() {
           {chats.map((chat) => (
             <button
               key={chat.id}
-              className={activeChat?.id === chat.id ? "channelButton chatUser active" : "channelButton chatUser"}
+              className={view === "chat" && activeChat?.id === chat.id ? "channelButton chatUser active" : "channelButton chatUser"}
               type="button"
               onClick={() => {
                 setActiveChat(chat);
@@ -4684,6 +4702,18 @@ function WebApp() {
           </button>
         )}
       </section>
+
+      {serverContext && (
+        <div className="serverContextScrim" onMouseDown={() => setServerContext(null)}>
+          <div className="serverContextMenu" style={{ left: Math.min(serverContext.x, window.innerWidth - 230), top: Math.min(serverContext.y, window.innerHeight - 250) }} onMouseDown={(event) => event.stopPropagation()}>
+            <strong>{serverContext.server.name}</strong>
+            <button onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
+            <button onClick={() => { window.dispatchEvent(new CustomEvent("vodkach:server-action", { detail: { action: "settings", serverId: serverContext.server.id } })); setServerContext(null); }}><Settings size={15}/>Server Settings</button>
+            <button onClick={() => { window.dispatchEvent(new CustomEvent("vodkach:server-action", { detail: { action: "create-channel", serverId: serverContext.server.id } })); setServerContext(null); }}><Plus size={15}/>Create Channel</button>
+            <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><UserRound size={15}/>Copy Invite Code</button>
+          </div>
+        </div>
+      )}
 
       <ServerCreateModal
         open={serverModalOpen}

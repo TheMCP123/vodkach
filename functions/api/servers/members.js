@@ -1,18 +1,6 @@
 import { getCurrentUser, json } from "../../_shared/auth.js";
-
-export async function onRequestGet({ request, env }) {
-  const user = await getCurrentUser(request, env);
-  if (!user) return json({ ok: false, error: "Not authenticated" }, { status: 401 });
-  const serverId = new URL(request.url).searchParams.get("server_id") || "";
-  const mine = await env.DB.prepare(`SELECT role FROM server_members WHERE server_id=? AND user_id=?`).bind(serverId,user.id).first();
-  if (!mine) return json({ ok:false,error:"Server not found"},{status:404});
-  const rows = await env.DB.prepare(`
-    SELECT u.id,u.username,u.display_name,u.avatar_url,u.verified,u.status_preference,u.last_seen_at,sm.role,sm.joined_at
-    FROM server_members sm JOIN users u ON u.id=sm.user_id
-    WHERE sm.server_id=?
-    ORDER BY CASE sm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,
-             CASE WHEN u.status_preference!='offline' AND datetime(u.last_seen_at)>=datetime('now','-90 seconds') THEN 0 ELSE 1 END,
-             lower(COALESCE(u.display_name,u.username))
-  `).bind(serverId).all();
-  return json({ok:true,members:(rows.results||[]).map(m=>({...m,verified:Boolean(m.verified)})),my_role:mine.role});
-}
+async function mine(env,s,u){return env.DB.prepare(`SELECT role FROM server_members WHERE server_id=? AND user_id=?`).bind(s,u).first();}
+export async function onRequestGet({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});const url=new URL(request.url),s=url.searchParams.get("server_id")||"",m=await mine(env,s,user.id);if(!m)return json({ok:false,error:"Server not found"},{status:404});if(url.searchParams.get("mode")==="bans"){if(!["owner","admin"].includes(m.role))return json({ok:false,error:"Missing permission"},{status:403});const r=await env.DB.prepare(`SELECT b.user_id,b.reason,b.created_at,u.username,u.display_name,u.avatar_url FROM server_bans b JOIN users u ON u.id=b.user_id WHERE b.server_id=? ORDER BY datetime(b.created_at) DESC`).bind(s).all();return json({ok:true,bans:r.results||[]});}const r=await env.DB.prepare(`SELECT u.id,u.username,u.display_name,u.avatar_url,u.verified,u.status_preference,u.last_seen_at,sm.role,sm.joined_at FROM server_members sm JOIN users u ON u.id=sm.user_id WHERE sm.server_id=? ORDER BY CASE sm.role WHEN 'owner' THEN 0 WHEN 'admin' THEN 1 ELSE 2 END,lower(COALESCE(u.display_name,u.username))`).bind(s).all();return json({ok:true,members:(r.results||[]).map(x=>({...x,verified:Boolean(x.verified)})),my_role:m.role});}
+export async function onRequestPatch({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const s=String(d.server_id||""),target=String(d.user_id||""),m=await mine(env,s,user.id);if(m?.role!=="owner")return json({ok:false,error:"Only the owner can manage roles"},{status:403});if(target===user.id)return json({ok:false,error:"You cannot change your owner role"},{status:400});const role=d.role==="admin"?"admin":"member";await env.DB.prepare(`UPDATE server_members SET role=? WHERE server_id=? AND user_id=?`).bind(role,s,target).run();return json({ok:true,server_id:s,user_id:target,role});}
+export async function onRequestDelete({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const s=String(d.server_id||""),target=String(d.user_id||""),m=await mine(env,s,user.id),tm=await mine(env,s,target);if(!m||!["owner","admin"].includes(m.role)||!tm||tm.role==="owner"||(m.role==="admin"&&tm.role==="admin"))return json({ok:false,error:"Missing permission"},{status:403});if(d.ban){await env.DB.prepare(`INSERT OR REPLACE INTO server_bans(server_id,user_id,banned_by_user_id,reason,created_at) VALUES(?,?,?,?,datetime('now'))`).bind(s,target,user.id,String(d.reason||"").slice(0,240)).run();}await env.DB.prepare(`DELETE FROM server_members WHERE server_id=? AND user_id=?`).bind(s,target).run();return json({ok:true,server_id:s,user_id:target,banned:Boolean(d.ban)});}
+export async function onRequestPost({request,env}){const user=await getCurrentUser(request,env);if(!user)return json({ok:false,error:"Not authenticated"},{status:401});let d={};try{d=await request.json();}catch{}const s=String(d.server_id||""),target=String(d.user_id||""),m=await mine(env,s,user.id);if(!m||!["owner","admin"].includes(m.role))return json({ok:false,error:"Missing permission"},{status:403});await env.DB.prepare(`DELETE FROM server_bans WHERE server_id=? AND user_id=?`).bind(s,target).run();return json({ok:true,server_id:s,user_id:target,unbanned:true});}

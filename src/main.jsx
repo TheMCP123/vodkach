@@ -24,7 +24,7 @@ import {
   ShoppingBag,
   ShieldCheck,
   UserRound,
-  Image as ImageIcon
+  Images
 } from "lucide-react";
 import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark, GifPicker } from "./servers.jsx";
 import {
@@ -4077,7 +4077,7 @@ function WebApp() {
                   onClick={() => setChatGifOpen((value) => !value)}
                   aria-label="Open GIF picker"
                 >
-                  <ImageIcon size={18} strokeWidth={2.2} />
+                  <Images size={19} strokeWidth={2.1} />
                 </button>
                 <ChatPollSystem
                   api={api}

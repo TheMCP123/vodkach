@@ -12395,3 +12395,88 @@ body:has(.serverContextMenuInline)::after {
   .messageComposer .composerInputRow > button[type="submit"],
   .serverMessageComposer .composerInputRow > button[type="submit"] { flex-basis: 68px !important; width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
 }
+
+/* Patch 104: reliable server settings portal + identical composer actions */
+.serverSettingsBackdrop {
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483600 !important;
+  display: grid !important;
+  place-items: stretch !important;
+  overflow: hidden !important;
+  background: #111216 !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+}
+.serverSettingsBackdrop .serverSettingsModal.pro {
+  position: relative !important;
+  inset: auto !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  min-width: 0 !important;
+  min-height: 0 !important;
+  max-width: none !important;
+  max-height: none !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+.serverSettingsBackdrop .serverSettingsModal.pro > main {
+  min-width: 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  gap: 8px !important;
+}
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton {
+  display: inline-grid !important;
+  place-items: center !important;
+  flex: 0 0 38px !important;
+  width: 38px !important;
+  min-width: 38px !important;
+  max-width: 38px !important;
+  height: 38px !important;
+  min-height: 38px !important;
+  max-height: 38px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #9da2ac !important;
+  line-height: 0 !important;
+}
+.messageComposer .gifButton svg,
+.serverMessageComposer .gifButton svg,
+.messageComposer .composerPollButton svg,
+.serverMessageComposer .composerPollButton svg {
+  width: 19px !important;
+  height: 19px !important;
+  display: block !important;
+  stroke-width: 2.1 !important;
+}
+.messageComposer .gifButton:hover,
+.serverMessageComposer .gifButton:hover,
+.messageComposer .composerPollButton:hover,
+.serverMessageComposer .composerPollButton:hover {
+  color: #fff !important;
+  background: #303239 !important;
+}
+@media (max-width:700px) {
+  .messageComposer .composerInputRow,
+  .serverMessageComposer .composerInputRow { gap: 5px !important; }
+}

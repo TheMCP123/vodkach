@@ -10,6 +10,9 @@ import {
   Smartphone,
   Box,
   Compass,
+  Copy,
+  LogOut,
+  Trash2,
   MoreVertical,
   Pin,
   Phone,
@@ -3134,8 +3137,7 @@ function WebApp() {
             onClick={() => { setActiveServer(server); setView("server"); setServerContext(null); }}
             onContextMenu={(event) => {
               event.preventDefault();
-              setActiveServer(server);
-              setView("server");
+              event.stopPropagation();
               setServerContext({ server, x: event.clientX, y: event.clientY });
             }}
           >
@@ -3144,6 +3146,13 @@ function WebApp() {
         ))}
         <button className="serverButton addServerButton" title="Create or join server" onClick={() => setServerModalOpen(true)}>
           <Plus size={19} />
+        </button>
+        <button
+          className={`serverButton discoveryButton ${view === "discovery" ? "active" : ""}`}
+          title="Discover servers"
+          onClick={() => { setView("discovery"); setActiveServer(null); setActiveChat(null); setServerContext(null); }}
+        >
+          <Compass size={18} />
         </button>
       </aside>
 
@@ -3157,15 +3166,6 @@ function WebApp() {
             <UserRound size={16} />
             Friends
             {incoming.length > 0 && <span className="navBadge">{incoming.length}</span>}
-          </button>
-
-          <button
-            className={view === "discovery" ? "sidebarNavButton active" : "sidebarNavButton"}
-            type="button"
-            onClick={() => { setView("discovery"); setActiveServer(null); setActiveChat(null); }}
-          >
-            <Compass size={16} />
-            Discovery
           </button>
 
           <button className="sidebarNavButton" type="button">
@@ -4708,9 +4708,24 @@ function WebApp() {
           <div className="serverContextMenu" style={{ left: Math.min(serverContext.x, window.innerWidth - 230), top: Math.min(serverContext.y, window.innerHeight - 250) }} onMouseDown={(event) => event.stopPropagation()}>
             <strong>{serverContext.server.name}</strong>
             <button onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
-            <button onClick={() => { window.dispatchEvent(new CustomEvent("vodkach:server-action", { detail: { action: "settings", serverId: serverContext.server.id } })); setServerContext(null); }}><Settings size={15}/>Server Settings</button>
-            <button onClick={() => { window.dispatchEvent(new CustomEvent("vodkach:server-action", { detail: { action: "create-channel", serverId: serverContext.server.id } })); setServerContext(null); }}><Plus size={15}/>Create Channel</button>
-            <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><UserRound size={15}/>Copy Invite Code</button>
+            <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><Copy size={15}/>Copy Invite Code</button>
+            <div className="serverContextSeparator" />
+            <button
+              className="danger"
+              onClick={async () => {
+                const target = serverContext.server;
+                const owner = target.role === "owner";
+                const confirmation = owner ? window.prompt(`Type ${target.name} to delete this server`) : "";
+                if (owner && confirmation !== target.name) return;
+                if (!owner && !window.confirm(`Leave ${target.name}?`)) return;
+                try {
+                  await api("/api/servers/settings", { method: "DELETE", body: JSON.stringify({ server_id: target.id, confirm_name: confirmation }) });
+                  setServers((items) => items.filter((item) => item.id !== target.id));
+                  if (activeServer?.id === target.id) { setActiveServer(null); setView("friends"); }
+                } catch (error) { setUiError(error.message); }
+                setServerContext(null);
+              }}
+            >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
           </div>
         </div>
       )}

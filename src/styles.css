@@ -15968,3 +15968,95 @@ button.danger:hover img[src$="/trash.svg"],
   visibility: visible !important;
   transform: none !important;
 }
+
+
+/* Patch 131 — multiline composer restored; emoji nodes stay atomic and stable. */
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: 138px !important;
+  align-items: flex-end !important;
+}
+
+.composerTextField {
+  height: auto !important;
+  min-height: 32px !important;
+  max-height: 120px !important;
+  overflow: hidden !important;
+}
+
+.emojiComposerEditor {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 32px !important;
+  max-height: 120px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 24px !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #41454e transparent !important;
+}
+
+.emojiComposerEditor::-webkit-scrollbar {
+  display: block !important;
+  width: 5px !important;
+}
+
+.emojiComposerEditor::-webkit-scrollbar-thumb {
+  border-radius: 999px !important;
+  background: #41454e !important;
+}
+
+.emojiComposerEditor br {
+  display: block !important;
+  content: "" !important;
+  line-height: 24px !important;
+}
+
+.emojiComposerEditor .composerInlineEmoji,
+.emojiComposerEditor .composerInlineEmojiFallback {
+  position: relative !important;
+  display: inline-block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  vertical-align: -5px !important;
+  object-fit: contain !important;
+  white-space: nowrap !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}
+
+/* Atomic nodes prevent adjacent emoji from merging, vanishing or eating the caret. */
+.emojiComposerEditor [data-emoji] {
+  user-select: all !important;
+  -webkit-user-select: all !important;
+  pointer-events: auto !important;
+}
+
+.composerActions {
+  align-self: flex-end !important;
+  margin-bottom: 0 !important;
+}
+
+/* Composer itself grows only when a real second line exists. */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  min-height: 50px !important;
+  height: auto !important;
+  max-height: 142px !important;
+}

@@ -225,31 +225,73 @@ function readComposerValue(root) {
   return value;
 }
 
-function appendComposerContent(root, value) {
-  const fragment = document.createDocumentFragment();
+function createComposerEmojiNode(emoji) {
+  const image = document.createElement("img");
+  image.className = "composerInlineEmoji";
+  image.src = notoEmojiUrl(emoji, EMOJI_HEXCODE_MAP.get(emoji) || "");
+  image.alt = emoji;
+  image.dataset.emoji = emoji;
+  image.draggable = false;
+  image.contentEditable = "false";
 
-  for (const part of splitGraphemes(String(value || ""))) {
-    if (EMOJI_GRAPHEME_RE.test(part)) {
-      const image = document.createElement("img");
-      image.className = "composerInlineEmoji";
-      image.src = notoEmojiUrl(part, EMOJI_HEXCODE_MAP.get(part) || "");
-      image.alt = part;
-      image.dataset.emoji = part;
-      image.draggable = false;
-      image.addEventListener("error", () => {
-        const fallback = document.createElement("span");
-        fallback.className = "composerInlineEmoji composerInlineEmojiFallback";
-        fallback.dataset.emoji = part;
-        fallback.textContent = part;
-        image.replaceWith(fallback);
-      }, { once: true });
-      fragment.appendChild(image);
-    } else {
-      fragment.appendChild(document.createTextNode(part));
+  image.addEventListener("error", () => {
+    const fallback = document.createElement("span");
+    fallback.className = "composerInlineEmoji composerInlineEmojiFallback";
+    fallback.dataset.emoji = emoji;
+    fallback.textContent = emoji;
+    fallback.contentEditable = "false";
+    image.replaceWith(fallback);
+  }, { once: true });
+
+  return image;
+}
+
+function createComposerFragment(value) {
+  const fragment = document.createDocumentFragment();
+  const lines = String(value || "").split("\n");
+
+  lines.forEach((line, lineIndex) => {
+    for (const part of splitGraphemes(line)) {
+      if (EMOJI_GRAPHEME_RE.test(part)) {
+        fragment.appendChild(createComposerEmojiNode(part));
+      } else {
+        fragment.appendChild(document.createTextNode(part));
+      }
     }
+
+    if (lineIndex < lines.length - 1) {
+      fragment.appendChild(document.createElement("br"));
+    }
+  });
+
+  return fragment;
+}
+
+function appendComposerContent(root, value) {
+  root.replaceChildren(createComposerFragment(value));
+}
+
+function insertComposerContent(root, value) {
+  const selection = window.getSelection();
+  if (!selection?.rangeCount || !root.contains(selection.anchorNode)) {
+    root.appendChild(createComposerFragment(value));
+    placeCaretAtEnd(root);
+    return;
   }
 
-  root.replaceChildren(fragment);
+  const range = selection.getRangeAt(0);
+  range.deleteContents();
+
+  const fragment = createComposerFragment(value);
+  const lastNode = fragment.lastChild;
+  range.insertNode(fragment);
+
+  if (lastNode) {
+    range.setStartAfter(lastNode);
+    range.collapse(true);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
 }
 
 function placeCaretAtEnd(root) {
@@ -278,57 +320,77 @@ export function EmojiComposerInput({
   onBlur
 }) {
   const ref = useRef(null);
-  const lastValueRef = useRef(String(value || ""));
+
+  function syncValue(root) {
+    if (!root) return;
+
+    let next = expandEmojiShortcodes(readComposerValue(root));
+    if (next.length > maxLength) next = next.slice(0, maxLength);
+
+    const current = readComposerValue(root);
+    if (next !== current) {
+      appendComposerContent(root, next);
+      placeCaretAtEnd(root);
+    }
+
+    onChange?.(next);
+  }
 
   useEffect(() => {
     const root = ref.current;
     const next = String(value || "");
     if (!root) return;
 
-    const current = readComposerValue(root);
-    if (current === next) {
-      lastValueRef.current = next;
-      return;
-    }
-
-    appendComposerContent(root, next);
-    lastValueRef.current = next;
-
-    if (document.activeElement === root) {
-      placeCaretAtEnd(root);
+    if (readComposerValue(root) !== next) {
+      appendComposerContent(root, next);
+      if (document.activeElement === root) placeCaretAtEnd(root);
     }
   }, [value]);
 
   function handleInput() {
     const root = ref.current;
-    if (!root) return;
-
-    let next = expandEmojiShortcodes(readComposerValue(root));
-    if (next.length > maxLength) next = next.slice(0, maxLength);
-
-    if (next !== readComposerValue(root)) {
-      appendComposerContent(root, next);
-      placeCaretAtEnd(root);
-    }
-
-    lastValueRef.current = next;
-    onChange?.(next);
+    syncValue(root);
 
     window.requestAnimationFrame(() => {
       const selection = window.getSelection();
-      if (!selection?.rangeCount || !root.contains(selection.anchorNode)) return;
+      if (!selection?.rangeCount || !root?.contains(selection.anchorNode)) return;
 
       const range = selection.getRangeAt(0).cloneRange();
       range.collapse(false);
       const caretRect = range.getBoundingClientRect();
       const rootRect = root.getBoundingClientRect();
 
-      if (caretRect.right > rootRect.right - 4) {
-        root.scrollLeft += caretRect.right - rootRect.right + 12;
-      } else if (caretRect.left < rootRect.left + 4) {
-        root.scrollLeft -= rootRect.left - caretRect.left + 12;
+      if (caretRect.bottom > rootRect.bottom - 3) {
+        root.scrollTop += caretRect.bottom - rootRect.bottom + 8;
+      } else if (caretRect.top < rootRect.top + 3) {
+        root.scrollTop -= rootRect.top - caretRect.top + 8;
       }
     });
+  }
+
+  function handleKeyDown(event) {
+    if (
+      event.key === "Enter" &&
+      event.shiftKey &&
+      !event.nativeEvent.isComposing
+    ) {
+      event.preventDefault();
+      insertComposerContent(event.currentTarget, "\n");
+      handleInput();
+      return;
+    }
+
+    onKeyDown?.(event);
+  }
+
+  function handlePaste(event) {
+    event.preventDefault();
+    const plain = event.clipboardData
+      .getData("text/plain")
+      .replace(/\r\n?/g, "\n");
+
+    insertComposerContent(event.currentTarget, plain);
+    handleInput();
   }
 
   return (
@@ -344,7 +406,8 @@ export function EmojiComposerInput({
       data-empty={!String(value || "") ? "true" : "false"}
       spellCheck="true"
       onInput={handleInput}
-      onKeyDown={onKeyDown}
+      onKeyDown={handleKeyDown}
+      onPaste={handlePaste}
       onContextMenu={onContextMenu}
       onBlur={onBlur}
     />

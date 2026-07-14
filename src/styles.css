@@ -15750,3 +15750,132 @@ button.active .inlineUiIcon {
   vertical-align: middle !important;
   background-size: 25px 25px !important;
 }
+
+
+/* Patch 128 — real Noto SVG editor and square emoji hitboxes. */
+
+/* The old native textarea is gone from the composer. */
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  display: none !important;
+}
+
+.emojiComposerEditor {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #f4f5f7 !important;
+  caret-color: #ffffff !important;
+  font-family: "Noto Sans", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 450 !important;
+  line-height: 24px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  box-sizing: border-box !important;
+  scrollbar-width: none !important;
+}
+
+.emojiComposerEditor::-webkit-scrollbar {
+  display: none !important;
+}
+
+.emojiComposerEditor[data-empty="true"]::before {
+  content: attr(data-placeholder);
+  color: #858b96;
+  pointer-events: none;
+}
+
+.emojiComposerEditor::selection,
+.emojiComposerEditor *::selection {
+  color: #ffffff !important;
+  background: #315fc9 !important;
+}
+
+/* One emoji = one real 22px square node in the Type Bar. */
+.composerInlineEmoji {
+  display: inline-block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  vertical-align: -5px !important;
+  object-fit: contain !important;
+  user-select: all !important;
+  -webkit-user-select: all !important;
+}
+
+/* Sent messages use real inline images with square selection/hitbox. */
+.notoEmojiGlyph {
+  display: inline-block !important;
+  width: 1.12em !important;
+  min-width: 1.12em !important;
+  max-width: 1.12em !important;
+  height: 1.12em !important;
+  min-height: 1.12em !important;
+  max-height: 1.12em !important;
+  margin: 0 .035em !important;
+  padding: 0 !important;
+  vertical-align: -.19em !important;
+  object-fit: contain !important;
+  background: none !important;
+  user-select: all !important;
+  -webkit-user-select: all !important;
+}
+
+/* Preserve picker sizes. */
+.emojiPicker .emojiGrid > button > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:hover > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:focus-visible > .notoEmojiGlyph {
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+.emojiPicker .emojiToneMenu > button > .notoEmojiGlyph,
+.emojiPicker .emojiToneMenu > button:hover > .notoEmojiGlyph {
+  width: 25px !important;
+  min-width: 25px !important;
+  max-width: 25px !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  margin: 0 !important;
+  vertical-align: middle !important;
+}
+
+/* Trash icons are always red in destructive actions. */
+button.danger img[src$="/trash.svg"],
+.contextMenu button.danger .contextActionImage,
+.messageContextMenu button.danger .contextActionImage,
+.serverContextMenu button.danger img[src$="/trash.svg"],
+.roleActions button.danger img[src$="/trash.svg"],
+.pollTrashIcon {
+  filter: brightness(0) saturate(100%) invert(23%) sepia(99%) saturate(7482%) hue-rotate(356deg) brightness(101%) contrast(118%) !important;
+  opacity: 1 !important;
+}
+
+button.danger:hover img[src$="/trash.svg"],
+.contextMenu button.danger:hover .contextActionImage,
+.messageContextMenu button.danger:hover .contextActionImage {
+  filter: brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(6378%) hue-rotate(353deg) brightness(108%) contrast(113%) !important;
+}

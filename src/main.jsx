@@ -27,7 +27,7 @@ import {
   Images
 } from "lucide-react";
 import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark, GifPicker } from "./servers.jsx";
-import { EmojiPicker, NotoEmojiText, expandEmojiShortcodes } from "./emoji.jsx";
+import { EmojiPicker, EmojiComposerInput, NotoEmojiText, expandEmojiShortcodes } from "./emoji.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -4024,10 +4024,9 @@ function WebApp() {
 
               <div className="composerInputRow">
                 <div className="composerTextField">
-                  <textarea
+                  <EmojiComposerInput
                     value={chatText}
-                    onChange={(event) => {
-                      const value = expandEmojiShortcodes(event.target.value);
+                    onChange={(value) => {
                       setChatText(value);
                       publishTyping(Boolean(value.trim()));
                       if (typingStopTimerRef.current) window.clearTimeout(typingStopTimerRef.current);
@@ -4040,7 +4039,7 @@ function WebApp() {
                         !event.nativeEvent.isComposing
                       ) {
                         event.preventDefault();
-                        event.currentTarget.form?.requestSubmit();
+                        event.currentTarget.closest("form")?.requestSubmit();
                       }
                     }}
                     onContextMenu={updateTextSelectionMenu}
@@ -4053,9 +4052,8 @@ function WebApp() {
                       }, 80);
                     }}
                     placeholder={editingMessage ? "Edit message" : `Message ${activeTitle}`}
-                    aria-label={editingMessage ? "Edit message" : `Message ${activeTitle}`}
+                    ariaLabel={editingMessage ? "Edit message" : `Message ${activeTitle}`}
                     maxLength={2000}
-                    rows={1}
                   />
                 </div>
                 <div className="composerActions">

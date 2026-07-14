@@ -1,6 +1,6 @@
 import React,{useEffect,useMemo,useRef,useState}from'react';
 import{createPortal}from'react-dom';
-import{EmojiPicker,NotoEmojiText,expandEmojiShortcodes}from'./emoji.jsx';
+import{EmojiPicker,EmojiComposerInput,NotoEmojiText,expandEmojiShortcodes}from'./emoji.jsx';
 import{Ban,Check,ChevronDown,Clipboard,Compass,Copy,Crown,Gavel,Hash,ImagePlus,ChevronUp,LogOut,MessageSquare,Pencil,Plus,Save,Search,Settings,Shield,Trash2,UserMinus,Users,X,Volume2,Mic,MicOff,Clock3,GripVertical,AtSign,Images,BarChart3,Upload,Link2}from'lucide-react';
 async function api(path,options={}){const r=await fetch(path,{credentials:'include',...options,headers:{...(options.body?{'Content-Type':'application/json'}:{}),...(options.headers||{})}});const d=await r.json().catch(()=>({}));if(!r.ok||d.ok===false)throw new Error(d.error||`Request failed (${r.status})`);return d}
 const online=m=>m.status_preference!=='offline'&&m.last_seen_at&&Date.now()-Date.parse(m.last_seen_at)<90000;
@@ -384,7 +384,22 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <div className="composerTextField">
-                  <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder={`Message #${activeChannel?.name || "channel"}`} aria-label={`Message #${activeChannel?.name || "channel"}`} />
+                  <EmojiComposerInput
+                    value={text}
+                    onChange={setText}
+                    placeholder={`Message #${activeChannel?.name || "channel"}`}
+                    ariaLabel={`Message #${activeChannel?.name || "channel"}`}
+                    onKeyDown={(event) => {
+                      if (
+                        event.key === "Enter" &&
+                        !event.shiftKey &&
+                        !event.nativeEvent.isComposing
+                      ) {
+                        event.preventDefault();
+                        event.currentTarget.closest("form")?.requestSubmit();
+                      }
+                    }}
+                  />
                 </div>
                 <div className="composerActions">
                   <button type="button" className="composerIconButton emojiButton" onClick={() => setComposerPanel((value) => value === "emoji" ? null : "emoji")} aria-label="Open emoji picker" title="Emoji"><img className="composerActionIcon" src="/ui/emojis.svg" alt="" /></button>

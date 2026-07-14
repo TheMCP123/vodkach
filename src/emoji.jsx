@@ -143,15 +143,15 @@ export function expandEmojiShortcodes(value) {
 
 export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
   return (
-    <span
+    <img
       className={`notoEmoji notoEmojiGlyph ${className}`}
+      src={notoEmojiUrl(emoji, hexcode)}
+      alt={emoji}
       title={title}
-      role="img"
-      aria-label={emoji}
-      style={{ "--noto-emoji-image": `url("${notoEmojiUrl(emoji, hexcode)}")` }}
-    >
-      {emoji}
-    </span>
+      draggable="false"
+      loading="lazy"
+      decoding="async"
+    />
   );
 }
 
@@ -168,6 +168,134 @@ export function NotoEmojiText({ text, className = "" }) {
         )
       )}
     </span>
+  );
+}
+
+
+function readComposerValue(root) {
+  let value = "";
+
+  function walk(node) {
+    if (node.nodeType === Node.TEXT_NODE) {
+      value += node.nodeValue || "";
+      return;
+    }
+
+    if (node.nodeType !== Node.ELEMENT_NODE) return;
+
+    if (node.tagName === "IMG" && node.dataset.emoji) {
+      value += node.dataset.emoji;
+      return;
+    }
+
+    if (node.tagName === "BR") {
+      value += "\n";
+      return;
+    }
+
+    for (const child of node.childNodes) walk(child);
+  }
+
+  for (const child of root.childNodes) walk(child);
+  return value;
+}
+
+function appendComposerContent(root, value) {
+  const fragment = document.createDocumentFragment();
+
+  for (const part of splitGraphemes(String(value || ""))) {
+    if (EMOJI_GRAPHEME_RE.test(part)) {
+      const image = document.createElement("img");
+      image.className = "composerInlineEmoji";
+      image.src = notoEmojiUrl(part);
+      image.alt = part;
+      image.dataset.emoji = part;
+      image.draggable = false;
+      fragment.appendChild(image);
+    } else {
+      fragment.appendChild(document.createTextNode(part));
+    }
+  }
+
+  root.replaceChildren(fragment);
+}
+
+function placeCaretAtEnd(root) {
+  const selection = window.getSelection();
+  if (!selection) return;
+
+  const range = document.createRange();
+  range.selectNodeContents(root);
+  range.collapse(false);
+  selection.removeAllRanges();
+  selection.addRange(range);
+}
+
+export function EmojiComposerInput({
+  value,
+  onChange,
+  placeholder = "",
+  ariaLabel = "",
+  maxLength = 2000,
+  onKeyDown,
+  onContextMenu,
+  onBlur
+}) {
+  const ref = useRef(null);
+  const lastValueRef = useRef(String(value || ""));
+
+  useEffect(() => {
+    const root = ref.current;
+    const next = String(value || "");
+    if (!root) return;
+
+    const current = readComposerValue(root);
+    if (current === next) {
+      lastValueRef.current = next;
+      return;
+    }
+
+    appendComposerContent(root, next);
+    lastValueRef.current = next;
+
+    if (document.activeElement === root) {
+      placeCaretAtEnd(root);
+    }
+  }, [value]);
+
+  function handleInput() {
+    const root = ref.current;
+    if (!root) return;
+
+    let next = expandEmojiShortcodes(readComposerValue(root));
+    if (next.length > maxLength) next = next.slice(0, maxLength);
+
+    if (next !== readComposerValue(root)) {
+      appendComposerContent(root, next);
+      placeCaretAtEnd(root);
+    }
+
+    lastValueRef.current = next;
+    onChange?.(next);
+  }
+
+  return (
+    <div
+      ref={ref}
+      className="emojiComposerEditor"
+      contentEditable
+      suppressContentEditableWarning
+      role="textbox"
+      aria-label={ariaLabel || placeholder}
+      aria-multiline="true"
+      data-placeholder={placeholder}
+      data-empty={!String(value || "") ? "true" : "false"}
+      spellCheck="true"
+      onInput={handleInput}
+      onKeyDown={onKeyDown}
+      onContextMenu={onContextMenu}
+      onBlur={onBlur}
+    />
   );
 }
 

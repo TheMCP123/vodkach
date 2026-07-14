@@ -320,23 +320,11 @@ function ReplyActionIcon() {
 }
 
 function EditActionIcon() {
-  return (
-    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m5 17.8.8-4.1L15.9 3.6a2 2 0 0 1 2.8 0l1.7 1.7a2 2 0 0 1 0 2.8L10.3 18.2 6.2 19Z" />
-      <path d="m14.4 5.1 4.5 4.5" />
-    </svg>
-  );
+  return <img className="contextActionIcon contextActionImage" src="/ui/edit.svg" alt="" aria-hidden="true" />;
 }
 
 function DeleteActionIcon() {
-  return (
-    <svg className="contextActionIcon" viewBox="0 0 24 24" aria-hidden="true">
-      <path d="M4.5 7h15" />
-      <path d="M9 7V4.8h6V7" />
-      <path d="m7 7 .8 12h8.4L17 7" />
-      <path d="M10 10.5v5.5M14 10.5v5.5" />
-    </svg>
-  );
+  return <img className="contextActionIcon contextActionImage" src="/ui/trash.svg" alt="" aria-hidden="true" />;
 }
 
 function StatusGlyph({ status }) {
@@ -2907,7 +2895,7 @@ function WebApp() {
               />
 
               <label className="avatarEditButton" title="Upload avatar">
-                <span className="customPencilIcon" aria-hidden="true" />
+                <img className="customPencilIcon" src="/ui/edit.svg" alt="" aria-hidden="true" />
                 <input
                   type="file"
                   accept="image/png,image/jpeg,image/webp,image/gif"
@@ -4558,7 +4546,7 @@ function WebApp() {
                             draggable="false"
                           />
                           <label className="settingsAvatarEditButton" title="Upload avatar">
-                            <span className="customPencilIcon" aria-hidden="true" />
+                            <img className="customPencilIcon" src="/ui/edit.svg" alt="" aria-hidden="true" />
                             <input
                               type="file"
                               accept="image/*"
@@ -4825,7 +4813,7 @@ function WebApp() {
               } catch (error) { setUiError(error.message); }
               setServerContext(null);
             }}
-          >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
+          >{serverContext.server.role === "owner" ? <><img className="inlineUiIcon" src="/ui/trash.svg" alt="" aria-hidden="true"/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
         </div>
       ) : null}
 

@@ -147,20 +147,20 @@ function AcceptCallIcon() {
 
 
 function MicrophoneIcon({ muted = false }) {
+  if (muted) return <img className="callIcon callIconImage" src="/ui/mic-off.svg" alt="" aria-hidden="true" />;
   return (
     <svg className="callIcon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M12 14.4a3.9 3.9 0 0 0 3.9-3.9V6.9a3.9 3.9 0 1 0-7.8 0v3.6a3.9 3.9 0 0 0 3.9 3.9Z" />
       <path d="M5.6 10.5a6.4 6.4 0 0 0 12.8 0h-2a4.4 4.4 0 0 1-8.8 0h-2ZM11 16.8V20H8.3v2h7.4v-2H13v-3.2h-2Z" />
-      {muted ? <path className="callIconSlash" d="M3.8 2.9 21.1 20.2l-1.4 1.4L2.4 4.3l1.4-1.4Z" /> : null}
     </svg>
   );
 }
 
 function CameraIcon({ disabled = false }) {
+  if (disabled) return <img className="callIcon callIconImage" src="/ui/camera-off.svg" alt="" aria-hidden="true" />;
   return (
     <svg className="callIcon" viewBox="0 0 24 24" aria-hidden="true">
       <path d="M4.5 6h9A2.5 2.5 0 0 1 16 8.5v7a2.5 2.5 0 0 1-2.5 2.5h-9A2.5 2.5 0 0 1 2 15.5v-7A2.5 2.5 0 0 1 4.5 6ZM17 9l5-2.6v11.2L17 15V9Z" />
-      {disabled ? <path className="callIconSlash" d="M3.8 2.9 21.1 20.2l-1.4 1.4L2.4 4.3l1.4-1.4Z" /> : null}
     </svg>
   );
 }

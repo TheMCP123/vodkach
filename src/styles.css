@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Noto+Sans:ital,wght@0,300..900;1,300..900&display=swap");
+
 
 html,
 body,
@@ -13,7 +15,7 @@ body,
 
 body {
   overflow: hidden;
-  font-family: Inter, ui-sans-serif, system-ui, -apple-system,
+  font-family: "Noto Sans", ui-sans-serif, system-ui, -apple-system,
     BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -30,7 +32,7 @@ textarea {
 :root {
   color-scheme: dark;
   font-family:
-    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
+    "Noto Sans", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont,
     "Segoe UI", sans-serif;
   background: #08090b;
   color: #f4f5f7;
@@ -12775,4 +12777,55 @@ body:has(.serverContextMenuInline)::after {
     height: 32px !important; min-height: 32px !important; max-height: 32px !important;
     line-height: 32px !important;
   }
+}
+
+
+/* Vodkach universal typography and asset icons */
+html, body, #root, button, input, textarea, select, option {
+  font-family: "Noto Sans", ui-sans-serif, system-ui, sans-serif !important;
+}
+
+.settingsNavGroup > span,
+.settingsFieldLabel,
+.serverSettingsModal label,
+.serverSettingsFrame label,
+.serverChannelGroupTitle,
+.memberSectionLabel,
+.notesSectionLabel,
+.pollFieldLabel,
+.formLabel,
+.eyebrow {
+  font-variant-caps: all-small-caps;
+  letter-spacing: .055em;
+}
+
+.inlineUiIcon,
+.contextActionImage,
+.callIconImage {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  flex: 0 0 auto;
+  object-fit: contain;
+  color: currentColor;
+  filter: brightness(0) saturate(100%) invert(78%) sepia(4%) saturate(424%) hue-rotate(182deg) brightness(92%) contrast(91%);
+}
+
+button:hover .inlineUiIcon,
+button:hover .contextActionImage,
+button:hover .callIconImage,
+button.active .inlineUiIcon {
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.customPencilIcon {
+  width: 17px !important;
+  height: 17px !important;
+  object-fit: contain;
+  filter: brightness(0) saturate(100%) invert(100%);
+}
+
+.callIconImage {
+  width: 22px;
+  height: 22px;
 }

@@ -47,6 +47,7 @@ export function GifPicker({ onPick, onClose }) {
   const [loadingMore, setLoadingMore] = useState(false);
   const panelRef = useRef(null);
   const bodyRef = useRef(null);
+  const categoryRef = useRef(null);
   const requestIdRef = useRef(0);
 
   const effectiveQuery = query.trim() || categories.find(([name]) => name === category)?.[1] || "";
@@ -97,6 +98,13 @@ export function GifPicker({ onPick, onClose }) {
     if (node.scrollHeight - node.scrollTop - node.clientHeight < 180) loadPage({ append: true, cursor: next });
   }
 
+  function onCategoryWheel(event) {
+    const node = categoryRef.current;
+    if (!node || node.scrollWidth <= node.clientWidth) return;
+    event.preventDefault();
+    node.scrollLeft += Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+  }
+
   return (
     <section className="gifPicker gifPickerPortal composerPopover" ref={panelRef} role="dialog" aria-label="GIF picker">
       <header className="composerPopoverHeader gifPickerHeader">
@@ -110,7 +118,7 @@ export function GifPicker({ onPick, onClose }) {
         <Search size={17} />
         <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search KLIPY" />
       </div>
-      <nav className="gifCategoryTabs" aria-label="GIF categories">
+      <nav className="gifCategoryTabs" ref={categoryRef} onWheel={onCategoryWheel} aria-label="GIF categories">
         {categories.map(([name]) => <button type="button" key={name} className={category === name && !query.trim() ? "active" : ""} onClick={() => { setCategory(name); setQuery(""); }}>{name}</button>)}
       </nav>
       <div className="gifPickerBody" ref={bodyRef} onScroll={onScroll}>

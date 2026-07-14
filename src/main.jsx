@@ -2697,7 +2697,7 @@ function WebApp() {
     lastOwnMessageIdRef.current = optimisticId;
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
-    setChatGifOpen(false);
+    setChatComposerPanel(null);
     setReplyingTo(null);
     setReplyingToPoll(null);
     requestAnimationFrame(() => {
@@ -3876,6 +3876,7 @@ function WebApp() {
             )}
 
             <div className="appMessages" ref={messagesViewportRef}>
+              <div className={`messageTimeline ${messages.length === 0 && chatPolls.length === 0 ? "empty" : ""}`}>
               {messages.length === 0 && (
                 <div className="chatStart redesigned">
                   <div className="chatStartVisual">
@@ -3962,6 +3963,7 @@ function WebApp() {
                   Device key setup failed: {deviceState.error}
                 </div>
               )}
+              </div>
             </div>
 
             {typingUsers.length > 0 && (

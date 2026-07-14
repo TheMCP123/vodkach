@@ -13176,3 +13176,154 @@ button.active .inlineUiIcon {
 @media (max-width: 700px) {
   .gifGrid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
 }
+
+
+/* Patch 111 — message sending, short-chat spacing, and GIF UI repair. */
+.appMessages::before {
+  content: none !important;
+  display: none !important;
+}
+
+.appMessages {
+  display: block !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  padding: 18px 16px 68px !important;
+  scroll-padding-bottom: 68px !important;
+}
+
+.messageTimeline {
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-end !important;
+  width: 100% !important;
+  min-height: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.messageTimeline.empty {
+  justify-content: center !important;
+}
+
+.messageTimeline > .appMessage,
+.messageTimeline > .timelinePoll,
+.messageTimeline > .chatStart,
+.messageTimeline > .deviceError,
+.messageTimeline > .messagesEndAnchor {
+  flex: 0 0 auto !important;
+}
+
+.appMessage {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerInputRow > .gifPickerPortal,
+.messageComposer .composerInputRow > .pollCreatePopover,
+.serverMessageComposer .composerInputRow > .gifPickerPortal,
+.serverMessageComposer .composerInputRow > .pollCreatePopover {
+  position: absolute !important;
+  left: auto !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  width: min(430px, calc(100vw - 24px)) !important;
+  max-width: min(430px, calc(100vw - 24px)) !important;
+  margin: 0 !important;
+  transform: none !important;
+}
+
+.gifPickerPortal,
+.pollCreatePopover {
+  border-radius: 8px !important;
+}
+
+.composerPopoverHeader,
+.gifPickerHeader,
+.pollCreatePopover > header {
+  border-radius: 7px 7px 0 0 !important;
+}
+
+.gifSearchField,
+.pollCreatePopover input,
+.pollCreatePopover textarea,
+.pollCreatePopover select,
+.pollCreatePopover .customSelectTrigger {
+  border-radius: 6px !important;
+}
+
+.gifGrid button,
+.gifGrid img {
+  border-radius: 6px !important;
+}
+
+.gifCategoryTabs {
+  position: relative !important;
+  z-index: 2 !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: #17181c !important;
+  background-image: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  scrollbar-width: none !important;
+  white-space: nowrap !important;
+}
+
+.gifCategoryTabs::before,
+.gifCategoryTabs::after {
+  content: none !important;
+  display: none !important;
+}
+
+.gifCategoryTabs button {
+  background: #202126 !important;
+  border-radius: 6px !important;
+}
+
+.gifCategoryTabs button:hover {
+  background: #27292f !important;
+}
+
+.gifCategoryTabs button.active {
+  background: rgba(252, 3, 3, .14) !important;
+}
+
+.gifGrid {
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 7px !important;
+}
+
+.gifGrid button {
+  aspect-ratio: 1 / 1 !important;
+  min-height: 0 !important;
+}
+
+.gifGrid img {
+  width: 100% !important;
+  height: 100% !important;
+  min-height: 0 !important;
+  object-fit: cover !important;
+}
+
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  min-height: 50px !important;
+  margin: 0 14px 12px !important;
+  padding: 0 !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+}
+
+@media (max-width: 700px) {
+  .gifGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  }
+}

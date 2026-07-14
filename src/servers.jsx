@@ -35,8 +35,21 @@ function normalizeGifItems(payload) {
 
 export function GifPicker({ onPick, onClose }) {
   const categories = [
-    ["Trending", ""], ["Reactions", "reaction"], ["Memes", "meme"],
-    ["Gaming", "gaming"], ["Anime", "anime"], ["Animals", "animals"]
+    ["Trending", ""],
+    ["Reactions", "reaction"],
+    ["Memes", "meme"],
+    ["Gaming", "gaming"],
+    ["Anime", "anime"],
+    ["Animals", "animals"],
+    ["Sports", "sports"],
+    ["Movies", "movies"],
+    ["TV", "television"],
+    ["Music", "music"],
+    ["Love", "love"],
+    ["Happy", "happy"],
+    ["Sad", "sad"],
+    ["Celebration", "celebration"],
+    ["WTF", "what"]
   ];
   const [query, setQuery] = useState("");
   const [category, setCategory] = useState("Trending");
@@ -101,8 +114,11 @@ export function GifPicker({ onPick, onClose }) {
   function onCategoryWheel(event) {
     const node = categoryRef.current;
     if (!node || node.scrollWidth <= node.clientWidth) return;
+    const delta = Math.abs(event.deltaY) >= Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+    if (!delta) return;
     event.preventDefault();
-    node.scrollLeft += Math.abs(event.deltaY) > Math.abs(event.deltaX) ? event.deltaY : event.deltaX;
+    event.stopPropagation();
+    node.scrollBy({ left: delta, behavior: "auto" });
   }
 
   return (

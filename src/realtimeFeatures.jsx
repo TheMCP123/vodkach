@@ -1965,6 +1965,7 @@ export function ChatPollSystem({ api, chatId, currentUserId, open, onOpenChange 
               </button>
             </header>
 
+            <div className="pollCreateBody">
             <label>
               <span>Question</span>
               <textarea
@@ -2071,6 +2072,7 @@ export function ChatPollSystem({ api, chatId, currentUserId, open, onOpenChange 
 
             {error ? <div className="pollFormError">{error}</div> : null}
 
+            </div>
             <footer>
               <button type="button" onClick={() => onOpenChange?.(false)}>
                 Cancel

@@ -14288,3 +14288,338 @@ button.active .inlineUiIcon {
     max-height: 126px !important;
   }
 }
+
+
+/* Patch 117 — centered emoji action, clean tone picker, rebuilt Poll UI. */
+
+/* Emoji action: exact same neutral icon treatment as GIF/Poll. */
+.messageComposer .composerActions .emojiButton,
+.serverMessageComposer .composerActions .emojiButton {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 6px !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  overflow: hidden !important;
+  transform: none !important;
+}
+
+.messageComposer .composerActions .emojiButton:hover,
+.serverMessageComposer .composerActions .emojiButton:hover {
+  background: rgba(255,255,255,.055) !important;
+}
+
+.messageComposer .composerActions .emojiButton .composerActionIcon,
+.serverMessageComposer .composerActions .emojiButton .composerActionIcon {
+  display: block !important;
+  width: 21px !important;
+  height: 21px !important;
+  min-width: 21px !important;
+  min-height: 21px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+  opacity: .78 !important;
+}
+
+/* Base list stays yellow/default. Right-click opens tone choices. */
+.emojiGrid {
+  position: relative !important;
+}
+
+.emojiGrid button.hasSkinTones > i {
+  position: absolute !important;
+  right: 4px !important;
+  bottom: 4px !important;
+  width: 5px !important;
+  height: 5px !important;
+  border-radius: 50% !important;
+  background: #777d88 !important;
+  opacity: .7 !important;
+  pointer-events: none !important;
+}
+
+.emojiToneMenu {
+  position: absolute !important;
+  z-index: 40 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  width: max-content !important;
+  max-width: calc(100% - 16px) !important;
+  padding: 5px !important;
+  border: 1px solid rgba(255,255,255,.10) !important;
+  border-radius: 7px !important;
+  background: #202126 !important;
+  box-shadow: 0 10px 28px rgba(0,0,0,.45) !important;
+}
+
+.emojiToneMenu button {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  min-width: 34px !important;
+  max-width: 34px !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  max-height: 34px !important;
+  padding: 4px !important;
+  border: 0 !important;
+  border-radius: 5px !important;
+  background: transparent !important;
+}
+
+.emojiToneMenu button:hover {
+  background: rgba(255,255,255,.08) !important;
+}
+
+.emojiToneMenu button.active {
+  background: rgba(252,3,3,.16) !important;
+  outline: 1px solid rgba(252,3,3,.36) !important;
+}
+
+.emojiToneMenu .notoEmojiGlyph {
+  width: 25px !important;
+  height: 25px !important;
+  margin: 0 !important;
+  font-size: 21px !important;
+  line-height: 25px !important;
+}
+
+/* Poll rebuilt as fixed header + independently scrollable body + fixed footer. */
+.pollCreatePopover,
+.pollCreateModal,
+.serverPollCreateModal {
+  display: grid !important;
+  grid-template-rows: auto minmax(0, 1fr) auto !important;
+  width: min(470px, calc(100vw - 28px)) !important;
+  max-width: min(470px, calc(100vw - 28px)) !important;
+  height: min(620px, calc(100vh - 125px)) !important;
+  max-height: min(620px, calc(100vh - 125px)) !important;
+  min-height: 0 !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.09) !important;
+  border-radius: 8px !important;
+  background: #17181c !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.48) !important;
+}
+
+.pollCreatePopover > header {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  width: 100% !important;
+  min-height: 66px !important;
+  margin: 0 !important;
+  padding: 12px 16px !important;
+  border-bottom: 1px solid rgba(255,255,255,.075) !important;
+  background: #191a1f !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreatePopover > header > div {
+  min-width: 0 !important;
+}
+
+.pollCreatePopover > header h2 {
+  margin: 4px 0 0 !important;
+  font-size: 1.02rem !important;
+  line-height: 1.15 !important;
+}
+
+.pollCreateBody {
+  min-height: 0 !important;
+  padding: 15px 16px 18px !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #454952 transparent !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreateBody > label,
+.pollCreateBody > .pollOptionEditor,
+.pollCreateBody > .pollSettingsGrid,
+.pollCreateBody > .serverPollOptionInputs,
+.pollCreateBody > .serverPollToggles,
+.pollCreateBody > .serverAddPollOption,
+.pollCreateBody > .serverInlineError,
+.pollCreateBody > .pollFormError,
+.pollCreateBody > .pollActionError {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreateBody > label {
+  display: grid !important;
+  gap: 7px !important;
+  margin: 0 0 16px !important;
+}
+
+.pollCreateBody > label > span,
+.pollCreateBody .pollOptionEditor > span {
+  margin: 0 !important;
+  color: #d5d8de !important;
+  font-size: .76rem !important;
+  font-weight: 760 !important;
+}
+
+.pollCreateBody input,
+.pollCreateBody textarea,
+.pollCreateBody select {
+  width: 100% !important;
+  min-width: 0 !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreateBody textarea {
+  min-height: 72px !important;
+  max-height: 110px !important;
+}
+
+.pollOptionEditor {
+  display: grid !important;
+  gap: 8px !important;
+  margin: 0 0 18px !important;
+}
+
+.pollOptionEditor > div {
+  display: grid !important;
+  grid-template-columns: 28px minmax(0,1fr) 32px !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.pollOptionEditor > div > span {
+  text-align: center !important;
+}
+
+.pollOptionEditor .addPollOption,
+.serverAddPollOption {
+  justify-self: start !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 34px !important;
+  min-height: 34px !important;
+  margin: 2px 0 0 !important;
+  padding: 0 11px !important;
+  border-radius: 6px !important;
+}
+
+.pollSettingsGrid,
+.serverPollToggles {
+  display: grid !important;
+  gap: 0 !important;
+  margin: 0 !important;
+  border-top: 1px solid rgba(255,255,255,.07) !important;
+}
+
+.pollToggleRow,
+.serverPollToggles label {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) 22px !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-height: 64px !important;
+  margin: 0 !important;
+  padding: 10px 0 !important;
+  border-bottom: 1px solid rgba(255,255,255,.065) !important;
+}
+
+.serverPollToggles label {
+  grid-template-columns: 22px minmax(0,1fr) !important;
+}
+
+.pollToggleRow input,
+.serverPollToggles input {
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+}
+
+.pollDurationField {
+  display: grid !important;
+  grid-template-columns: minmax(0,1fr) minmax(165px,205px) !important;
+  align-items: center !important;
+  gap: 14px !important;
+  min-height: 64px !important;
+  margin: 0 !important;
+  padding: 12px 0 0 !important;
+}
+
+.pollCreatePopover > footer {
+  position: static !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-height: 58px !important;
+  margin: 0 !important;
+  padding: 10px 14px !important;
+  overflow: visible !important;
+  border-top: 1px solid rgba(255,255,255,.075) !important;
+  background: #191a1f !important;
+  box-sizing: border-box !important;
+}
+
+.pollCreatePopover > footer button {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: auto !important;
+  min-width: 94px !important;
+  max-width: none !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  overflow: visible !important;
+  border-radius: 6px !important;
+  white-space: nowrap !important;
+}
+
+/* Keep the panel inside the viewport even on shorter displays. */
+.messageComposer .composerActions .pollCreatePopover,
+.serverMessageComposer .composerActions .pollCreatePopover {
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  right: 0 !important;
+}
+
+@media (max-width: 620px) {
+  .pollCreatePopover,
+  .pollCreateModal,
+  .serverPollCreateModal {
+    width: calc(100vw - 18px) !important;
+    max-width: calc(100vw - 18px) !important;
+    height: min(590px, calc(100vh - 95px)) !important;
+    max-height: min(590px, calc(100vh - 95px)) !important;
+  }
+
+  .pollDurationField {
+    grid-template-columns: 1fr !important;
+  }
+}

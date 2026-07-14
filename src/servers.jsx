@@ -259,6 +259,7 @@ function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
       {open ? (
         <div ref={pollPanelRef} className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
             <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" className="composerPopoverClose" onClick={() => onOpenChange?.(false)} aria-label="Close poll creator"><X size={18} /></button></header>
+            <div className="pollCreateBody">
             <label><span>Question</span><input autoFocus value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={300} /></label>
             <div className="serverPollOptionInputs">
               {options.map((option, index) => <label key={index}><span>Option {index + 1}</span><input value={option} onChange={(event) => setOptions((values) => values.map((value, optionIndex) => optionIndex === index ? event.target.value : value))} maxLength={120} /></label>)}
@@ -271,6 +272,7 @@ function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
             </div>
             <label><span>Duration</span><select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="0">No time limit</option><option value="5">5 minutes</option><option value="60">1 hour</option><option value="1440">1 day</option><option value="10080">7 days</option></select></label>
             {error ? <div className="serverInlineError">{error}</div> : null}
+            </div>
             <footer><button type="button" onClick={() => onOpenChange?.(false)}>Cancel</button><button type="button" disabled={busy} onClick={submit}>{busy ? "Creating…" : "Create Poll"}</button></footer>
         </div>
       ) : null}

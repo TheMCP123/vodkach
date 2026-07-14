@@ -4,6 +4,7 @@ import githubShortcodes from "emojibase-data/en/shortcodes/github.json";
 
 const NOTO_EMOJI_CDN =
   "https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/svg";
+const TONE_STORAGE_KEY = "vodkach:emoji-tone-preferences";
 
 const GROUPS = [
   { id: "all", label: "All", group: null },
@@ -28,59 +29,42 @@ function normalizeShortcode(value) {
     .replace(/^_+|_+$/g, "");
 }
 
-function expandData() {
-  const result = [];
-
-  for (const item of emojiData) {
-    const shortcodes = githubShortcodes[item.hexcode];
-    const aliases = Array.isArray(shortcodes)
-      ? shortcodes
-      : shortcodes
-        ? [shortcodes]
+const BASE_EMOJIS = emojiData
+  .filter((item) => item.unicode && item.hexcode)
+  .map((item) => {
+    const rawShortcodes = githubShortcodes[item.hexcode];
+    const shortcodes = Array.isArray(rawShortcodes)
+      ? rawShortcodes
+      : rawShortcodes
+        ? [rawShortcodes]
         : [];
 
-    const shortcode = normalizeShortcode(
-      aliases[0] || item.label || item.hexcode
-    );
-
-    result.push({
+    return {
       emoji: item.unicode,
       hexcode: item.hexcode,
       label: item.label,
-      shortcode,
+      shortcode: normalizeShortcode(
+        shortcodes[0] || item.label || item.hexcode
+      ),
       aliases: [
-        ...aliases.map(normalizeShortcode),
+        ...shortcodes.map(normalizeShortcode),
         ...(item.tags || []).map(normalizeShortcode)
       ].filter(Boolean),
       group: item.group,
-      order: Number(item.order || 0)
-    });
+      order: Number(item.order || 0),
+      skins: (item.skins || [])
+        .filter((skin) => skin.unicode && skin.hexcode)
+        .map((skin) => ({
+          emoji: skin.unicode,
+          hexcode: skin.hexcode,
+          label: skin.label
+        }))
+    };
+  })
+  .sort((a, b) => a.order - b.order);
 
-    for (const skin of item.skins || []) {
-      result.push({
-        emoji: skin.unicode,
-        hexcode: skin.hexcode,
-        label: skin.label,
-        shortcode: normalizeShortcode(skin.label),
-        aliases: [
-          shortcode,
-          ...(item.tags || []).map(normalizeShortcode)
-        ].filter(Boolean),
-        group: item.group,
-        order: Number(skin.order || item.order || 0)
-      });
-    }
-  }
-
-  return result
-    .filter((item) => item.emoji && item.hexcode)
-    .sort((a, b) => a.order - b.order);
-}
-
-const ALL_EMOJIS = expandData();
 const SHORTCODE_MAP = new Map();
-
-for (const item of ALL_EMOJIS) {
+for (const item of BASE_EMOJIS) {
   if (item.shortcode) SHORTCODE_MAP.set(item.shortcode, item.emoji);
   for (const alias of item.aliases) {
     if (alias && !SHORTCODE_MAP.has(alias)) {
@@ -120,6 +104,23 @@ function emojiCodepoints(emoji) {
     .join("_");
 }
 
+function readTonePreferences() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(TONE_STORAGE_KEY) || "{}");
+    return stored && typeof stored === "object" ? stored : {};
+  } catch {
+    return {};
+  }
+}
+
+function writeTonePreferences(value) {
+  try {
+    localStorage.setItem(TONE_STORAGE_KEY, JSON.stringify(value));
+  } catch {
+    // localStorage may be unavailable in private/locked contexts.
+  }
+}
+
 export function notoEmojiUrl(emoji, hexcode = "") {
   const normalized = hexcode
     ? String(hexcode)
@@ -139,11 +140,6 @@ export function expandEmojiShortcodes(value) {
   );
 }
 
-/*
- * The real Unicode character stays inside the DOM so selecting/copying chat
- * text keeps the emoji. It is visually transparent and the Noto SVG is painted
- * as its background, so Windows/Linux emoji glyphs are never the visible layer.
- */
 export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
   return (
     <span
@@ -159,8 +155,7 @@ export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
 }
 
 export function NotoEmojiText({ text, className = "" }) {
-  const value = String(text || "");
-  const parts = splitGraphemes(value);
+  const parts = splitGraphemes(String(text || ""));
 
   return (
     <span className={className}>
@@ -179,6 +174,9 @@ export function EmojiPicker({ onPick, onClose }) {
   const [query, setQuery] = useState("");
   const [groupId, setGroupId] = useState("all");
   const [visibleCount, setVisibleCount] = useState(240);
+  const [tonePreferences, setTonePreferences] = useState(readTonePreferences);
+  const [toneMenu, setToneMenu] = useState(null);
+
   const categoryRef = useRef(null);
   const bodyRef = useRef(null);
   const panelRef = useRef(null);
@@ -189,7 +187,10 @@ export function EmojiPicker({ onPick, onClose }) {
       if (!panelRef.current?.contains(event.target)) onClose?.();
     };
     const closeEscape = (event) => {
-      if (event.key === "Escape") onClose?.();
+      if (event.key === "Escape") {
+        if (toneMenu) setToneMenu(null);
+        else onClose?.();
+      }
     };
     const timer = window.setTimeout(() => {
       document.addEventListener("pointerdown", closeOutside);
@@ -202,10 +203,11 @@ export function EmojiPicker({ onPick, onClose }) {
       document.removeEventListener("pointerdown", closeOutside);
       document.removeEventListener("keydown", closeEscape);
     };
-  }, [onClose]);
+  }, [onClose, toneMenu]);
 
   useEffect(() => {
     setVisibleCount(240);
+    setToneMenu(null);
     if (bodyRef.current) bodyRef.current.scrollTop = 0;
   }, [groupId, query]);
 
@@ -213,18 +215,13 @@ export function EmojiPicker({ onPick, onClose }) {
     const normalized = normalizeShortcode(query);
     const selectedGroup = GROUPS.find((group) => group.id === groupId);
 
-    return ALL_EMOJIS.filter((item) => {
+    return BASE_EMOJIS.filter((item) => {
       if (selectedGroup?.group !== null && item.group !== selectedGroup.group) {
         return false;
       }
-
       if (!normalized) return true;
 
-      return [
-        item.shortcode,
-        item.label,
-        ...item.aliases
-      ]
+      return [item.shortcode, item.label, ...item.aliases]
         .join(" ")
         .toLowerCase()
         .includes(normalized);
@@ -232,6 +229,26 @@ export function EmojiPicker({ onPick, onClose }) {
   }, [groupId, query]);
 
   const visible = filtered.slice(0, visibleCount);
+
+  function chosenVariant(item) {
+    const preferredHexcode = tonePreferences[item.hexcode];
+    if (!preferredHexcode) return item;
+
+    return (
+      item.skins.find((skin) => skin.hexcode === preferredHexcode) || item
+    );
+  }
+
+  function chooseTone(item, variant) {
+    const next = { ...tonePreferences };
+
+    if (variant.hexcode === item.hexcode) delete next[item.hexcode];
+    else next[item.hexcode] = variant.hexcode;
+
+    setTonePreferences(next);
+    writeTonePreferences(next);
+    setToneMenu(null);
+  }
 
   function onCategoryWheel(event) {
     const node = categoryRef.current;
@@ -317,32 +334,92 @@ export function EmojiPicker({ onPick, onClose }) {
         className="emojiGrid"
         ref={bodyRef}
         onScroll={onBodyScroll}
+        onContextMenu={(event) => event.preventDefault()}
       >
-        {visible.map((item) => (
-          <button
-            type="button"
-            onClick={() => onPick?.(item.emoji)}
-            title={`:${item.shortcode}:`}
-            aria-label={`Insert ${item.label}`}
-            key={`${item.hexcode}-${item.order}`}
-          >
-            <NotoEmoji
-              emoji={item.emoji}
-              hexcode={item.hexcode}
-              title={`:${item.shortcode}:`}
-            />
-          </button>
-        ))}
+        {visible.map((item) => {
+          const selected = chosenVariant(item);
+
+          return (
+            <button
+              type="button"
+              className={item.skins.length ? "hasSkinTones" : ""}
+              onClick={() => onPick?.(selected.emoji)}
+              onContextMenu={(event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (!item.skins.length) return;
+
+                const bodyRect = bodyRef.current?.getBoundingClientRect();
+                const buttonRect = event.currentTarget.getBoundingClientRect();
+
+                setToneMenu({
+                  item,
+                  left: Math.max(
+                    8,
+                    Math.min(
+                      buttonRect.left - (bodyRect?.left || 0),
+                      (bodyRect?.width || 300) - 230
+                    )
+                  ),
+                  top:
+                    buttonRect.bottom -
+                    (bodyRect?.top || 0) +
+                    (bodyRef.current?.scrollTop || 0) +
+                    5
+                });
+              }}
+              title={
+                item.skins.length
+                  ? `:${item.shortcode}: · Right-click for skin tone`
+                  : `:${item.shortcode}:`
+              }
+              aria-label={`Insert ${item.label}`}
+              key={item.hexcode}
+            >
+              <NotoEmoji
+                emoji={item.emoji}
+                hexcode={item.hexcode}
+                title={`:${item.shortcode}:`}
+              />
+              {item.skins.length ? <i aria-hidden="true" /> : null}
+            </button>
+          );
+        })}
 
         {!visible.length && (
           <div className="emojiPickerEmpty">No emoji found</div>
         )}
 
         {visibleCount < filtered.length && (
-          <div className="emojiPickerLoading">
-            Loading more emoji…
-          </div>
+          <div className="emojiPickerLoading">Loading more emoji…</div>
         )}
+
+        {toneMenu ? (
+          <div
+            className="emojiToneMenu"
+            style={{ left: toneMenu.left, top: toneMenu.top }}
+            onPointerDown={(event) => event.stopPropagation()}
+          >
+            {[toneMenu.item, ...toneMenu.item.skins].map((variant) => (
+              <button
+                type="button"
+                className={
+                  chosenVariant(toneMenu.item).hexcode === variant.hexcode
+                    ? "active"
+                    : ""
+                }
+                onClick={() => chooseTone(toneMenu.item, variant)}
+                aria-label={`Use ${variant.label || toneMenu.item.label}`}
+                key={variant.hexcode}
+              >
+                <NotoEmoji
+                  emoji={variant.emoji}
+                  hexcode={variant.hexcode}
+                />
+              </button>
+            ))}
+          </div>
+        ) : null}
       </div>
     </section>
   );

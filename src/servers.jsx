@@ -356,10 +356,12 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <textarea rows={1} value={text} onChange={(event) => setText(expandEmojiShortcodes(event.target.value))} placeholder={`Message #${activeChannel?.name || "channel"}`} />
-                <button type="button" className="composerIconButton emojiButton" onClick={() => setComposerPanel((value) => value === "emoji" ? null : "emoji")} aria-label="Open emoji picker" title="Emoji"><img className="composerActionIcon" src="/ui/emojis.svg" alt="" /></button>
-                <button type="button" className="gifButton dmGifButton" onClick={() => setComposerPanel((value) => value === "gif" ? null : "gif")} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>
-                <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} open={composerPanel === "poll"} onOpenChange={(open) => setComposerPanel(open ? "poll" : null)} />
-                <button type="submit" disabled={!text.trim()}>Send</button>
+                <div className="composerActions">
+                  <button type="button" className="composerIconButton emojiButton" onClick={() => setComposerPanel((value) => value === "emoji" ? null : "emoji")} aria-label="Open emoji picker" title="Emoji"><img className="composerActionIcon" src="/ui/emojis.svg" alt="" /></button>
+                  <button type="button" className="gifButton dmGifButton" onClick={() => setComposerPanel((value) => value === "gif" ? null : "gif")} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>
+                  <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} open={composerPanel === "poll"} onOpenChange={(open) => setComposerPanel(open ? "poll" : null)} />
+                  <button type="submit" disabled={!text.trim()}>Send</button>
+                </div>
               </div>
               {composerPanel === "emoji" ? <EmojiPicker onClose={() => setComposerPanel(null)} onPick={(emoji) => setText((value) => `${value}${emoji}`)} /> : null}
               {composerPanel === "gif" ? <GifPicker onClose={() => setComposerPanel(null)} onPick={(url) => { setComposerPanel(null); send(null, url); }} /> : null}

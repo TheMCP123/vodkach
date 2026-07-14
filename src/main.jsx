@@ -4057,30 +4057,35 @@ function WebApp() {
                   maxLength={2000}
                   rows={1}
                 />
-                <button
-                  type="button"
-                  className="composerIconButton emojiButton"
-                  onClick={() => setChatComposerPanel((value) => value === "emoji" ? null : "emoji")}
-                  aria-label="Open emoji picker"
-                  title="Emoji"
-                >
-                  <img className="composerActionIcon" src="/ui/emojis.svg" alt="" />
-                </button>
-                <button
-                  type="button"
-                  className="gifButton dmGifButton"
-                  onClick={() => setChatComposerPanel((value) => value === "gif" ? null : "gif")}
-                  aria-label="Open GIF picker"
-                >
-                  <img className="composerActionIcon" src="/ui/gif.svg" alt="" />
-                </button>
-                <ChatPollSystem
-                  api={api}
-                  chatId={activeChat.id}
-                  currentUserId={auth.user.id}
-                  open={chatComposerPanel === "poll"}
-                  onOpenChange={(open) => setChatComposerPanel(open ? "poll" : null)}
-                />
+                <div className="composerActions">
+                  <button
+                    type="button"
+                    className="composerIconButton emojiButton"
+                    onClick={() => setChatComposerPanel((value) => value === "emoji" ? null : "emoji")}
+                    aria-label="Open emoji picker"
+                    title="Emoji"
+                  >
+                    <img className="composerActionIcon" src="/ui/emojis.svg" alt="" />
+                  </button>
+                  <button
+                    type="button"
+                    className="gifButton dmGifButton"
+                    onClick={() => setChatComposerPanel((value) => value === "gif" ? null : "gif")}
+                    aria-label="Open GIF picker"
+                  >
+                    <img className="composerActionIcon" src="/ui/gif.svg" alt="" />
+                  </button>
+                  <ChatPollSystem
+                    api={api}
+                    chatId={activeChat.id}
+                    currentUserId={auth.user.id}
+                    open={chatComposerPanel === "poll"}
+                    onOpenChange={(open) => setChatComposerPanel(open ? "poll" : null)}
+                  />
+                  <button type="submit" disabled={!chatText.trim() || sendingMessage}>
+                    {editingMessage ? "Save" : "Send"}
+                  </button>
+                </div>
                 {chatComposerPanel === "emoji" && (
                   <EmojiPicker
                     onClose={() => setChatComposerPanel(null)}
@@ -4095,9 +4100,6 @@ function WebApp() {
                     onPick={(url) => { setChatComposerPanel(null); sendMessage(null, url); }}
                   />
                 )}
-                <button type="submit" disabled={!chatText.trim() || sendingMessage}>
-                  {editingMessage ? "Save" : "Send"}
-                </button>
               </div>
             </form>
           </>

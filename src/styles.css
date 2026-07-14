@@ -13620,3 +13620,128 @@ button.active .inlineUiIcon {
     max-height: 30px !important;
   }
 }
+
+
+/* Patch 114 — structural composer fix. No more CSS grid auto-placement guesses. */
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  padding: 6px 8px 6px 14px !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
+}
+
+.messageComposer .composerInputRow > textarea,
+.serverMessageComposer .composerInputRow > textarea {
+  flex: 1 1 auto !important;
+  grid-column: auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  padding: 5px 0 !important;
+  align-self: center !important;
+}
+
+.composerActions {
+  display: flex !important;
+  flex: 0 0 auto !important;
+  align-items: center !important;
+  justify-content: flex-end !important;
+  flex-wrap: nowrap !important;
+  gap: 8px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.messageComposer .composerActions > button,
+.serverMessageComposer .composerActions > button,
+.messageComposer .composerActions .composerPollButton,
+.serverMessageComposer .composerActions .composerPollButton {
+  position: static !important;
+  grid-column: auto !important;
+  grid-row: auto !important;
+  flex: 0 0 32px !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  margin: 0 !important;
+  align-self: center !important;
+}
+
+.messageComposer .composerActions > button[type="submit"],
+.serverMessageComposer .composerActions > button[type="submit"] {
+  flex-basis: 88px !important;
+  width: 88px !important;
+  min-width: 88px !important;
+  max-width: 88px !important;
+  line-height: 32px !important;
+  padding: 0 12px !important;
+}
+
+/* Poll/GIF/Emoji panels remain absolute and do not consume a row. */
+.messageComposer .composerInputRow > .emojiPicker,
+.messageComposer .composerInputRow > .gifPickerPortal,
+.messageComposer .composerInputRow > .pollCreatePopover,
+.serverMessageComposer > .emojiPicker,
+.serverMessageComposer > .gifPickerPortal,
+.serverMessageComposer .composerActions > .pollCreatePopover {
+  position: absolute !important;
+  left: auto !important;
+  right: 0 !important;
+  top: auto !important;
+  bottom: calc(100% + 8px) !important;
+  margin: 0 !important;
+  transform: none !important;
+  z-index: 910 !important;
+}
+
+@media (max-width: 720px) {
+  .messageComposer .composerInputRow,
+  .serverMessageComposer .composerInputRow {
+    gap: 5px !important;
+    padding-left: 11px !important;
+  }
+
+  .composerActions {
+    gap: 5px !important;
+  }
+
+  .messageComposer .composerActions > button,
+  .serverMessageComposer .composerActions > button,
+  .messageComposer .composerActions .composerPollButton,
+  .serverMessageComposer .composerActions .composerPollButton {
+    flex-basis: 30px !important;
+    width: 30px !important;
+    min-width: 30px !important;
+    max-width: 30px !important;
+    height: 30px !important;
+    min-height: 30px !important;
+    max-height: 30px !important;
+  }
+
+  .messageComposer .composerActions > button[type="submit"],
+  .serverMessageComposer .composerActions > button[type="submit"] {
+    flex-basis: 68px !important;
+    width: 68px !important;
+    min-width: 68px !important;
+    max-width: 68px !important;
+  }
+}

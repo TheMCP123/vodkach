@@ -202,13 +202,13 @@ function readComposerValue(root) {
 
   function walk(node) {
     if (node.nodeType === Node.TEXT_NODE) {
-      value += node.nodeValue || "";
+      value += (node.nodeValue || "").replace(/\u200B/g, "");
       return;
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) return;
 
-    if (node.dataset?.emoji) {
+    if (node.classList?.contains("composerEmojiAtom") && node.dataset?.emoji) {
       value += node.dataset.emoji;
       return;
     }
@@ -226,24 +226,26 @@ function readComposerValue(root) {
 }
 
 function createComposerEmojiNode(emoji) {
+  const atom = document.createElement("span");
+  atom.className = "composerEmojiAtom";
+  atom.dataset.emoji = emoji;
+  atom.contentEditable = "false";
+
   const image = document.createElement("img");
   image.className = "composerInlineEmoji";
   image.src = notoEmojiUrl(emoji, EMOJI_HEXCODE_MAP.get(emoji) || "");
   image.alt = emoji;
-  image.dataset.emoji = emoji;
   image.draggable = false;
-  image.contentEditable = "false";
 
   image.addEventListener("error", () => {
     const fallback = document.createElement("span");
     fallback.className = "composerInlineEmoji composerInlineEmojiFallback";
-    fallback.dataset.emoji = emoji;
     fallback.textContent = emoji;
-    fallback.contentEditable = "false";
     image.replaceWith(fallback);
   }, { once: true });
 
-  return image;
+  atom.appendChild(image);
+  return atom;
 }
 
 function createComposerFragment(value) {
@@ -254,6 +256,9 @@ function createComposerFragment(value) {
     for (const part of splitGraphemes(line)) {
       if (EMOJI_GRAPHEME_RE.test(part)) {
         fragment.appendChild(createComposerEmojiNode(part));
+
+        const caretSlot = document.createTextNode("\u200B");
+        fragment.appendChild(caretSlot);
       } else {
         fragment.appendChild(document.createTextNode(part));
       }
@@ -321,6 +326,17 @@ export function EmojiComposerInput({
 }) {
   const ref = useRef(null);
 
+  function resizeEditor(root) {
+    if (!root) return;
+
+    root.style.height = "32px";
+    const nextHeight = Math.min(Math.max(root.scrollHeight, 32), 128);
+    root.style.height = `${nextHeight}px`;
+
+    const field = root.closest(".composerTextField");
+    if (field) field.style.height = `${nextHeight}px`;
+  }
+
   function syncValue(root) {
     if (!root) return;
 
@@ -345,11 +361,14 @@ export function EmojiComposerInput({
       appendComposerContent(root, next);
       if (document.activeElement === root) placeCaretAtEnd(root);
     }
+
+    window.requestAnimationFrame(() => resizeEditor(root));
   }, [value]);
 
   function handleInput() {
     const root = ref.current;
     syncValue(root);
+    resizeEditor(root);
 
     window.requestAnimationFrame(() => {
       const selection = window.getSelection();

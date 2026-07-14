@@ -16060,3 +16060,102 @@ button.danger:hover img[src$="/trash.svg"],
   height: auto !important;
   max-height: 142px !important;
 }
+
+
+/* Patch 132 — exactly five visible lines and stable adjacent emoji caret slots. */
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: 142px !important;
+  align-items: flex-end !important;
+}
+
+.composerTextField {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  overflow: hidden !important;
+  transition: height 90ms ease !important;
+}
+
+.emojiComposerEditor {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  padding: 4px 2px 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 24px !important;
+  box-sizing: border-box !important;
+}
+
+/* 5 text rows: 5 × 24px plus 8px vertical padding = 128px. */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: 146px !important;
+}
+
+.composerEmojiAtom {
+  position: relative !important;
+  display: inline-block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  vertical-align: -5px !important;
+  white-space: nowrap !important;
+  user-select: all !important;
+  -webkit-user-select: all !important;
+}
+
+/* The IMG is purely visual; the wrapper is the single atomic editor node. */
+.composerEmojiAtom > .composerInlineEmoji,
+.composerEmojiAtom > .composerInlineEmojiFallback {
+  position: absolute !important;
+  inset: 0 !important;
+  display: block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  object-fit: contain !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+  pointer-events: none !important;
+}
+
+/*
+ * Invisible U+200B slots after atoms create a real caret position between every
+ * pair of consecutive emoji without adding visible width.
+ */
+.emojiComposerEditor {
+  unicode-bidi: plaintext !important;
+}
+
+.composerActions {
+  align-self: flex-end !important;
+  flex: 0 0 auto !important;
+  margin-bottom: 0 !important;
+}

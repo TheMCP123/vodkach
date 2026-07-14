@@ -16390,3 +16390,128 @@ button.danger:hover img[src$="/trash.svg"],
   overflow-y: auto !important;
   overflow-x: hidden !important;
 }
+
+
+/* Patch 136 — stable native textarea composer, 5 visible lines, normal typography. */
+
+/* Retire the contenteditable editor completely. */
+.emojiComposerEditor {
+  display: none !important;
+}
+
+.composerTextField {
+  position: relative !important;
+  display: flex !important;
+  align-items: flex-end !important;
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: auto !important;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  overflow: hidden !important;
+}
+
+.messageComposer .composerTextField > textarea.emojiComposerTextarea,
+.serverMessageComposer .composerTextField > textarea.emojiComposerTextarea {
+  position: static !important;
+  inset: auto !important;
+  z-index: auto !important;
+  display: block !important;
+  flex: 1 1 auto !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  margin: 0 !important;
+  padding: 4px 2px 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  resize: none !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+
+  color: #f4f5f7 !important;
+  -webkit-text-fill-color: #f4f5f7 !important;
+  caret-color: #ffffff !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  text-transform: none !important;
+  font-family: "Noto Sans", "Noto Color Emoji", sans-serif !important;
+  font-size: 16px !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+  font-variant: normal !important;
+  font-variant-caps: normal !important;
+  font-variant-emoji: emoji !important;
+  font-feature-settings: normal !important;
+  letter-spacing: normal !important;
+  line-height: 24px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #41454e transparent !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerTextField > textarea.emojiComposerTextarea::placeholder,
+.serverMessageComposer .composerTextField > textarea.emojiComposerTextarea::placeholder {
+  color: #858b96 !important;
+  -webkit-text-fill-color: #858b96 !important;
+  opacity: 1 !important;
+  text-transform: none !important;
+  font-family: "Noto Sans", sans-serif !important;
+  font-size: 16px !important;
+  font-weight: 400 !important;
+  font-variant-caps: normal !important;
+  letter-spacing: normal !important;
+}
+
+.messageComposer .composerTextField > textarea.emojiComposerTextarea::selection,
+.serverMessageComposer .composerTextField > textarea.emojiComposerTextarea::selection {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #315fc9 !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: 142px !important;
+  align-items: flex-end !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: 146px !important;
+  margin: 0 14px 12px !important;
+  overflow: visible !important;
+}
+
+/* The composer stays pinned to the bottom; extra rows grow into message space. */
+.appChat,
+.serverChannelMain,
+.serverChannelView,
+.serverWorkspace {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.appMessages,
+.serverMessageList {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}

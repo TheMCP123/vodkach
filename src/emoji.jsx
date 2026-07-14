@@ -292,117 +292,36 @@ export function EmojiComposerInput({
 }) {
   const ref = useRef(null);
 
-  function resizeEditor(root) {
-    if (!root) return;
+  function resize() {
+    const node = ref.current;
+    if (!node) return;
 
-    root.style.height = "32px";
-    const nextHeight = Math.min(Math.max(root.scrollHeight, 32), 128);
-    root.style.height = `${nextHeight}px`;
-
-    const field = root.closest(".composerTextField");
-    if (field) {
-      field.style.height = `${nextHeight}px`;
-      field.style.minHeight = "32px";
-      field.style.maxHeight = "128px";
-    }
-
-    const row = root.closest(".composerInputRow");
-    if (row) {
-      row.style.minHeight = "46px";
-      row.style.maxHeight = "142px";
-    }
-  }
-
-  function syncValue(root) {
-    if (!root) return;
-
-    let next = expandEmojiShortcodes(readComposerValue(root));
-    if (next.length > maxLength) next = next.slice(0, maxLength);
-
-    const current = readComposerValue(root);
-    if (next !== current) {
-      appendComposerContent(root, next);
-      placeCaretAtEnd(root);
-    }
-
-    onChange?.(next);
+    node.style.height = "32px";
+    node.style.height = `${Math.min(Math.max(node.scrollHeight, 32), 128)}px`;
   }
 
   useEffect(() => {
-    const root = ref.current;
-    const next = String(value || "");
-    if (!root) return;
-
-    if (readComposerValue(root) !== next) {
-      appendComposerContent(root, next);
-      if (document.activeElement === root) placeCaretAtEnd(root);
-    }
-
-    window.requestAnimationFrame(() => resizeEditor(root));
+    window.requestAnimationFrame(resize);
   }, [value]);
 
-  function handleInput() {
-    const root = ref.current;
-    syncValue(root);
-    resizeEditor(root);
-
-    window.requestAnimationFrame(() => {
-      const selection = window.getSelection();
-      if (!selection?.rangeCount || !root?.contains(selection.anchorNode)) return;
-
-      const range = selection.getRangeAt(0).cloneRange();
-      range.collapse(false);
-      const caretRect = range.getBoundingClientRect();
-      const rootRect = root.getBoundingClientRect();
-
-      if (caretRect.bottom > rootRect.bottom - 3) {
-        root.scrollTop += caretRect.bottom - rootRect.bottom + 8;
-      } else if (caretRect.top < rootRect.top + 3) {
-        root.scrollTop -= rootRect.top - caretRect.top + 8;
-      }
-    });
-  }
-
-  function handleKeyDown(event) {
-    if (
-      event.key === "Enter" &&
-      event.shiftKey &&
-      !event.nativeEvent.isComposing
-    ) {
-      event.preventDefault();
-      insertComposerContent(event.currentTarget, "\n");
-      handleInput();
-      return;
-    }
-
-    onKeyDown?.(event);
-  }
-
-  function handlePaste(event) {
-    event.preventDefault();
-    const plain = event.clipboardData
-      .getData("text/plain")
-      .replace(/\r\n?/g, "\n");
-
-    insertComposerContent(event.currentTarget, plain);
-    handleInput();
+  function handleChange(event) {
+    const next = expandEmojiShortcodes(event.target.value).slice(0, maxLength);
+    onChange?.(next);
+    window.requestAnimationFrame(resize);
   }
 
   return (
-    <div
+    <textarea
       ref={ref}
-      className="emojiComposerEditor"
-      contentEditable
-      suppressContentEditableWarning
-      role="textbox"
+      className="emojiComposerTextarea"
+      value={value}
+      rows={1}
+      maxLength={maxLength}
+      placeholder={placeholder}
       aria-label={ariaLabel || placeholder}
-      aria-multiline="true"
-      data-placeholder={placeholder}
-      data-empty={!String(value || "") ? "true" : "false"}
       spellCheck="true"
-      onInput={handleInput}
-      onKeyDown={handleKeyDown}
-      onPaste={handlePaste}
+      onChange={handleChange}
+      onKeyDown={onKeyDown}
       onContextMenu={onContextMenu}
       onBlur={onBlur}
     />

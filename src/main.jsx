@@ -4077,7 +4077,7 @@ function WebApp() {
                   onClick={() => setChatGifOpen((value) => !value)}
                   aria-label="Open GIF picker"
                 >
-                  <Images size={19} strokeWidth={2.1} />
+                  <img className="composerActionIcon" src="/ui/gif.png" alt="" />
                 </button>
                 <ChatPollSystem
                   api={api}
@@ -5543,7 +5543,7 @@ function AppMessage({
         {/^https?:\/\/[^\s]+(?:klipy|\.(?:gif|webp)(?:\?|$))/i.test(String(text || "")) ? (
           <div className="dmGifMessage">
             <img src={text} alt="GIF" loading="lazy" />
-            <span>KLIPY</span>
+            
           </div>
         ) : (
         <p

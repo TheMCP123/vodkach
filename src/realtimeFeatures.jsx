@@ -1661,6 +1661,8 @@ export function VoiceCameraSettings() {
 }
 
 export function PollCard({ poll, api, reload, currentUserId }) {
+  const [busyOption, setBusyOption] = useState("");
+  const [actionError, setActionError] = useState("");
   const totalVotes = poll.options.reduce(
     (sum, option) => sum + Number(option.vote_count || 0),
     0
@@ -1673,24 +1675,15 @@ export function PollCard({ poll, api, reload, currentUserId }) {
   const selected = new Set(poll.current_user_option_ids || []);
 
   async function vote(optionId) {
-    await api("/api/polls/vote", {
-      method: "POST",
-      body: JSON.stringify({
-        poll_id: poll.id,
-        option_id: optionId
-      })
-    });
-    reload();
-    window.dispatchEvent(new CustomEvent("vodkach:polls-changed"));
+    if (busyOption) return; setBusyOption(optionId); setActionError("");
+    try { await api("/api/polls/vote", { method: "POST", body: JSON.stringify({ poll_id: poll.id, option_id: optionId }) }); await reload?.(); window.dispatchEvent(new CustomEvent("vodkach:polls-changed")); }
+    catch (e) { setActionError(e.message || "Could not vote"); } finally { setBusyOption(""); }
   }
 
   async function closePoll() {
-    await api("/api/polls/close", {
-      method: "POST",
-      body: JSON.stringify({ poll_id: poll.id })
-    });
-    reload();
-    window.dispatchEvent(new CustomEvent("vodkach:polls-changed"));
+    if (busyOption) return; setBusyOption("close"); setActionError("");
+    try { await api("/api/polls/close", { method: "POST", body: JSON.stringify({ poll_id: poll.id }) }); await reload?.(); window.dispatchEvent(new CustomEvent("vodkach:polls-changed")); }
+    catch (e) { setActionError(e.message || "Could not close poll"); } finally { setBusyOption(""); }
   }
 
   return (
@@ -1729,7 +1722,7 @@ export function PollCard({ poll, api, reload, currentUserId }) {
               className={selected.has(option.id) ? "selected" : ""}
               type="button"
               key={option.id}
-              disabled={Boolean(poll.closed_at)}
+              disabled={Boolean(poll.closed_at) || Boolean(busyOption)}
               onClick={() => vote(option.id)}
             >
               <span
@@ -1761,6 +1754,7 @@ export function PollCard({ poll, api, reload, currentUserId }) {
           </button>
         ) : null}
       </footer>
+      {actionError ? <div className="pollActionError">{actionError}</div> : null}
     </article>
   );
 }
@@ -1876,7 +1870,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
   }
 
   async function createPoll(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     if (busy) return;
 
     const cleanOptions = options.map((option) => option.trim()).filter(Boolean);
@@ -1932,17 +1926,11 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
         title="Polls"
         onClick={() => setOpen(true)}
       >
-        <PollIcon />
+        <img className="composerActionIcon" src="/ui/poll.png" alt="" />
       </button>
 
-      {open &&
-        createPortal(
-          <div className="pollModalBackdrop" onMouseDown={() => setOpen(false)}>
-          <form
-            className="pollCreateModal"
-            onSubmit={createPoll}
-            onMouseDown={(event) => event.stopPropagation()}
-          >
+      {open && (
+          <div className="pollCreatePopover pollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
             <header>
               <div>
                 <span className="chatPollEyebrow">
@@ -1988,7 +1976,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
                         )
                       }
                     >
-                      <CloseIcon />
+                      <img className="pollTrashIcon" src="/ui/trash.png" alt="" />
                     </button>
                   ) : null}
                 </div>
@@ -2066,14 +2054,12 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
               <button type="button" onClick={() => setOpen(false)}>
                 Cancel
               </button>
-              <button type="submit" disabled={busy}>
+              <button type="button" disabled={busy} onClick={createPoll}>
                 {busy ? "Creating..." : "Create Poll"}
               </button>
             </footer>
-          </form>
-        </div>,
-          document.body
-        )}
+        </div>
+      )}
     </>
   );
 }

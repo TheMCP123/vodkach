@@ -5,7 +5,7 @@ async function api(path,options={}){const r=await fetch(path,{credentials:'inclu
 const online=m=>m.status_preference!=='offline'&&m.last_seen_at&&Date.now()-Date.parse(m.last_seen_at)<90000;
 async function imageData(file,{w,h,quality=.82,label='Image'}={}){if(!file)return null;if(!file.type.startsWith('image/'))throw new Error('Choose an image file');if(file.size>10*1024*1024)throw new Error(`${label} must be 10 MB or smaller`);const b=await createImageBitmap(file),c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d'),scale=Math.max(w/b.width,h/b.height),dw=b.width*scale,dh=b.height*scale;x.fillStyle='#111216';x.fillRect(0,0,w,h);x.drawImage(b,(w-dw)/2,(h-dh)/2,dw,dh);b.close?.();return c.toDataURL('image/webp',quality)}
 export function ServerMark({server,size=42}){return <span className={`serverMark ${server.icon_data?'hasImage':''}`} style={{'--server-color':server.icon_color||'#2b2d31',width:size,height:size}}>{server.icon_data?<img src={server.icon_data} alt=""/>:(server.icon_text||server.name?.[0]?.toUpperCase()||'V')}</span>}
-export function ServerCreateModal({open,onClose,onChanged}){const[mode,setMode]=useState('create'),[name,setName]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');if(!open)return null;async function submit(e){e.preventDefault();setBusy(true);setError('');try{const d=mode==='create'?await api('/api/servers',{method:'POST',body:JSON.stringify({name})}):await api('/api/servers/join',{method:'POST',body:JSON.stringify({invite_code:code})});onChanged?.(d.server);onClose()}catch(x){setError(x.message)}finally{setBusy(false)}}return <div className="serverModalBackdrop" onMouseDown={onClose}><form className="serverModal serverJoinCreateModal" onMouseDown={e=>e.stopPropagation()} onSubmit={submit}><button type="button" className="serverModalClose" onClick={onClose}><X size={18}/></button><h2>{mode==='create'?'Create a server':'Join a server'}</h2><div className="serverModalTabs"><button type="button" className={mode==='create'?'active':''} onClick={()=>setMode('create')}>Create</button><button type="button" className={mode==='join'?'active':''} onClick={()=>setMode('join')}>Join</button></div>{mode==='create'?<label>SERVER NAME<input autoFocus value={name} onChange={e=>setName(e.target.value)} maxLength={32}/></label>:<label>INVITE CODE<input autoFocus value={code} onChange={e=>setCode(e.target.value.toUpperCase())}/></label>}{error&&<div className="serverInlineError">{error}</div>}<button className="serverModalPrimary" disabled={busy}>{busy?'Please wait…':mode==='create'?'Create Server':'Join Server'}</button></form></div>}
+export function ServerCreateModal({open,onClose,onChanged}){const[mode,setMode]=useState('create'),[name,setName]=useState(''),[code,setCode]=useState(''),[busy,setBusy]=useState(false),[error,setError]=useState('');if(!open)return null;async function submit(e){e?.preventDefault?.();setBusy(true);setError('');try{const d=mode==='create'?await api('/api/servers',{method:'POST',body:JSON.stringify({name})}):await api('/api/servers/join',{method:'POST',body:JSON.stringify({invite_code:code})});onChanged?.(d.server);onClose()}catch(x){setError(x.message)}finally{setBusy(false)}}return <div className="serverModalBackdrop" onMouseDown={onClose}><form className="serverModal serverJoinCreateModal" onMouseDown={e=>e.stopPropagation()} onSubmit={submit}><button type="button" className="serverModalClose" onClick={onClose}><X size={18}/></button><h2>{mode==='create'?'Create a server':'Join a server'}</h2><div className="serverModalTabs"><button type="button" className={mode==='create'?'active':''} onClick={()=>setMode('create')}>Create</button><button type="button" className={mode==='join'?'active':''} onClick={()=>setMode('join')}>Join</button></div>{mode==='create'?<label>SERVER NAME<input autoFocus value={name} onChange={e=>setName(e.target.value)} maxLength={32}/></label>:<label>INVITE CODE<input autoFocus value={code} onChange={e=>setCode(e.target.value.toUpperCase())}/></label>}{error&&<div className="serverInlineError">{error}</div>}<button className="serverModalPrimary" disabled={busy}>{busy?'Please wait…':mode==='create'?'Create Server':'Join Server'}</button></form></div>}
 export function ServerDiscovery({onJoined,onOpenServer}){const[servers,setServers]=useState([]),[q,setQ]=useState(''),[error,setError]=useState('');useEffect(()=>{const t=setTimeout(()=>api(`/api/servers/discovery?q=${encodeURIComponent(q)}`).then(d=>setServers(d.servers||[])).catch(e=>setError(e.message)),180);return()=>clearTimeout(t)},[q]);return <section className="serverDiscoveryPage"><header><div className="discoveryTitle"><Compass/><div><strong>Server Discovery</strong><span>Find public communities</span></div></div><label><Search size={17}/><input value={q} onChange={e=>setQ(e.target.value)} placeholder="Search servers"/></label></header><div className="discoveryGrid">{servers.map(s=><article className="discoveryCard" key={s.id}><ServerMark server={s} size={56}/><div className="discoveryCardBody"><strong>{s.name}</strong><p>{s.description||'A Vodkach community.'}</p><span><Users size={14}/>{s.member_count||0} members</span></div><button onClick={async()=>{if(s.joined)return onOpenServer?.(s);try{const d=await api('/api/servers/join',{method:'POST',body:JSON.stringify({server_id:s.id})});onJoined?.(d.server);onOpenServer?.(d.server)}catch(e){setError(e.message)}}}>{s.joined?'Open':'Join'}</button></article>)}</div>{error&&<div className="serverInlineError">{error}</div>}</section>}
 const PERMS=['view_channels','send_messages','manage_messages','manage_channels','manage_roles','kick_members','ban_members','timeout_members','mention_everyone','connect_voice','speak','mute_members'];
 function SettingsModal({server,members,channels,onClose,onUpdated,onRemoved,reloadChannels,reloadMembers}){const[tab,setTab]=useState('overview'),[form,setForm]=useState({...server,banner_data:server.banner_data||null}),[roles,setRoles]=useState([]),[assignments,setAssignments]=useState([]),[invites,setInvites]=useState([]),[bans,setBans]=useState([]),[timeouts,setTimeouts]=useState([]),[error,setError]=useState(''),[editChannel,setEditChannel]=useState(null);const owner=server.role==='owner',manage=['owner','admin'].includes(server.role);async function loadRoles(){const d=await api(`/api/servers/roles?server_id=${server.id}`);setRoles(d.roles||[]);setAssignments(d.assignments||[])}async function loadInvites(){setInvites((await api(`/api/servers/invites?server_id=${server.id}`)).invites||[])}async function loadBans(){setBans((await api(`/api/servers/members?server_id=${server.id}&mode=bans`)).bans||[])}async function loadTimeouts(){setTimeouts((await api(`/api/servers/moderation?server_id=${server.id}`)).timeouts||[])}useEffect(()=>{if(tab==='roles'||tab==='members')loadRoles();if(tab==='invites')loadInvites();if(tab==='bans')loadBans();if(tab==='moderation')loadTimeouts()},[tab]);async function save(){try{const d=await api('/api/servers/settings',{method:'PATCH',body:JSON.stringify({server_id:server.id,...form})});onUpdated?.({...server,...d.server})}catch(e){setError(e.message)}}async function choose(e,kind){try{const f=e.target.files?.[0],data=await imageData(f,kind==='banner'?{w:1200,h:400,quality:.78,label:'Server banner'}:{w:256,h:256,label:'Server icon'});setForm(x=>({...x,[kind==='banner'?'banner_data':'icon_data']:data}))}catch(x){setError(x.message)}e.target.value=''}async function moderate(m,action){const reason=prompt(`${action} reason:`,'')??'';let minutes;if(action==='timeout')minutes=Number(prompt('Timeout minutes:','10'));try{await api('/api/servers/moderation',{method:'POST',body:JSON.stringify({server_id:server.id,user_id:m.id,action,reason,minutes})});reloadMembers?.();loadTimeouts()}catch(e){setError(e.message)}}const tabs=[['overview','Overview'],['roles','Roles'],['channels','Channels'],['invites','Invites'],['members','Members'],['moderation','Moderation'],['bans','Bans']];return createPortal(<div className="serverSettingsBackdrop" role="dialog" aria-modal="true"><div className="serverSettingsModal pro"><aside><div className="serverSettingsIdentity"><ServerMark server={form} size={46}/><div><strong>{server.name}</strong><span>Server Settings</span></div></div>{tabs.map(([k,n])=><button className={tab===k?'active':''} onClick={()=>setTab(k)} key={k}>{n}</button>)}<button className="danger" onClick={async()=>{const confirmName=owner?prompt(`Type ${server.name} to delete`):'';if(owner&&confirmName!==server.name)return;await api('/api/servers/settings',{method:'DELETE',body:JSON.stringify({server_id:server.id,confirm_name:confirmName})});onRemoved?.(server.id);onClose()}}>{owner?'Delete Server':'Leave Server'}</button></aside><main><button className="serverSettingsClose" onClick={onClose}><X/></button>{tab==='overview'&&<section><h2>Server Overview</h2><div className="serverBannerEditor" style={form.banner_data?{backgroundImage:`url(${form.banner_data})`}:{}}><div><label className="serverUploadButton"><Upload size={16}/>Edit Banner<input type="file" accept="image/*" onChange={e=>choose(e,'banner')}/></label>{form.banner_data&&<button onClick={()=>setForm(x=>({...x,banner_data:null}))}>Clear</button>}</div></div><div className="serverIdentityEditor"><ServerMark server={form} size={86}/><div><label className="serverUploadButton"><ImagePlus size={16}/>Edit Icon<input type="file" accept="image/*" onChange={e=>choose(e,'icon')}/></label>{form.icon_data&&<button onClick={()=>setForm(x=>({...x,icon_data:null}))}>Clear</button>}</div></div><label>SERVER NAME<input value={form.name||''} onChange={e=>setForm({...form,name:e.target.value})}/></label><label>DESCRIPTION<textarea value={form.description||''} onChange={e=>setForm({...form,description:e.target.value})}/></label><label className="serverCheck"><input type="checkbox" checked={!!form.is_public} onChange={e=>setForm({...form,is_public:e.target.checked})}/>Show in Discovery</label><button className="serverPrimaryAction" onClick={save}><Save size={16}/>Save Changes</button></section>}{tab==='roles'&&<section><div className="serverSettingsSectionTitle"><div><h2>Roles</h2><p>Drag-style ordering, colors and granular permissions.</p></div><button onClick={async()=>{await api('/api/servers/roles',{method:'POST',body:JSON.stringify({server_id:server.id,name:'New Role'})});loadRoles()}}><Plus/>Create Role</button></div><div className="roleManager">{roles.map((r,i)=><div className="roleCard" key={r.id}><GripVertical/><input className="roleColor" type="color" value={r.color} disabled={r.managed} onChange={async e=>{await api('/api/servers/roles',{method:'PATCH',body:JSON.stringify({role_id:r.id,color:e.target.value})});loadRoles()}}/><input value={r.name} disabled={r.managed} onChange={e=>setRoles(a=>a.map(x=>x.id===r.id?{...x,name:e.target.value}:x))}/><div className="roleActions">{!r.managed&&<><button title="Move up" onClick={async()=>{await api('/api/servers/roles',{method:'PATCH',body:JSON.stringify({role_id:r.id,position:(r.position||0)+1})});loadRoles()}}><ChevronUp size={15}/></button><button onClick={async()=>{await api('/api/servers/roles',{method:'PATCH',body:JSON.stringify({role_id:r.id,name:r.name,position:r.position})});loadRoles()}}><Save size={15}/></button><button className="danger" onClick={async()=>{await api('/api/servers/roles',{method:'DELETE',body:JSON.stringify({role_id:r.id})});loadRoles()}}><Trash2 size={15}/></button></>}</div><div className="permissionGrid">{PERMS.map(p=><label key={p}><input type="checkbox" checked={!!r.permissions?.[p]} disabled={r.managed} onChange={async e=>{const permissions={...r.permissions,[p]:e.target.checked};await api('/api/servers/roles',{method:'PATCH',body:JSON.stringify({role_id:r.id,permissions})});loadRoles()}}/>{p.replaceAll('_',' ')}</label>)}</div></div>)}</div></section>}{tab==='channels'&&<section><h2>Channels</h2><div className="channelSettingsList">{channels.map(c=><div key={c.id}><span>{c.type==='voice'?<Volume2/>:<Hash/>}</span><div><strong>{c.name}</strong><small>{c.topic||`${c.type} channel`}</small></div><button onClick={()=>setEditChannel({...c})}><Settings size={16}/></button></div>)}</div>{editChannel&&<div className="channelEditor"><h3>Edit #{editChannel.name}</h3><label>NAME<input value={editChannel.name} onChange={e=>setEditChannel({...editChannel,name:e.target.value})}/></label><label>TYPE<select value={editChannel.type||'text'} onChange={e=>setEditChannel({...editChannel,type:e.target.value})}><option value="text">Text</option><option value="voice">Voice</option></select></label><label>TOPIC<input value={editChannel.topic||''} onChange={e=>setEditChannel({...editChannel,topic:e.target.value})}/></label>{editChannel.type==='voice'&&<><label>BITRATE<input type="range" min="8000" max="128000" step="8000" value={editChannel.bitrate||64000} onChange={e=>setEditChannel({...editChannel,bitrate:Number(e.target.value)})}/><span>{Math.round((editChannel.bitrate||64000)/1000)} kbps</span></label><label>USER LIMIT<input type="number" min="0" max="99" value={editChannel.user_limit||0} onChange={e=>setEditChannel({...editChannel,user_limit:Number(e.target.value)})}/></label></>}<div className="permissionGrid">{['view_channel','send_messages','connect','speak'].map(p=><label key={p}><input type="checkbox" checked={editChannel.permissions?.[p]!==false} onChange={e=>setEditChannel({...editChannel,permissions:{...(editChannel.permissions||{}),[p]:e.target.checked}})}/>{p.replaceAll('_',' ')}</label>)}</div><button className="serverPrimaryAction" onClick={async()=>{await api('/api/servers/channels',{method:'PATCH',body:JSON.stringify({channel_id:editChannel.id,...editChannel})});setEditChannel(null);reloadChannels?.()}}>Save Channel</button></div>}</section>}{tab==='invites'&&<section><div className="serverSettingsSectionTitle"><h2>Invites</h2><button onClick={async()=>{await api('/api/servers/invites',{method:'POST',body:JSON.stringify({server_id:server.id,expires_hours:168})});loadInvites()}}><Plus/>Create Invite</button></div><div className="inviteList">{invites.map(i=><div key={i.id}><code>{i.code}</code><span>{i.uses}{i.max_uses?` / ${i.max_uses}`:''} uses</span><button onClick={()=>navigator.clipboard.writeText(`${location.origin}/?invite=${i.code}`)}><Copy/></button></div>)}</div></section>}{tab==='members'&&<section><h2>Members</h2><div className="serverSettingsMembers expanded">{members.map(m=><div key={m.id}><img src={m.avatar_url||'/default-avatar.png'}/><div><strong>{m.display_name||m.username}</strong><span>@{m.username}</span></div><em>{m.role}</em>{manage&&m.role!=='owner'&&<div className="memberRoleChips">{roles.filter(r=>!r.managed).map(r=>{const assigned=assignments.some(a=>a.user_id===m.id&&a.role_id===r.id);return <button key={r.id} className={assigned?'active':''} style={{'--role-color':r.color}} onClick={async()=>{await api('/api/servers/roles',{method:assigned?'DELETE':'POST',body:JSON.stringify({server_id:server.id,assign_user_id:m.id,role_id:r.id})});loadRoles()}}>{r.name}</button>})}</div>}{manage&&m.role!=='owner'&&<><button onClick={()=>moderate(m,'timeout')}><Clock3/></button><button onClick={()=>moderate(m,'kick')}><UserMinus/></button><button className="danger" onClick={()=>moderate(m,'ban')}><Ban/></button></>}</div>)}</div></section>}{tab==='moderation'&&<section><h2>Moderation</h2><label>VERIFICATION<select value={form.verification_level||0} onChange={e=>setForm({...form,verification_level:Number(e.target.value)})}><option value="0">None</option><option value="1">Verified accounts</option><option value="2">Established accounts</option></select></label><label>SERVER RULES<textarea value={form.rules_text||''} onChange={e=>setForm({...form,rules_text:e.target.value})}/></label><button className="serverPrimaryAction" onClick={save}>Save Moderation</button><h3>Active Timeouts</h3>{timeouts.map(t=><div className="moderationRow" key={t.user_id}><span>{t.display_name||t.username}</span><small>until {new Date(t.expires_at).toLocaleString()}</small><button onClick={()=>moderate({id:t.user_id,display_name:t.display_name},'remove-timeout')}>Remove</button></div>)}</section>}{tab==='bans'&&<section><h2>Bans</h2>{bans.map(b=><div className="moderationRow" key={b.user_id}><span>{b.display_name||b.username}</span><small>{b.reason||'No reason'}</small><button onClick={async()=>{await api('/api/servers/members',{method:'POST',body:JSON.stringify({server_id:server.id,user_id:b.user_id})});loadBans()}}>Unban</button></div>)}</section>}{error&&<div className="serverInlineError">{error}</div>}</main></div></div>,document.body)}
@@ -71,7 +71,7 @@ export function GifPicker({ onPick, onClose }) {
     return () => { cancelled = true; window.clearTimeout(timer); };
   }, [query]);
 
-  return createPortal(
+  return (
     <section className="gifPicker gifPickerPortal" ref={panelRef} role="dialog" aria-label="GIF picker">
       <header className="gifPickerHeader">
         <div className="gifSearchField">
@@ -93,24 +93,25 @@ export function GifPicker({ onPick, onClose }) {
         </div>
       </div>
       <footer>Powered by KLIPY</footer>
-    </section>,
-    document.body
+    </section>
   );
 }
 
 function ServerPollCard({ poll, onChanged, currentUser }) {
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
   const totalVotes = poll.options.reduce((sum, option) => sum + Number(option.vote_count || 0), 0);
   const voted = poll.options.some((option) => option.selected);
   const closed = Boolean(poll.closed_at) || (poll.closes_at && Date.parse(poll.closes_at) <= Date.now());
   const showResults = !poll.hide_results_until_vote || voted || closed;
 
   async function vote(optionId) {
-    if (closed) return;
-    await api("/api/servers/polls", {
-      method: "PATCH",
-      body: JSON.stringify({ poll_id: poll.id, option_id: optionId })
-    });
-    onChanged?.();
+    if (closed || busy) return;
+    setBusy(true); setError("");
+    try {
+      const data = await api("/api/servers/polls", { method: "PATCH", body: JSON.stringify({ poll_id: poll.id, option_id: optionId }) });
+      onChanged?.(data.poll);
+    } catch (e) { setError(e.message || "Could not vote"); } finally { setBusy(false); }
   }
 
   return (
@@ -124,7 +125,7 @@ function ServerPollCard({ poll, onChanged, currentUser }) {
         {poll.options.map((option) => {
           const percentage = totalVotes ? Math.round((Number(option.vote_count || 0) / totalVotes) * 100) : 0;
           return (
-            <button type="button" className={option.selected ? "selected" : ""} key={option.id} onClick={() => vote(option.id)} disabled={closed}>
+            <button type="button" className={option.selected ? "selected" : ""} key={option.id} onClick={() => vote(option.id)} disabled={closed || busy}>
               <span className="serverPollFill" style={{ width: showResults ? `${percentage}%` : "0%" }} />
               <span className="serverPollOptionText"><i>{option.selected ? "✓" : ""}</i>{option.option_text}</span>
               {showResults ? <b>{percentage}%</b> : null}
@@ -136,11 +137,12 @@ function ServerPollCard({ poll, onChanged, currentUser }) {
         <span>{totalVotes} vote{totalVotes === 1 ? "" : "s"}{closed ? " · Closed" : ""}</span>
         {poll.creator_user_id === currentUser?.id && !closed ? (
           <button type="button" onClick={async () => {
-            await api("/api/servers/polls", { method: "PATCH", body: JSON.stringify({ poll_id: poll.id, action: "close" }) });
-            onChanged?.();
+            if (busy) return; setBusy(true); setError("");
+            try { const data = await api("/api/servers/polls", { method: "PATCH", body: JSON.stringify({ poll_id: poll.id, action: "close" }) }); onChanged?.(data.poll); } catch (e) { setError(e.message || "Could not close poll"); } finally { setBusy(false); }
           }}>Close poll</button>
         ) : null}
       </footer>
+      {error ? <div className="pollActionError">{error}</div> : null}
     </article>
   );
 }
@@ -157,7 +159,7 @@ function ServerPollSystem({ channelId, onCreated }) {
   const [error, setError] = useState("");
 
   async function submit(event) {
-    event.preventDefault();
+    event?.preventDefault?.();
     const cleanOptions = options.map((value) => value.trim()).filter(Boolean);
     if (!question.trim() || cleanOptions.length < 2) { setError("Add a question and at least two options."); return; }
     setBusy(true); setError("");
@@ -174,10 +176,9 @@ function ServerPollSystem({ channelId, onCreated }) {
 
   return (
     <>
-      <button type="button" className="composerPollButton" onClick={() => setOpen(true)} aria-label="Create poll" title="Create poll"><BarChart3 size={18} /></button>
-      {open ? createPortal(
-        <div className="pollModalBackdrop" onMouseDown={() => setOpen(false)}>
-          <form className="pollCreateModal serverPollCreateModal" onSubmit={submit} onMouseDown={(event) => event.stopPropagation()}>
+      <button type="button" className="composerPollButton" onClick={() => setOpen(true)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.png" alt="" /></button>
+      {open ? (
+        <div className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
             <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" onClick={() => setOpen(false)}><X /></button></header>
             <label><span>Question</span><input autoFocus value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={300} /></label>
             <div className="serverPollOptionInputs">
@@ -191,9 +192,9 @@ function ServerPollSystem({ channelId, onCreated }) {
             </div>
             <label><span>Duration</span><select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="0">No time limit</option><option value="5">5 minutes</option><option value="60">1 hour</option><option value="1440">1 day</option><option value="10080">7 days</option></select></label>
             {error ? <div className="serverInlineError">{error}</div> : null}
-            <footer><button type="button" onClick={() => setOpen(false)}>Cancel</button><button type="submit" disabled={busy}>{busy ? "Creating…" : "Create Poll"}</button></footer>
-          </form>
-        </div>, document.body) : null}
+            <footer><button type="button" onClick={() => setOpen(false)}>Cancel</button><button type="button" disabled={busy} onClick={submit}>{busy ? "Creating…" : "Create Poll"}</button></footer>
+        </div>
+      ) : null}
     </>
   );
 }
@@ -289,16 +290,16 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
           <>
             <div className="serverMessageList">
               {timeline.map((item) => item.type === "poll" ? (
-                <ServerPollCard key={item.value.id} poll={item.value} currentUser={currentUser} onChanged={() => loadPolls()} />
+                <ServerPollCard key={item.value.id} poll={item.value} currentUser={currentUser} onChanged={(updated) => updated ? setPolls((list) => list.map((entry) => entry.id === updated.id ? updated : entry)) : loadPolls()} />
               ) : (
-                <article className="serverMessage" key={item.value.id}><img src={item.value.sender?.avatar_url || "/default-avatar.png"} alt="" /><div><div><strong>{item.value.sender?.display_name || item.value.sender?.username}</strong><time>{new Date(item.value.created_at).toLocaleString()}</time></div>{item.value.body ? <p>{renderMentions(item.value.body, members)}</p> : null}{item.value.gif_url ? <div className="serverGifMessage"><img src={item.value.gif_url} alt="GIF" /><span>KLIPY</span></div> : null}</div></article>
+                <article className="serverMessage" key={item.value.id}><img src={item.value.sender?.avatar_url || "/default-avatar.png"} alt="" /><div><div><strong>{item.value.sender?.display_name || item.value.sender?.username}</strong><time>{new Date(item.value.created_at).toLocaleString()}</time></div>{item.value.body ? <p>{renderMentions(item.value.body, members)}</p> : null}{item.value.gif_url ? <div className="serverGifMessage"><img src={item.value.gif_url} alt="GIF" /></div> : null}</div></article>
               ))}
               <div ref={endRef} />
             </div>
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <textarea rows={1} value={text} onChange={(event) => setText(event.target.value)} placeholder={`Message #${activeChannel?.name || "channel"}`} />
-                <button type="button" className="gifButton dmGifButton" onClick={() => setGifOpen((value) => !value)} aria-label="Open GIF picker" title="GIF"><Images size={19} /></button>
+                <button type="button" className="gifButton dmGifButton" onClick={() => setGifOpen((value) => !value)} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.png" alt="" /></button>
                 <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} />
                 <button type="submit" disabled={!text.trim()}>Send</button>
               </div>

@@ -12480,3 +12480,206 @@ body:has(.serverContextMenuInline)::after {
   .messageComposer .composerInputRow,
   .serverMessageComposer .composerInputRow { gap: 5px !important; }
 }
+
+/* Patch 105: unified composer, anchored GIF/Poll panels, uploaded action icons */
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  position: relative !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 64px !important;
+  max-height: none !important;
+  margin: 0 14px !important;
+  padding: 3px 0 6px !important;
+  overflow: visible !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  position: relative !important;
+  display: grid !important;
+  grid-template-columns: minmax(0, 1fr) 40px 40px 96px !important;
+  align-items: center !important;
+  column-gap: 10px !important;
+  width: 100% !important;
+  height: 58px !important;
+  min-height: 58px !important;
+  max-height: 58px !important;
+  margin: 0 !important;
+  padding: 8px 10px 8px 16px !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+  border: 1px solid rgba(255,255,255,.08) !important;
+  border-radius: 12px !important;
+  background: #202126 !important;
+  box-shadow: none !important;
+}
+
+.messageComposer .composerInputRow textarea,
+.serverMessageComposer .composerInputRow textarea {
+  grid-column: 1 !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 9px 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  resize: none !important;
+  overflow: hidden !important;
+  background: transparent !important;
+  color: #eef0f4 !important;
+  font: inherit !important;
+  font-size: 1rem !important;
+  line-height: 22px !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton {
+  display: grid !important;
+  place-items: center !important;
+  width: 40px !important;
+  min-width: 40px !important;
+  max-width: 40px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #9da2ac !important;
+  box-sizing: border-box !important;
+}
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton { grid-column: 2 !important; }
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton { grid-column: 3 !important; }
+
+.composerActionIcon,
+.pollTrashIcon {
+  display: block !important;
+  width: 24px !important;
+  height: 24px !important;
+  object-fit: contain !important;
+  filter: invert(70%) sepia(5%) saturate(300%) hue-rotate(180deg) brightness(92%) !important;
+  opacity: .95 !important;
+  pointer-events: none !important;
+}
+.messageComposer .gifButton:hover .composerActionIcon,
+.serverMessageComposer .gifButton:hover .composerActionIcon,
+.messageComposer .composerPollButton:hover .composerActionIcon,
+.serverMessageComposer .composerPollButton:hover .composerActionIcon {
+  filter: invert(100%) !important;
+}
+
+.messageComposer .composerInputRow > button[type="submit"],
+.serverMessageComposer .composerInputRow > button[type="submit"] {
+  grid-column: 4 !important;
+  position: static !important;
+  width: 96px !important;
+  min-width: 96px !important;
+  max-width: 96px !important;
+  height: 40px !important;
+  min-height: 40px !important;
+  max-height: 40px !important;
+  margin: 0 !important;
+  padding: 0 14px !important;
+  transform: none !important;
+  line-height: 40px !important;
+  box-sizing: border-box !important;
+}
+
+/* Both panels stay inside the center conversation column and never cover the right rail/profile. */
+.gifPickerPortal,
+.pollCreatePopover {
+  position: absolute !important;
+  right: 0 !important;
+  bottom: calc(100% + 8px) !important;
+  left: auto !important;
+  top: auto !important;
+  width: min(430px, calc(100% - 8px)) !important;
+  max-width: calc(100% - 8px) !important;
+  max-height: min(570px, 72vh) !important;
+  z-index: 400 !important;
+  margin: 0 !important;
+  transform: none !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  overflow: hidden !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 14px !important;
+  background: #17181c !important;
+  box-shadow: 0 18px 55px rgba(0,0,0,.48) !important;
+}
+.gifPickerPortal { display: flex !important; flex-direction: column !important; }
+.gifPickerBody { min-height: 0 !important; overflow-y: auto !important; }
+.gifPickerPortal footer { flex: 0 0 auto !important; }
+
+.pollCreatePopover {
+  display: block !important;
+  overflow-y: auto !important;
+  padding: 18px !important;
+}
+.pollModalBackdrop { display: contents !important; background: transparent !important; backdrop-filter: none !important; }
+
+/* Keep the channel member/profile rail visible while popovers are open. */
+.serverChatPane,
+.chatColumn,
+.chatMain { min-width: 0 !important; overflow: visible !important; }
+.serverMemberRail,
+.profilePanel { position: relative !important; z-index: 20 !important; }
+
+.serverChatPane {
+  grid-template-rows: 58px minmax(0, 1fr) auto !important;
+}
+.serverMessageList { padding-bottom: 4px !important; }
+
+.serverGifMessage span,
+.dmGifMessage span { display: none !important; }
+.serverGifMessage img,
+.dmGifMessage img { display: block !important; max-width: min(420px, 100%) !important; border-radius: 10px !important; }
+
+.pollRemoveOption,
+.pollOptionEditor button[aria-label="Remove option"] {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+}
+.pollTrashIcon { width: 20px !important; height: 20px !important; }
+.pollActionError { margin-top: 8px; color: #ff7b80; font-size: .78rem; }
+
+@media (max-width: 720px) {
+  .messageComposer.composerForm,
+  .serverMessageComposer.messageComposer.composerForm { margin: 0 8px !important; }
+  .messageComposer .composerInputRow,
+  .serverMessageComposer .composerInputRow {
+    grid-template-columns: minmax(0,1fr) 36px 36px 72px !important;
+    column-gap: 5px !important;
+    padding-left: 11px !important;
+  }
+  .messageComposer .gifButton,
+  .serverMessageComposer .gifButton,
+  .messageComposer .composerPollButton,
+  .serverMessageComposer .composerPollButton {
+    width: 36px !important; min-width: 36px !important; max-width: 36px !important;
+  }
+  .messageComposer .composerInputRow > button[type="submit"],
+  .serverMessageComposer .composerInputRow > button[type="submit"] {
+    width: 72px !important; min-width: 72px !important; max-width: 72px !important;
+  }
+  .gifPickerPortal,
+  .pollCreatePopover { width: 100% !important; max-width: 100% !important; right: 0 !important; }
+}

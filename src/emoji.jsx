@@ -230,21 +230,9 @@ function createComposerEmojiNode(emoji) {
   atom.className = "composerEmojiAtom";
   atom.dataset.emoji = emoji;
   atom.contentEditable = "false";
-
-  const image = document.createElement("img");
-  image.className = "composerInlineEmoji";
-  image.src = notoEmojiUrl(emoji, EMOJI_HEXCODE_MAP.get(emoji) || "");
-  image.alt = emoji;
-  image.draggable = false;
-
-  image.addEventListener("error", () => {
-    const fallback = document.createElement("span");
-    fallback.className = "composerInlineEmoji composerInlineEmojiFallback";
-    fallback.textContent = emoji;
-    image.replaceWith(fallback);
-  }, { once: true });
-
-  atom.appendChild(image);
+  atom.setAttribute("role", "img");
+  atom.setAttribute("aria-label", emoji);
+  atom.textContent = emoji;
   return atom;
 }
 
@@ -256,9 +244,6 @@ function createComposerFragment(value) {
     for (const part of splitGraphemes(line)) {
       if (EMOJI_GRAPHEME_RE.test(part)) {
         fragment.appendChild(createComposerEmojiNode(part));
-
-        const caretSlot = document.createTextNode("\u200B");
-        fragment.appendChild(caretSlot);
       } else {
         fragment.appendChild(document.createTextNode(part));
       }

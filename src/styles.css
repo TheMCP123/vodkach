@@ -16159,3 +16159,128 @@ button.danger:hover img[src$="/trash.svg"],
   flex: 0 0 auto !important;
   margin-bottom: 0 !important;
 }
+
+
+/* Patch 133 — stable local-font emoji atoms and viewport-safe five-line composer. */
+
+/*
+ * Composer emoji no longer load SVG files. Each atom uses the self-hosted
+ * Noto Color Emoji font, so there are no failed images, disappearing nodes or
+ * OS-specific emoji.
+ */
+.composerEmojiAtom {
+  position: relative !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  color: initial !important;
+  -webkit-text-fill-color: initial !important;
+  background: transparent !important;
+  font-family: "Noto Color Emoji", sans-serif !important;
+  font-size: 19px !important;
+  font-weight: 400 !important;
+  line-height: 22px !important;
+  vertical-align: -5px !important;
+  white-space: nowrap !important;
+  text-shadow: none !important;
+  user-select: all !important;
+  -webkit-user-select: all !important;
+  box-sizing: content-box !important;
+}
+
+/* Neutralize every old IMG/fallback rule inside the new font atom. */
+.composerEmojiAtom > .composerInlineEmoji,
+.composerEmojiAtom > .composerInlineEmojiFallback {
+  display: none !important;
+}
+
+/* Five visible text rows, then an internal scrollbar. */
+.emojiComposerEditor {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  padding: 4px 2px 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  line-height: 24px !important;
+  box-sizing: border-box !important;
+}
+
+/*
+ * Keep the growing composer inside the browser viewport. appMessages absorbs
+ * all height changes; the composer can never push below the bottom edge.
+ */
+.appChat {
+  height: 100dvh !important;
+  max-height: 100dvh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+.appMessages {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  height: auto !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: 146px !important;
+  margin: 0 14px 12px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: 142px !important;
+  align-items: flex-end !important;
+  box-sizing: border-box !important;
+}
+
+.composerTextField {
+  height: 32px;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  overflow: hidden !important;
+}
+
+/* Server channel layout gets the same viewport protection. */
+.serverWorkspace,
+.serverChannelView,
+.serverChannelMain {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+.serverMessageList {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+}

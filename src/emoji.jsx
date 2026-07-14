@@ -261,6 +261,10 @@ function placeCaretAtEnd(root) {
   range.collapse(false);
   selection.removeAllRanges();
   selection.addRange(range);
+
+  window.requestAnimationFrame(() => {
+    root.scrollLeft = root.scrollWidth;
+  });
 }
 
 export function EmojiComposerInput({
@@ -309,6 +313,22 @@ export function EmojiComposerInput({
 
     lastValueRef.current = next;
     onChange?.(next);
+
+    window.requestAnimationFrame(() => {
+      const selection = window.getSelection();
+      if (!selection?.rangeCount || !root.contains(selection.anchorNode)) return;
+
+      const range = selection.getRangeAt(0).cloneRange();
+      range.collapse(false);
+      const caretRect = range.getBoundingClientRect();
+      const rootRect = root.getBoundingClientRect();
+
+      if (caretRect.right > rootRect.right - 4) {
+        root.scrollLeft += caretRect.right - rootRect.right + 12;
+      } else if (caretRect.left < rootRect.left + 4) {
+        root.scrollLeft -= rootRect.left - caretRect.left + 12;
+      }
+    });
   }
 
   return (

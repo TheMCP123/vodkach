@@ -15922,3 +15922,49 @@ button.danger:hover img[src$="/trash.svg"],
 .composerInlineEmoji[src=""] {
   visibility: hidden !important;
 }
+
+
+/* Patch 130 — consecutive emoji stay visible in the one-line Type Bar. */
+.emojiComposerEditor {
+  display: block !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  white-space: pre !important;
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  scrollbar-width: none !important;
+  overscroll-behavior-x: contain !important;
+}
+
+.emojiComposerEditor::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Consecutive emoji must remain independent square inline nodes. */
+.emojiComposerEditor .composerInlineEmoji,
+.emojiComposerEditor .composerInlineEmojiFallback {
+  display: inline-block !important;
+  flex: none !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  vertical-align: -5px !important;
+  object-fit: contain !important;
+  white-space: nowrap !important;
+}
+
+/* Prevent generic image rules from shrinking later emoji in a sequence. */
+.emojiComposerEditor img.composerInlineEmoji {
+  position: static !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  transform: none !important;
+}

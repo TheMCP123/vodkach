@@ -377,8 +377,8 @@ export function EmojiPicker({ onPick, onClose }) {
               key={item.hexcode}
             >
               <NotoEmoji
-                emoji={item.emoji}
-                hexcode={item.hexcode}
+                emoji={selected.emoji}
+                hexcode={selected.hexcode}
                 title={`:${item.shortcode}:`}
               />
               {item.skins.length ? <i aria-hidden="true" /> : null}

@@ -14812,3 +14812,154 @@ button.active .inlineUiIcon {
   transform: none !important;
   object-position: center !important;
 }
+
+
+/* Patch 119 — exact GIF-style categories, no dark emoji tiles, live tone preview. */
+
+/* Match Emoji category buttons to the currently approved GIF category UI. */
+.emojiPicker .emojiCategoryTabs {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 41px !important;
+  margin: 0 !important;
+  padding: 0 14px 11px !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  background: #17181c !important;
+  background-image: none !important;
+  mask-image: none !important;
+  -webkit-mask-image: none !important;
+  scrollbar-width: none !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+
+.emojiPicker .emojiCategoryTabs::-webkit-scrollbar {
+  display: none !important;
+}
+
+.emojiPicker .emojiCategoryTabs::before,
+.emojiPicker .emojiCategoryTabs::after {
+  content: none !important;
+  display: none !important;
+}
+
+.emojiPicker .emojiCategoryTabs > button,
+.emojiPicker .emojiCategoryTabs > button[type="button"] {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 6px !important;
+  outline: 0 !important;
+  background: #202126 !important;
+  box-shadow: none !important;
+  color: #a6abb5 !important;
+  font-size: .76rem !important;
+  font-weight: 700 !important;
+  line-height: 30px !important;
+  white-space: nowrap !important;
+  transform: none !important;
+}
+
+.emojiPicker .emojiCategoryTabs > button:hover {
+  border-color: transparent !important;
+  background: #27292f !important;
+  color: #ffffff !important;
+}
+
+.emojiPicker .emojiCategoryTabs > button.active {
+  border-color: rgba(252,3,3,.25) !important;
+  background: rgba(252,3,3,.14) !important;
+  color: #ff5a60 !important;
+}
+
+/*
+ * Old tooltip CSS targeted every span inside an emoji button and painted
+ * #090a0c behind the Noto glyph. Explicitly neutralize all of it here.
+ */
+.emojiPicker .emojiGrid > button > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:hover > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:focus-visible > .notoEmojiGlyph {
+  position: static !important;
+  left: auto !important;
+  right: auto !important;
+  top: auto !important;
+  bottom: auto !important;
+  z-index: auto !important;
+  display: block !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  outline: 0 !important;
+  background-color: transparent !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 30px 30px !important;
+  box-shadow: none !important;
+  color: transparent !important;
+  font-size: 24px !important;
+  line-height: 30px !important;
+  white-space: nowrap !important;
+  pointer-events: none !important;
+  transform: none !important;
+}
+
+/* The grid cell itself is also completely transparent until hover. */
+.emojiPicker .emojiGrid > button,
+.emojiPicker .emojiGrid > button[type="button"] {
+  background-color: transparent !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+.emojiPicker .emojiGrid > button:hover,
+.emojiPicker .emojiGrid > button:focus-visible {
+  background-color: rgba(255,255,255,.055) !important;
+  background-image: none !important;
+  box-shadow: none !important;
+}
+
+/* Tone menu keeps the same neutral Vodkach surface and no black emoji tiles. */
+.emojiPicker .emojiToneMenu > button > .notoEmojiGlyph,
+.emojiPicker .emojiToneMenu > button:hover > .notoEmojiGlyph {
+  position: static !important;
+  display: block !important;
+  width: 25px !important;
+  min-width: 25px !important;
+  max-width: 25px !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background-color: transparent !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 25px 25px !important;
+  box-shadow: none !important;
+  line-height: 25px !important;
+  transform: none !important;
+}

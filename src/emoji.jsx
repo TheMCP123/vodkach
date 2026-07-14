@@ -202,19 +202,15 @@ function readComposerValue(root) {
 
   function walk(node) {
     if (node.nodeType === Node.TEXT_NODE) {
-      value += (node.nodeValue || "").replace(/\u200B/g, "");
+      value += node.nodeValue || "";
       return;
     }
 
     if (node.nodeType !== Node.ELEMENT_NODE) return;
 
-    if (node.classList?.contains("composerEmojiAtom") && node.dataset?.emoji) {
-      value += node.dataset.emoji;
-      return;
-    }
-
     if (node.tagName === "BR") {
-      value += "\n";
+      value += "
+";
       return;
     }
 
@@ -222,33 +218,20 @@ function readComposerValue(root) {
   }
 
   for (const child of root.childNodes) walk(child);
-  return value;
+  return value.replace(/ /g, " ");
 }
 
 function createComposerEmojiNode(emoji) {
-  const atom = document.createElement("span");
-  atom.className = "composerEmojiAtom";
-  atom.dataset.emoji = emoji;
-  atom.contentEditable = "false";
-  atom.setAttribute("role", "img");
-  atom.setAttribute("aria-label", emoji);
-  atom.textContent = emoji;
-  return atom;
+  return document.createTextNode(emoji);
 }
 
 function createComposerFragment(value) {
   const fragment = document.createDocumentFragment();
-  const lines = String(value || "").split("\n");
+  const lines = String(value || "").split("
+");
 
   lines.forEach((line, lineIndex) => {
-    for (const part of splitGraphemes(line)) {
-      if (EMOJI_GRAPHEME_RE.test(part)) {
-        fragment.appendChild(createComposerEmojiNode(part));
-      } else {
-        fragment.appendChild(document.createTextNode(part));
-      }
-    }
-
+    fragment.appendChild(document.createTextNode(line));
     if (lineIndex < lines.length - 1) {
       fragment.appendChild(document.createElement("br"));
     }
@@ -319,7 +302,17 @@ export function EmojiComposerInput({
     root.style.height = `${nextHeight}px`;
 
     const field = root.closest(".composerTextField");
-    if (field) field.style.height = `${nextHeight}px`;
+    if (field) {
+      field.style.height = `${nextHeight}px`;
+      field.style.minHeight = "32px";
+      field.style.maxHeight = "128px";
+    }
+
+    const row = root.closest(".composerInputRow");
+    if (row) {
+      row.style.minHeight = "46px";
+      row.style.maxHeight = "142px";
+    }
   }
 
   function syncValue(root) {

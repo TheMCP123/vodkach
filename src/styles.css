@@ -16284,3 +16284,109 @@ button.danger:hover img[src$="/trash.svg"],
   min-height: 0 !important;
   overflow-y: auto !important;
 }
+
+
+/* Patch 134 — direct Unicode editor with self-hosted Noto Color Emoji. */
+.emojiComposerEditor,
+.emojiComposerEditor * {
+  font-family: "Noto Color Emoji", "Noto Sans", sans-serif !important;
+  font-variant-emoji: emoji !important;
+}
+
+.emojiComposerEditor {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  margin: 0 !important;
+  padding: 4px 0 !important;
+  overflow-x: hidden !important;
+  overflow-y: auto !important;
+  background: transparent !important;
+  color: #f4f5f7 !important;
+  -webkit-text-fill-color: #f4f5f7 !important;
+  caret-color: #ffffff !important;
+  font-size: 17px !important;
+  font-weight: 400 !important;
+  line-height: 24px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+  word-break: break-word !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #41454e transparent !important;
+}
+.emojiComposerEditor::selection,
+.emojiComposerEditor *::selection {
+  color: #ffffff !important;
+  background: #315fc9 !important;
+  -webkit-text-fill-color: #ffffff !important;
+}
+.emojiComposerEditor br {
+  display: block !important;
+  content: "" !important;
+  line-height: 24px !important;
+}
+.emojiComposerEditor .composerEmojiAtom,
+.emojiComposerEditor .composerInlineEmoji,
+.emojiComposerEditor .composerInlineEmojiFallback {
+  display: inline !important;
+  position: static !important;
+  width: auto !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: auto !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  background: transparent !important;
+  object-fit: contain !important;
+  vertical-align: baseline !important;
+}
+.composerTextField {
+  flex: 1 1 auto !important;
+  width: auto !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 128px !important;
+  overflow: hidden !important;
+}
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  position: relative !important;
+  flex: 0 0 auto !important;
+  width: auto !important;
+  height: auto !important;
+  min-height: 50px !important;
+  max-height: 146px !important;
+  margin: 0 14px 12px !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  box-sizing: border-box !important;
+}
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: auto !important;
+  min-height: 46px !important;
+  max-height: 142px !important;
+  align-items: flex-end !important;
+  box-sizing: border-box !important;
+}
+.appChat,
+.serverWorkspace,
+.serverChannelView,
+.serverChannelMain {
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.appMessages,
+.serverMessageList {
+  flex: 1 1 0 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}

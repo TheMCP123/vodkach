@@ -14963,3 +14963,61 @@ button.active .inlineUiIcon {
   line-height: 25px !important;
   transform: none !important;
 }
+
+
+/* Patch 120 — Emoji header/search exactly matches GIF picker. */
+.emojiPickerHeader {
+  min-height: 62px !important;
+}
+
+.emojiPickerHeader .composerPopoverEyebrow {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+}
+
+.emojiPickerHeader .popoverEyebrowIcon {
+  display: block !important;
+  width: 18px !important;
+  height: 18px !important;
+  margin: 0 !important;
+  opacity: .78 !important;
+  object-fit: contain !important;
+  filter: brightness(0) saturate(100%) invert(72%) sepia(6%) saturate(321%) hue-rotate(182deg) brightness(91%) contrast(88%) !important;
+}
+
+.emojiPicker .emojiSearchField {
+  display: grid !important;
+  grid-template-columns: 18px minmax(0, 1fr) !important;
+  align-items: center !important;
+  gap: 9px !important;
+  height: 38px !important;
+  margin: 11px 12px 8px !important;
+  padding: 0 11px !important;
+  border: 1px solid rgba(255,255,255,.085) !important;
+  border-radius: 6px !important;
+  background: #111216 !important;
+  color: #858b96 !important;
+  box-sizing: border-box !important;
+}
+
+.emojiPicker .emojiSearchField > svg {
+  display: block !important;
+  width: 17px !important;
+  height: 17px !important;
+  margin: 0 !important;
+  color: #858b96 !important;
+  stroke-width: 2 !important;
+}
+
+.emojiPicker .emojiSearchField input {
+  width: 100% !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}

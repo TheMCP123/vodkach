@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import emojiData from "emojibase-data/en/compact.json";
 import githubShortcodes from "emojibase-data/en/shortcodes/github.json";
+import { Search, X } from "lucide-react";
 
 const NOTO_EMOJI_CDN =
   "https://cdn.jsdelivr.net/gh/googlefonts/noto-emoji@main/svg";
@@ -184,6 +185,7 @@ export function EmojiPicker({ onPick, onClose }) {
 
   useEffect(() => {
     const closeOutside = (event) => {
+      if (event.target?.closest?.(".emojiButton")) return;
       if (!panelRef.current?.contains(event.target)) onClose?.();
     };
     const closeEscape = (event) => {
@@ -284,10 +286,13 @@ export function EmojiPicker({ onPick, onClose }) {
       role="dialog"
       aria-label="Emoji picker"
     >
-      <header className="composerPopoverHeader">
+      <header className="composerPopoverHeader emojiPickerHeader">
         <div>
-          <span className="composerPopoverEyebrow">NOTO EMOJI</span>
-          <strong>Emoji</strong>
+          <span className="composerPopoverEyebrow">
+            <img className="popoverEyebrowIcon" src="/ui/emojis.svg" alt="" />
+            Emojis
+          </span>
+          <strong>Find the perfect Emoji</strong>
         </div>
         <button
           type="button"
@@ -295,12 +300,12 @@ export function EmojiPicker({ onPick, onClose }) {
           onClick={onClose}
           aria-label="Close emoji picker"
         >
-          ×
+          <X size={18} />
         </button>
       </header>
 
       <label className="emojiSearchField">
-        <span aria-hidden="true">⌕</span>
+        <Search size={17} aria-hidden="true" />
         <input
           ref={searchRef}
           value={query}

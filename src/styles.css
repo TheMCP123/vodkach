@@ -15545,3 +15545,131 @@ button.active .inlineUiIcon {
 .serverMessageComposer .composerTextField > textarea {
   font-family: "Noto Sans", "Noto Color Emoji", sans-serif !important;
 }
+
+
+/* Patch 126 — final Type Bar emoji, square selection hitbox, and chat spacing. */
+
+/*
+ * Unicode-range makes this safe: Noto Color Emoji is only selected for emoji,
+ * while ordinary text continues to use Noto Sans.
+ */
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  font-family: "Noto Color Emoji", "Noto Sans", sans-serif !important;
+  font-size: 17px !important;
+  font-weight: 400 !important;
+  line-height: 24px !important;
+  color: #f4f5f7 !important;
+  -webkit-text-fill-color: #f4f5f7 !important;
+  caret-color: #ffffff !important;
+  padding: 4px 0 !important;
+}
+
+/* Prevent an old transparent-input rule from hiding native Noto emoji. */
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea,
+.messageComposer .composerTextField > textarea:focus,
+.serverMessageComposer .composerTextField > textarea:focus {
+  opacity: 1 !important;
+  visibility: visible !important;
+  text-shadow: none !important;
+  filter: none !important;
+}
+
+.messageComposer .composerTextField > textarea::selection,
+.serverMessageComposer .composerTextField > textarea::selection {
+  color: #ffffff !important;
+  -webkit-text-fill-color: #ffffff !important;
+  background: #315fc9 !important;
+}
+
+/*
+ * Message emoji use a true one-em square. The selectable Unicode grapheme and
+ * the visible SVG now have the same hitbox instead of a 1.38em-wide box.
+ */
+.notoEmojiGlyph {
+  position: relative !important;
+  display: inline-block !important;
+  width: 1em !important;
+  min-width: 1em !important;
+  max-width: 1em !important;
+  height: 1em !important;
+  min-height: 1em !important;
+  max-height: 1em !important;
+  margin: 0 .035em !important;
+  padding: 0 !important;
+  overflow: visible !important;
+  line-height: 1em !important;
+  vertical-align: -.15em !important;
+  background-position: 50% 50% !important;
+  background-repeat: no-repeat !important;
+  background-size: 1em 1em !important;
+  box-sizing: content-box !important;
+}
+
+/* One grapheme = one compact square selection area. */
+.notoEmojiGlyph::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: #315fc9 !important;
+}
+
+/* Picker and tone selector keep their intentionally larger visual sizes. */
+.emojiPicker .emojiGrid > button > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:hover > .notoEmojiGlyph,
+.emojiPicker .emojiGrid > button:focus-visible > .notoEmojiGlyph {
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  line-height: 30px !important;
+  vertical-align: middle !important;
+  background-size: 30px 30px !important;
+}
+
+.emojiPicker .emojiToneMenu > button > .notoEmojiGlyph,
+.emojiPicker .emojiToneMenu > button:hover > .notoEmojiGlyph {
+  width: 25px !important;
+  min-width: 25px !important;
+  max-width: 25px !important;
+  height: 25px !important;
+  min-height: 25px !important;
+  max-height: 25px !important;
+  margin: 0 !important;
+  line-height: 25px !important;
+  vertical-align: middle !important;
+  background-size: 25px 25px !important;
+}
+
+/*
+ * The 68px bottom padding was the remaining artificial gap between the final
+ * message and Type Bar. The composer is already a separate grid row.
+ */
+.appMessages {
+  padding: 14px 16px 8px !important;
+  scroll-padding-bottom: 8px !important;
+}
+
+.messageTimeline {
+  min-height: 100% !important;
+  padding-bottom: 0 !important;
+}
+
+/* Same compact ending in server channels. */
+.serverMessageList {
+  padding-bottom: 8px !important;
+  scroll-padding-bottom: 8px !important;
+}
+
+/* Do not let the invisible end anchor create extra vertical space. */
+.messagesEndAnchor {
+  flex: 0 0 1px !important;
+  width: 1px !important;
+  height: 1px !important;
+  min-height: 1px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}

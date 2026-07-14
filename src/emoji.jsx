@@ -209,8 +209,7 @@ function readComposerValue(root) {
     if (node.nodeType !== Node.ELEMENT_NODE) return;
 
     if (node.tagName === "BR") {
-      value += "
-";
+      value += "\n";
       return;
     }
 
@@ -227,8 +226,7 @@ function createComposerEmojiNode(emoji) {
 
 function createComposerFragment(value) {
   const fragment = document.createDocumentFragment();
-  const lines = String(value || "").split("
-");
+  const lines = String(value || "").split("\n");
 
   lines.forEach((line, lineIndex) => {
     fragment.appendChild(document.createTextNode(line));

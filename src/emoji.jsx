@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import emojiData from "emojibase-data/en/compact.json";
 import githubShortcodes from "emojibase-data/en/shortcodes/github.json";
-import "@fontsource/noto-color-emoji";
 import { Search, X } from "lucide-react";
 
 const NOTO_EMOJI_CDN =

@@ -22,7 +22,8 @@ import {
   Settings,
   ShoppingBag,
   ShieldCheck,
-  UserRound
+  UserRound,
+  Image as ImageIcon
 } from "lucide-react";
 import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark, GifPicker } from "./servers.jsx";
 import {
@@ -4019,7 +4020,7 @@ function WebApp() {
                   onClick={() => setChatGifOpen((value) => !value)}
                   aria-label="Open GIF picker"
                 >
-                  GIF
+                  <ImageIcon size={18} strokeWidth={2.2} />
                 </button>
                 <ChatPollSystem
                   api={api}
@@ -4742,41 +4743,39 @@ function WebApp() {
         )}
       </section>
 
-      {serverContext && typeof document !== "undefined"
-        ? createPortal(
-            <div
-              className="serverContextMenu"
-              style={{
-                left: Math.max(8, Math.min(serverContext.x, window.innerWidth - 230)),
-                top: Math.max(8, Math.min(serverContext.y, window.innerHeight - 190))
-              }}
-              onPointerDown={(event) => event.stopPropagation()}
-              onContextMenu={(event) => event.preventDefault()}
-            >
-              <strong>{serverContext.server.name}</strong>
-              <button onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
-              <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><Copy size={15}/>Copy Invite Code</button>
-              <div className="serverContextSeparator" />
-              <button
-                className="danger"
-                onClick={async () => {
-                  const target = serverContext.server;
-                  const owner = target.role === "owner";
-                  const confirmation = owner ? window.prompt(`Type ${target.name} to delete this server`) : "";
-                  if (owner && confirmation !== target.name) return;
-                  if (!owner && !window.confirm(`Leave ${target.name}?`)) return;
-                  try {
-                    await api("/api/servers/settings", { method: "DELETE", body: JSON.stringify({ server_id: target.id, confirm_name: confirmation }) });
-                    setServers((items) => items.filter((item) => item.id !== target.id));
-                    if (activeServer?.id === target.id) { setActiveServer(null); setView("friends"); }
-                  } catch (error) { setUiError(error.message); }
-                  setServerContext(null);
-                }}
-              >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
-            </div>,
-            document.body
-          )
-        : null}
+      {serverContext ? (
+        <div
+          className="serverContextMenu serverContextMenuInline"
+          style={{
+            left: Math.max(8, Math.min(serverContext.x, window.innerWidth - 230)),
+            top: Math.max(8, Math.min(serverContext.y, window.innerHeight - 190))
+          }}
+          onPointerDown={(event) => event.stopPropagation()}
+          onContextMenu={(event) => event.preventDefault()}
+        >
+          <strong>{serverContext.server.name}</strong>
+          <button type="button" onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
+          <button type="button" onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><Copy size={15}/>Copy Invite Code</button>
+          <div className="serverContextSeparator" />
+          <button
+            type="button"
+            className="danger"
+            onClick={async () => {
+              const target = serverContext.server;
+              const owner = target.role === "owner";
+              const confirmation = owner ? window.prompt(`Type ${target.name} to delete this server`) : "";
+              if (owner && confirmation !== target.name) return;
+              if (!owner && !window.confirm(`Leave ${target.name}?`)) return;
+              try {
+                await api("/api/servers/settings", { method: "DELETE", body: JSON.stringify({ server_id: target.id, confirm_name: confirmation }) });
+                setServers((items) => items.filter((item) => item.id !== target.id));
+                if (activeServer?.id === target.id) { setActiveServer(null); setView("friends"); }
+              } catch (error) { setUiError(error.message); }
+              setServerContext(null);
+            }}
+          >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
+        </div>
+      ) : null}
 
       <ServerCreateModal
         open={serverModalOpen}

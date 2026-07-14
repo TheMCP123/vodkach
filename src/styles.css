@@ -11914,3 +11914,125 @@ a.authGoogleButton {
 .dmGifMessage img{display:block;max-width:100%;max-height:360px;border-radius:10px;object-fit:contain;background:#0d0e11}
 .dmGifMessage span{font-size:.58rem;color:#777d87;font-weight:800;letter-spacing:.04em}
 @media(max-width:700px){.composerInputRow>.gifPicker{right:0!important;width:min(390px,calc(100vw - 18px))!important}.dmGifMessage{max-width:82vw}}
+
+/* Patch 101: emergency server layout, context menu, and composer recovery */
+.appShell.serverMode {
+  grid-template-columns: 64px minmax(0, 1fr) !important;
+  grid-template-rows: 100vh !important;
+}
+.appShell.serverMode > .appChat {
+  grid-column: 2 !important;
+  grid-row: 1 !important;
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+.serverWorkspace.serverWorkspacePro {
+  width: 100% !important;
+  height: 100vh !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-columns: 240px minmax(0, 1fr) 238px !important;
+  overflow: hidden !important;
+}
+.serverChatPane {
+  height: 100vh !important;
+  min-height: 0 !important;
+  display: grid !important;
+  grid-template-rows: 58px minmax(0, 1fr) 72px !important;
+  overflow: hidden !important;
+}
+.serverMessageList {
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  padding-bottom: 18px !important;
+}
+.serverComposer.serverMessageComposer {
+  position: relative !important;
+  grid-row: 3 !important;
+  align-self: center !important;
+  width: auto !important;
+  height: 52px !important;
+  min-height: 52px !important;
+  max-height: 52px !important;
+  margin: 8px 14px 12px !important;
+  grid-template-columns: minmax(0, 1fr) 38px 82px !important;
+  overflow: visible !important;
+}
+.serverComposer.serverMessageComposer textarea {
+  min-width: 0 !important;
+  margin: 0 !important;
+}
+.gifButton,
+.dmGifButton {
+  width: 36px !important;
+  min-width: 36px !important;
+  max-width: 36px !important;
+  height: 36px !important;
+  min-height: 36px !important;
+  max-height: 36px !important;
+  padding: 0 !important;
+  display: grid !important;
+  place-items: center !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  color: #aeb2bb !important;
+  background: transparent !important;
+  font-size: 0 !important;
+  line-height: 0 !important;
+}
+.gifButton:hover,
+.dmGifButton:hover {
+  color: #fff !important;
+  background: #303239 !important;
+}
+.messageComposer .composerInputRow {
+  grid-template-columns: minmax(0, 1fr) 36px 36px 90px !important;
+  align-items: center !important;
+}
+.messageComposer .composerInputRow > button[type="submit"] {
+  width: 90px !important;
+  min-width: 90px !important;
+  max-width: 90px !important;
+}
+.serverContextMenuInline {
+  position: fixed !important;
+  z-index: 2147483646 !important;
+  display: block !important;
+  width: 218px !important;
+  min-width: 218px !important;
+  max-width: 218px !important;
+  height: auto !important;
+  min-height: 0 !important;
+  padding: 7px !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+  pointer-events: auto !important;
+  isolation: isolate !important;
+  transform: none !important;
+  filter: none !important;
+  backdrop-filter: none !important;
+  background: #17181c !important;
+  border: 1px solid rgba(255,255,255,.1) !important;
+  border-radius: 10px !important;
+  box-shadow: 0 18px 48px rgba(0,0,0,.58) !important;
+}
+body:has(.serverContextMenuInline)::before,
+body:has(.serverContextMenuInline)::after {
+  content: none !important;
+  display: none !important;
+}
+@media (max-width: 1050px) {
+  .serverWorkspace.serverWorkspacePro { grid-template-columns: 210px minmax(0, 1fr) 190px !important; }
+}
+@media (max-width: 800px) {
+  .serverWorkspace.serverWorkspacePro { grid-template-columns: 190px minmax(0, 1fr) !important; }
+  .serverMemberRail { display: none !important; }
+}
+@media (max-width: 700px) {
+  .messageComposer .composerInputRow { grid-template-columns: minmax(0, 1fr) 34px 34px 68px !important; }
+  .messageComposer .composerInputRow > button[type="submit"] { width: 68px !important; min-width: 68px !important; max-width: 68px !important; }
+}

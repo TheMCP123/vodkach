@@ -15879,3 +15879,46 @@ button.danger:hover img[src$="/trash.svg"],
 .messageContextMenu button.danger:hover .contextActionImage {
   filter: brightness(0) saturate(100%) invert(35%) sepia(98%) saturate(6378%) hue-rotate(353deg) brightness(108%) contrast(113%) !important;
 }
+
+
+/* Patch 129 — never expose broken emoji images. */
+.notoEmojiFontFallback,
+.composerInlineEmojiFallback {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  overflow: hidden !important;
+  color: initial !important;
+  -webkit-text-fill-color: initial !important;
+  background: transparent !important;
+  font-family: "Noto Color Emoji", sans-serif !important;
+  font-weight: 400 !important;
+  text-shadow: none !important;
+}
+
+.composerInlineEmojiFallback {
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  padding: 0 !important;
+  font-size: 19px !important;
+  line-height: 22px !important;
+  vertical-align: -5px !important;
+  user-select: all !important;
+  -webkit-user-select: all !important;
+}
+
+.notoEmojiFontFallback {
+  font-size: .96em !important;
+  line-height: 1 !important;
+}
+
+/* Broken-image browser glyphs must never occupy the editor. */
+.composerInlineEmoji:not([src]),
+.composerInlineEmoji[src=""] {
+  visibility: hidden !important;
+}

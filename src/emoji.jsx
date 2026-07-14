@@ -64,6 +64,14 @@ const BASE_EMOJIS = emojiData
   })
   .sort((a, b) => a.order - b.order);
 
+const EMOJI_HEXCODE_MAP = new Map();
+for (const item of BASE_EMOJIS) {
+  EMOJI_HEXCODE_MAP.set(item.emoji, item.hexcode);
+  for (const skin of item.skins) {
+    EMOJI_HEXCODE_MAP.set(skin.emoji, skin.hexcode);
+  }
+}
+
 const SHORTCODE_MAP = new Map();
 for (const item of BASE_EMOJIS) {
   if (item.shortcode) SHORTCODE_MAP.set(item.shortcode, item.emoji);
@@ -123,8 +131,9 @@ function writeTonePreferences(value) {
 }
 
 export function notoEmojiUrl(emoji, hexcode = "") {
-  const normalized = hexcode
-    ? String(hexcode)
+  const resolvedHexcode = hexcode || EMOJI_HEXCODE_MAP.get(emoji) || "";
+  const normalized = resolvedHexcode
+    ? String(resolvedHexcode)
         .split("-")
         .filter((part) => !/^FE0[EF]$/i.test(part))
         .map((part) => part.toLowerCase())
@@ -142,6 +151,21 @@ export function expandEmojiShortcodes(value) {
 }
 
 export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
+  const [failed, setFailed] = useState(false);
+
+  if (failed) {
+    return (
+      <span
+        className={`notoEmoji notoEmojiGlyph notoEmojiFontFallback ${className}`}
+        title={title}
+        role="img"
+        aria-label={emoji}
+      >
+        {emoji}
+      </span>
+    );
+  }
+
   return (
     <img
       className={`notoEmoji notoEmojiGlyph ${className}`}
@@ -151,6 +175,7 @@ export function NotoEmoji({ emoji, hexcode = "", className = "", title }) {
       draggable="false"
       loading="lazy"
       decoding="async"
+      onError={() => setFailed(true)}
     />
   );
 }
@@ -183,7 +208,7 @@ function readComposerValue(root) {
 
     if (node.nodeType !== Node.ELEMENT_NODE) return;
 
-    if (node.tagName === "IMG" && node.dataset.emoji) {
+    if (node.dataset?.emoji) {
       value += node.dataset.emoji;
       return;
     }
@@ -207,10 +232,17 @@ function appendComposerContent(root, value) {
     if (EMOJI_GRAPHEME_RE.test(part)) {
       const image = document.createElement("img");
       image.className = "composerInlineEmoji";
-      image.src = notoEmojiUrl(part);
+      image.src = notoEmojiUrl(part, EMOJI_HEXCODE_MAP.get(part) || "");
       image.alt = part;
       image.dataset.emoji = part;
       image.draggable = false;
+      image.addEventListener("error", () => {
+        const fallback = document.createElement("span");
+        fallback.className = "composerInlineEmoji composerInlineEmojiFallback";
+        fallback.dataset.emoji = part;
+        fallback.textContent = part;
+        image.replaceWith(fallback);
+      }, { once: true });
       fragment.appendChild(image);
     } else {
       fragment.appendChild(document.createTextNode(part));

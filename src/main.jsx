@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import { createPortal } from "react-dom";
 import {
   ArrowRight,
   FileText,
@@ -23,7 +24,7 @@ import {
   ShieldCheck,
   UserRound
 } from "lucide-react";
-import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark } from "./servers.jsx";
+import { ServerCreateModal, ServerDiscovery, ServerWorkspace, ServerMark, GifPicker } from "./servers.jsx";
 import {
   CallIcon,
   CallSystem,
@@ -770,6 +771,7 @@ function WebApp() {
   const [activeServer, setActiveServer] = useState(null);
   const [serverModalOpen, setServerModalOpen] = useState(false);
   const [serverContext, setServerContext] = useState(null);
+  const [chatGifOpen, setChatGifOpen] = useState(false);
   const [messages, setMessages] = useState([]);
   const [chatPolls, setChatPolls] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -838,6 +840,28 @@ function WebApp() {
   const audioUnlockedRef = useRef(false);
   const sendingMessageRef = useRef(false);
   const draftHydratingRef = useRef(false);
+
+  useEffect(() => {
+    if (!serverContext) return undefined;
+
+    const closeMenu = (event) => {
+      if (!event.target?.closest?.(".serverContextMenu")) {
+        setServerContext(null);
+      }
+    };
+    const closeOnEscape = (event) => {
+      if (event.key === "Escape") setServerContext(null);
+    };
+
+    window.addEventListener("pointerdown", closeMenu);
+    window.addEventListener("blur", closeMenu);
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      window.removeEventListener("pointerdown", closeMenu);
+      window.removeEventListener("blur", closeMenu);
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [serverContext]);
   const previousIncomingIdsRef = useRef(new Set());
   const previousFriendIdsRef = useRef(new Set());
   const socialReadyRef = useRef(false);
@@ -2637,10 +2661,10 @@ function WebApp() {
     });
   }
 
-  async function sendMessage(event) {
-    event.preventDefault();
+  async function sendMessage(event, overrideText = null) {
+    event?.preventDefault?.();
 
-    const rawText = chatText.trim();
+    const rawText = String(overrideText ?? chatText).trim();
     const pollPrefix = replyingToPoll
       ? `> Poll: ${replyingToPoll.question}\n`
       : "";
@@ -2688,6 +2712,7 @@ function WebApp() {
     lastOwnMessageIdRef.current = optimisticId;
     setMessages((current) => [...current, optimisticMessage]);
     setChatText("");
+    setChatGifOpen(false);
     setReplyingTo(null);
     setReplyingToPoll(null);
     requestAnimationFrame(() => {
@@ -3988,11 +4013,25 @@ function WebApp() {
                   maxLength={2000}
                   rows={1}
                 />
+                <button
+                  type="button"
+                  className="gifButton dmGifButton"
+                  onClick={() => setChatGifOpen((value) => !value)}
+                  aria-label="Open GIF picker"
+                >
+                  GIF
+                </button>
                 <ChatPollSystem
                   api={api}
                   chatId={activeChat.id}
                   currentUserId={auth.user.id}
                 />
+                {chatGifOpen && (
+                  <GifPicker
+                    onClose={() => setChatGifOpen(false)}
+                    onPick={(url) => sendMessage(null, url)}
+                  />
+                )}
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>
                   {editingMessage ? "Save" : "Send"}
                 </button>
@@ -4703,32 +4742,41 @@ function WebApp() {
         )}
       </section>
 
-      {serverContext && (
-        <div className="serverContextScrim" onMouseDown={() => setServerContext(null)}>
-          <div className="serverContextMenu" style={{ left: Math.min(serverContext.x, window.innerWidth - 230), top: Math.min(serverContext.y, window.innerHeight - 250) }} onMouseDown={(event) => event.stopPropagation()}>
-            <strong>{serverContext.server.name}</strong>
-            <button onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
-            <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><Copy size={15}/>Copy Invite Code</button>
-            <div className="serverContextSeparator" />
-            <button
-              className="danger"
-              onClick={async () => {
-                const target = serverContext.server;
-                const owner = target.role === "owner";
-                const confirmation = owner ? window.prompt(`Type ${target.name} to delete this server`) : "";
-                if (owner && confirmation !== target.name) return;
-                if (!owner && !window.confirm(`Leave ${target.name}?`)) return;
-                try {
-                  await api("/api/servers/settings", { method: "DELETE", body: JSON.stringify({ server_id: target.id, confirm_name: confirmation }) });
-                  setServers((items) => items.filter((item) => item.id !== target.id));
-                  if (activeServer?.id === target.id) { setActiveServer(null); setView("friends"); }
-                } catch (error) { setUiError(error.message); }
-                setServerContext(null);
+      {serverContext && typeof document !== "undefined"
+        ? createPortal(
+            <div
+              className="serverContextMenu"
+              style={{
+                left: Math.max(8, Math.min(serverContext.x, window.innerWidth - 230)),
+                top: Math.max(8, Math.min(serverContext.y, window.innerHeight - 190))
               }}
-            >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
-          </div>
-        </div>
-      )}
+              onPointerDown={(event) => event.stopPropagation()}
+              onContextMenu={(event) => event.preventDefault()}
+            >
+              <strong>{serverContext.server.name}</strong>
+              <button onClick={() => { setActiveServer(serverContext.server); setView("server"); setServerContext(null); }}><Hash size={15}/>Open Server</button>
+              <button onClick={() => { navigator.clipboard?.writeText(serverContext.server.invite_code || ""); setServerContext(null); }}><Copy size={15}/>Copy Invite Code</button>
+              <div className="serverContextSeparator" />
+              <button
+                className="danger"
+                onClick={async () => {
+                  const target = serverContext.server;
+                  const owner = target.role === "owner";
+                  const confirmation = owner ? window.prompt(`Type ${target.name} to delete this server`) : "";
+                  if (owner && confirmation !== target.name) return;
+                  if (!owner && !window.confirm(`Leave ${target.name}?`)) return;
+                  try {
+                    await api("/api/servers/settings", { method: "DELETE", body: JSON.stringify({ server_id: target.id, confirm_name: confirmation }) });
+                    setServers((items) => items.filter((item) => item.id !== target.id));
+                    if (activeServer?.id === target.id) { setActiveServer(null); setView("friends"); }
+                  } catch (error) { setUiError(error.message); }
+                  setServerContext(null);
+                }}
+              >{serverContext.server.role === "owner" ? <><Trash2 size={15}/>Delete Server</> : <><LogOut size={15}/>Leave Server</>}</button>
+            </div>,
+            document.body
+          )
+        : null}
 
       <ServerCreateModal
         open={serverModalOpen}
@@ -5436,6 +5484,12 @@ function AppMessage({
           </button>
         )}
 
+        {/^https?:\/\/[^\s]+(?:klipy|\.(?:gif|webp)(?:\?|$))/i.test(String(text || "")) ? (
+          <div className="dmGifMessage">
+            <img src={text} alt="GIF" loading="lazy" />
+            <span>KLIPY</span>
+          </div>
+        ) : (
         <p
           className={
             message.optimistic ? "pendingMessageText" : "sentMessageText"
@@ -5452,6 +5506,7 @@ function AppMessage({
             </span>
           ) : null}
         </p>
+        )}
       </div>
     </div>
   );

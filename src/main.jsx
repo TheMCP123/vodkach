@@ -756,7 +756,7 @@ function WebApp() {
   const [activeServer, setActiveServer] = useState(null);
   const [serverModalOpen, setServerModalOpen] = useState(false);
   const [serverContext, setServerContext] = useState(null);
-  const [chatGifOpen, setChatGifOpen] = useState(false);
+  const [chatComposerPanel, setChatComposerPanel] = useState(null);
   const [messages, setMessages] = useState([]);
   const [chatPolls, setChatPolls] = useState([]);
   const [typingUsers, setTypingUsers] = useState([]);
@@ -4057,7 +4057,7 @@ function WebApp() {
                 <button
                   type="button"
                   className="gifButton dmGifButton"
-                  onClick={() => setChatGifOpen((value) => !value)}
+                  onClick={() => setChatComposerPanel((value) => value === "gif" ? null : "gif")}
                   aria-label="Open GIF picker"
                 >
                   <img className="composerActionIcon" src="/ui/gif.svg" alt="" />
@@ -4066,11 +4066,13 @@ function WebApp() {
                   api={api}
                   chatId={activeChat.id}
                   currentUserId={auth.user.id}
+                  open={chatComposerPanel === "poll"}
+                  onOpenChange={(open) => setChatComposerPanel(open ? "poll" : null)}
                 />
-                {chatGifOpen && (
+                {chatComposerPanel === "gif" && (
                   <GifPicker
-                    onClose={() => setChatGifOpen(false)}
-                    onPick={(url) => sendMessage(null, url)}
+                    onClose={() => setChatComposerPanel(null)}
+                    onPick={(url) => { setChatComposerPanel(null); sendMessage(null, url); }}
                   />
                 )}
                 <button type="submit" disabled={!chatText.trim() || sendingMessage}>

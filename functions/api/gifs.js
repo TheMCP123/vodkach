@@ -51,7 +51,11 @@ export async function onRequestGet({ request, env }) {
     return json({ ok: false, error: message }, { status: 502 });
   }
 
-  const raw = Array.isArray(payload?.results) ? payload.results : [];
+  const raw = Array.isArray(payload?.results) ? payload.results
+    : Array.isArray(payload?.data) ? payload.data
+    : Array.isArray(payload?.data?.results) ? payload.data.results
+    : [];
   const items = raw.map(normalizeResult).filter(Boolean);
-  return json({ ok: true, items, next: payload?.next || null });
+  const next = payload?.next || payload?.next_pos || payload?.data?.next || payload?.data?.next_pos || payload?.meta?.next || null;
+  return json({ ok: true, items, next });
 }

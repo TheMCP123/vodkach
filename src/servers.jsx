@@ -34,16 +34,25 @@ function normalizeGifItems(payload) {
 }
 
 export function GifPicker({ onPick, onClose }) {
+  const categories = [
+    ["Trending", ""], ["Reactions", "reaction"], ["Memes", "meme"],
+    ["Gaming", "gaming"], ["Anime", "anime"], ["Animals", "animals"]
+  ];
   const [query, setQuery] = useState("");
+  const [category, setCategory] = useState("Trending");
   const [items, setItems] = useState([]);
+  const [next, setNext] = useState(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const panelRef = useRef(null);
+  const bodyRef = useRef(null);
+  const requestIdRef = useRef(0);
+
+  const effectiveQuery = query.trim() || categories.find(([name]) => name === category)?.[1] || "";
 
   useEffect(() => {
-    const close = (event) => {
-      if (!panelRef.current?.contains(event.target)) onClose?.();
-    };
+    const close = (event) => { if (!panelRef.current?.contains(event.target)) onClose?.(); };
     const escape = (event) => { if (event.key === "Escape") onClose?.(); };
     const timer = window.setTimeout(() => document.addEventListener("pointerdown", close), 0);
     document.addEventListener("keydown", escape);
@@ -54,44 +63,68 @@ export function GifPicker({ onPick, onClose }) {
     };
   }, [onClose]);
 
+  async function loadPage({ append = false, cursor = null } = {}) {
+    const requestId = ++requestIdRef.current;
+    append ? setLoadingMore(true) : setLoading(true);
+    if (!append) setError("");
+    try {
+      const params = new URLSearchParams();
+      if (effectiveQuery) params.set("q", effectiveQuery);
+      if (cursor) params.set("pos", cursor);
+      const data = await api(`/api/gifs?${params.toString()}`);
+      if (requestId !== requestIdRef.current) return;
+      const page = normalizeGifItems(data);
+      setItems((current) => append ? [...current, ...page.filter((gif) => !current.some((old) => old.id === gif.id))] : page);
+      setNext(data.next || null);
+    } catch (requestError) {
+      if (requestId === requestIdRef.current) setError(requestError.message || "Could not load GIFs");
+    } finally {
+      if (requestId === requestIdRef.current) {
+        setLoading(false);
+        setLoadingMore(false);
+      }
+    }
+  }
+
   useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    setError("");
-    const timer = window.setTimeout(() => {
-      api(`/api/gifs?q=${encodeURIComponent(query)}`)
-        .then((data) => {
-          if (cancelled) return;
-          setItems(normalizeGifItems(data));
-        })
-        .catch((requestError) => {
-          if (!cancelled) setError(requestError.message || "Could not load GIFs");
-        })
-        .finally(() => { if (!cancelled) setLoading(false); });
-    }, 220);
-    return () => { cancelled = true; window.clearTimeout(timer); };
-  }, [query]);
+    const timer = window.setTimeout(() => loadPage({ append: false }), query.trim() ? 280 : 80);
+    return () => window.clearTimeout(timer);
+  }, [effectiveQuery]);
+
+  function onScroll(event) {
+    const node = event.currentTarget;
+    if (!next || loading || loadingMore) return;
+    if (node.scrollHeight - node.scrollTop - node.clientHeight < 180) loadPage({ append: true, cursor: next });
+  }
 
   return (
-    <section className="gifPicker gifPickerPortal" ref={panelRef} role="dialog" aria-label="GIF picker">
-      <header className="gifPickerHeader">
-        <div className="gifSearchField">
-          <Search size={17} />
-          <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search GIFs" />
+    <section className="gifPicker gifPickerPortal composerPopover" ref={panelRef} role="dialog" aria-label="GIF picker">
+      <header className="composerPopoverHeader gifPickerHeader">
+        <div>
+          <span className="composerPopoverEyebrow"><UiIcon name="gif" />GIFs</span>
+          <strong>Find the perfect GIF</strong>
         </div>
-        <button type="button" className="gifPickerClose" onClick={onClose} aria-label="Close GIF picker"><X size={18} /></button>
+        <button type="button" className="composerPopoverClose" onClick={onClose} aria-label="Close GIF picker"><X size={18} /></button>
       </header>
-      <div className="gifPickerBody">
+      <div className="gifSearchField">
+        <Search size={17} />
+        <input autoFocus value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search KLIPY" />
+      </div>
+      <nav className="gifCategoryTabs" aria-label="GIF categories">
+        {categories.map(([name]) => <button type="button" key={name} className={category === name && !query.trim() ? "active" : ""} onClick={() => { setCategory(name); setQuery(""); }}>{name}</button>)}
+      </nav>
+      <div className="gifPickerBody" ref={bodyRef} onScroll={onScroll}>
         {loading ? <div className="gifPickerState">Loading GIFs…</div> : null}
         {!loading && error ? <div className="gifPickerState error">{error}</div> : null}
         {!loading && !error && !items.length ? <div className="gifPickerState">No GIFs found</div> : null}
         <div className="gifGrid">
           {items.map((gif) => (
-            <button type="button" key={gif.id} onClick={() => onPick?.(gif.url)}>
-              <img src={gif.preview} alt="" loading="lazy" />
+            <button type="button" key={gif.id} onClick={() => onPick?.(gif.url)} title={gif.description || "GIF"}>
+              <img src={gif.preview} alt={gif.description || "GIF"} loading="lazy" />
             </button>
           ))}
         </div>
+        {loadingMore ? <div className="gifLoadMore">Loading more…</div> : null}
       </div>
       <footer>Powered by KLIPY</footer>
     </section>
@@ -148,8 +181,7 @@ function ServerPollCard({ poll, onChanged, currentUser }) {
   );
 }
 
-function ServerPollSystem({ channelId, onCreated }) {
-  const [open, setOpen] = useState(false);
+function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", ""]);
   const [allowMultiple, setAllowMultiple] = useState(false);
@@ -169,7 +201,7 @@ function ServerPollSystem({ channelId, onCreated }) {
         method: "POST",
         body: JSON.stringify({ channel_id: channelId, question: question.trim(), options: cleanOptions, allow_multiple: allowMultiple, anonymous, hide_results_until_vote: hideResults, duration_minutes: Number(duration || 0) })
       });
-      setOpen(false); setQuestion(""); setOptions(["", ""]); setDuration("0");
+      onOpenChange?.(false); setQuestion(""); setOptions(["", ""]); setDuration("0");
       onCreated?.();
     } catch (submitError) { setError(submitError.message); }
     finally { setBusy(false); }
@@ -177,10 +209,10 @@ function ServerPollSystem({ channelId, onCreated }) {
 
   return (
     <>
-      <button type="button" className="composerPollButton" onClick={() => setOpen(true)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.svg" alt="" /></button>
+      <button type="button" className="composerPollButton" onClick={() => onOpenChange?.(!open)} aria-label="Create poll" title="Create poll"><img className="composerActionIcon" src="/ui/poll.svg" alt="" /></button>
       {open ? (
         <div className="pollCreatePopover pollCreateModal serverPollCreateModal" onMouseDown={(event) => event.stopPropagation()}>
-            <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" onClick={() => setOpen(false)}><X /></button></header>
+            <header><div><span className="chatPollEyebrow"><BarChart3 size={17} />Create Poll</span><h2>Ask the channel</h2></div><button type="button" onClick={() => onOpenChange?.(false)}><X /></button></header>
             <label><span>Question</span><input autoFocus value={question} onChange={(event) => setQuestion(event.target.value)} maxLength={300} /></label>
             <div className="serverPollOptionInputs">
               {options.map((option, index) => <label key={index}><span>Option {index + 1}</span><input value={option} onChange={(event) => setOptions((values) => values.map((value, optionIndex) => optionIndex === index ? event.target.value : value))} maxLength={120} /></label>)}
@@ -193,7 +225,7 @@ function ServerPollSystem({ channelId, onCreated }) {
             </div>
             <label><span>Duration</span><select value={duration} onChange={(event) => setDuration(event.target.value)}><option value="0">No time limit</option><option value="5">5 minutes</option><option value="60">1 hour</option><option value="1440">1 day</option><option value="10080">7 days</option></select></label>
             {error ? <div className="serverInlineError">{error}</div> : null}
-            <footer><button type="button" onClick={() => setOpen(false)}>Cancel</button><button type="button" disabled={busy} onClick={submit}>{busy ? "Creating…" : "Create Poll"}</button></footer>
+            <footer><button type="button" onClick={() => onOpenChange?.(false)}>Cancel</button><button type="button" disabled={busy} onClick={submit}>{busy ? "Creating…" : "Create Poll"}</button></footer>
         </div>
       ) : null}
     </>
@@ -212,7 +244,7 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
   const [channelType, setChannelType] = useState("text");
   const [error, setError] = useState("");
   const [settingsOpen, setSettingsOpen] = useState(false);
-  const [gifOpen, setGifOpen] = useState(false);
+  const [composerPanel, setComposerPanel] = useState(null);
   const [voiceJoined, setVoiceJoined] = useState(null);
   const endRef = useRef(null);
 
@@ -300,11 +332,11 @@ export function ServerWorkspace({ server, currentUser, onServerUpdated, onServer
             <form className="messageComposer composerForm serverMessageComposer" onSubmit={send}>
               <div className="composerInputRow">
                 <textarea rows={1} value={text} onChange={(event) => setText(event.target.value)} placeholder={`Message #${activeChannel?.name || "channel"}`} />
-                <button type="button" className="gifButton dmGifButton" onClick={() => setGifOpen((value) => !value)} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>
-                <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} />
+                <button type="button" className="gifButton dmGifButton" onClick={() => setComposerPanel((value) => value === "gif" ? null : "gif")} aria-label="Open GIF picker" title="GIF"><img className="composerActionIcon" src="/ui/gif.svg" alt="" /></button>
+                <ServerPollSystem channelId={activeChannel?.id} onCreated={() => loadPolls()} open={composerPanel === "poll"} onOpenChange={(open) => setComposerPanel(open ? "poll" : null)} />
                 <button type="submit" disabled={!text.trim()}>Send</button>
               </div>
-              {gifOpen ? <GifPicker onClose={() => setGifOpen(false)} onPick={(url) => send(null, url)} /> : null}
+              {composerPanel === "gif" ? <GifPicker onClose={() => setComposerPanel(null)} onPick={(url) => { setComposerPanel(null); send(null, url); }} /> : null}
             </form>
           </>
         )}

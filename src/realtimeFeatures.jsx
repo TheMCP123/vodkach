@@ -1816,8 +1816,7 @@ export function ChatPollFeed({ api, chatId, currentUserId }) {
   );
 }
 
-export function ChatPollSystem({ api, chatId, currentUserId }) {
-  const [open, setOpen] = useState(false);
+export function ChatPollSystem({ api, chatId, currentUserId, open, onOpenChange }) {
 
   const [polls, setPolls] = useState([]);
   const [question, setQuestion] = useState("");
@@ -1843,7 +1842,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
   }
 
   useEffect(() => {
-    setOpen(false);
+    onOpenChange?.(false);
     setPolls([]);
 
     if (!chatId) return undefined;
@@ -1903,7 +1902,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
       setAllowMultiple(false);
       setHideResults(false);
       setDuration("0");
-      setOpen(false);
+      onOpenChange?.(false);
       await loadPolls();
       window.dispatchEvent(
         new CustomEvent("vodkach:polls-changed", {
@@ -1924,9 +1923,9 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
         type="button"
         aria-label="Polls"
         title="Polls"
-        onClick={() => setOpen(true)}
+        onClick={() => onOpenChange?.(!open)}
       >
-        <img className="composerActionIcon" src="/ui/poll.png" alt="" />
+        <img className="composerActionIcon" src="/ui/poll.svg" alt="" />
       </button>
 
       {open && (
@@ -1939,7 +1938,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
                 </span>
                 <h2>Ask the chat</h2>
               </div>
-              <button type="button" onClick={() => setOpen(false)}>
+              <button type="button" onClick={() => onOpenChange?.(false)}>
                 <CloseIcon />
               </button>
             </header>
@@ -2051,7 +2050,7 @@ export function ChatPollSystem({ api, chatId, currentUserId }) {
             {error ? <div className="pollFormError">{error}</div> : null}
 
             <footer>
-              <button type="button" onClick={() => setOpen(false)}>
+              <button type="button" onClick={() => onOpenChange?.(false)}>
                 Cancel
               </button>
               <button type="button" disabled={busy} onClick={createPoll}>

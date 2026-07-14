@@ -12829,3 +12829,280 @@ button.active .inlineUiIcon {
   width: 22px;
   height: 22px;
 }
+
+/* Patch 108: unified composer popovers, compact lifted composer, GIF categories + pagination */
+:root {
+  --composer-panel-bg: #17181c;
+  --composer-panel-soft: #202127;
+  --composer-panel-border: rgba(255,255,255,.09);
+  --composer-panel-muted: #969ca7;
+}
+
+.messageComposer.composerForm,
+.serverMessageComposer.messageComposer.composerForm {
+  min-height: 50px !important;
+  margin: 0 14px 12px !important;
+  padding: 0 !important;
+  position: relative !important;
+  z-index: 35 !important;
+}
+
+.messageComposer .composerInputRow,
+.serverMessageComposer .composerInputRow {
+  height: 46px !important;
+  min-height: 46px !important;
+  max-height: 46px !important;
+  padding: 6px 8px 6px 14px !important;
+  border-radius: 12px !important;
+  background: #202126 !important;
+  border: 1px solid rgba(255,255,255,.075) !important;
+  box-shadow: none !important;
+}
+
+.messageComposer .composerInputRow textarea,
+.serverMessageComposer .composerInputRow textarea {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 5px 0 !important;
+  line-height: 22px !important;
+}
+
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton,
+.messageComposer .composerInputRow > button[type="submit"],
+.serverMessageComposer .composerInputRow > button[type="submit"] {
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+}
+
+.messageComposer .gifButton,
+.serverMessageComposer .gifButton,
+.messageComposer .composerPollButton,
+.serverMessageComposer .composerPollButton {
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+}
+
+.messageComposer .composerInputRow > button[type="submit"],
+.serverMessageComposer .composerInputRow > button[type="submit"] {
+  line-height: 32px !important;
+}
+
+.serverChatPane {
+  grid-template-rows: 58px minmax(0,1fr) auto !important;
+}
+.serverMessageList,
+.messageList,
+.chatMessages {
+  min-height: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* GIF and Poll are one visual system. */
+.gifPickerPortal,
+.pollCreatePopover {
+  right: 0 !important;
+  bottom: calc(100% + 10px) !important;
+  width: min(460px, calc(100% - 4px)) !important;
+  max-width: calc(100% - 4px) !important;
+  border: 1px solid var(--composer-panel-border) !important;
+  border-radius: 15px !important;
+  background: var(--composer-panel-bg) !important;
+  box-shadow: 0 20px 55px rgba(0,0,0,.42) !important;
+  color: #eef0f4 !important;
+  overflow: hidden !important;
+  z-index: 700 !important;
+}
+
+.composerPopoverHeader,
+.gifPickerHeader,
+.pollCreatePopover > header {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  min-height: 67px !important;
+  padding: 14px 16px !important;
+  border-bottom: 1px solid var(--composer-panel-border) !important;
+  background: #191a1f !important;
+}
+
+.composerPopoverHeader > div,
+.pollCreatePopover > header > div {
+  display: grid !important;
+  gap: 3px !important;
+}
+.composerPopoverHeader strong,
+.pollCreatePopover > header h2 {
+  margin: 0 !important;
+  font-size: 1.02rem !important;
+  line-height: 1.25 !important;
+  font-weight: 700 !important;
+}
+.composerPopoverEyebrow,
+.chatPollEyebrow {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 7px !important;
+  color: var(--composer-panel-muted) !important;
+  font-size: .72rem !important;
+  font-weight: 800 !important;
+  font-variant-caps: all-small-caps !important;
+  letter-spacing: .065em !important;
+}
+.composerPopoverEyebrow .inlineUiIcon { width: 17px !important; height: 17px !important; }
+
+.composerPopoverClose,
+.gifPickerClose,
+.pollCreatePopover > header > button {
+  display: grid !important;
+  place-items: center !important;
+  width: 34px !important;
+  height: 34px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 8px !important;
+  background: transparent !important;
+  color: #9da2ac !important;
+}
+.composerPopoverClose:hover,
+.gifPickerClose:hover,
+.pollCreatePopover > header > button:hover { background: #2a2c32 !important; color: #fff !important; }
+
+.gifSearchField {
+  display: flex !important;
+  align-items: center !important;
+  gap: 9px !important;
+  height: 42px !important;
+  margin: 13px 14px 9px !important;
+  padding: 0 12px !important;
+  border: 1px solid var(--composer-panel-border) !important;
+  border-radius: 10px !important;
+  background: #101115 !important;
+  color: #8f95a0 !important;
+}
+.gifSearchField input {
+  flex: 1 !important;
+  min-width: 0 !important;
+  height: 100% !important;
+  padding: 0 !important;
+  border: 0 !important;
+  outline: 0 !important;
+  background: transparent !important;
+  color: #eef0f4 !important;
+  font-size: .91rem !important;
+}
+
+.gifCategoryTabs {
+  display: flex !important;
+  gap: 6px !important;
+  padding: 0 14px 11px !important;
+  overflow-x: auto !important;
+  scrollbar-width: none !important;
+}
+.gifCategoryTabs::-webkit-scrollbar { display: none !important; }
+.gifCategoryTabs button {
+  flex: 0 0 auto !important;
+  min-height: 30px !important;
+  padding: 0 11px !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  background: #22242a !important;
+  color: #a6abb5 !important;
+  font-size: .76rem !important;
+  font-weight: 700 !important;
+}
+.gifCategoryTabs button:hover { color: #fff !important; background: #2b2d34 !important; }
+.gifCategoryTabs button.active {
+  border-color: rgba(252,3,3,.25) !important;
+  background: rgba(252,3,3,.13) !important;
+  color: #ff5a60 !important;
+}
+
+.gifPickerPortal { max-height: min(590px, 72vh) !important; }
+.gifPickerBody {
+  min-height: 260px !important;
+  max-height: min(420px, 52vh) !important;
+  padding: 0 12px 12px !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #4a4d55 transparent !important;
+}
+.gifPickerBody::-webkit-scrollbar { width: 8px !important; }
+.gifPickerBody::-webkit-scrollbar-track { background: transparent !important; }
+.gifPickerBody::-webkit-scrollbar-thumb { background: #4a4d55 !important; border-radius: 999px !important; }
+.gifGrid {
+  display: grid !important;
+  grid-template-columns: repeat(2, minmax(0,1fr)) !important;
+  gap: 7px !important;
+}
+.gifGrid button {
+  position: relative !important;
+  min-height: 112px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 9px !important;
+  overflow: hidden !important;
+  background: #22242a !important;
+}
+.gifGrid button:hover { outline: 2px solid rgba(252,3,3,.55) !important; outline-offset: -2px !important; }
+.gifGrid img { width: 100% !important; height: 100% !important; min-height: 112px !important; object-fit: cover !important; display: block !important; }
+.gifLoadMore,
+.gifPickerState { padding: 22px 12px !important; text-align: center !important; color: var(--composer-panel-muted) !important; font-size: .82rem !important; }
+.gifPickerPortal > footer {
+  padding: 9px 14px !important;
+  border-top: 1px solid var(--composer-panel-border) !important;
+  color: #747984 !important;
+  background: #15161a !important;
+  font-size: .68rem !important;
+  text-align: center !important;
+}
+
+.pollCreatePopover {
+  max-height: min(590px,72vh) !important;
+  padding: 0 !important;
+  overflow-y: auto !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #4a4d55 transparent !important;
+}
+.pollCreatePopover > label,
+.pollCreatePopover > .pollOptionEditor,
+.pollCreatePopover > .serverPollOptionInputs,
+.pollCreatePopover > .serverPollToggles,
+.pollCreatePopover > .pollToggles,
+.pollCreatePopover > .serverAddPollOption,
+.pollCreatePopover > .serverInlineError,
+.pollCreatePopover > .pollActionError {
+  margin-left: 16px !important;
+  margin-right: 16px !important;
+}
+.pollCreatePopover > label:first-of-type { margin-top: 15px !important; }
+.pollCreatePopover input,
+.pollCreatePopover textarea,
+.pollCreatePopover select {
+  border: 1px solid var(--composer-panel-border) !important;
+  border-radius: 9px !important;
+  background: #101115 !important;
+  color: #eef0f4 !important;
+  box-shadow: none !important;
+}
+.pollCreatePopover > footer {
+  display: flex !important;
+  justify-content: flex-end !important;
+  gap: 8px !important;
+  margin-top: 14px !important;
+  padding: 12px 16px !important;
+  border-top: 1px solid var(--composer-panel-border) !important;
+  background: #15161a !important;
+}
+
+@media (max-width: 720px) {
+  .messageComposer.composerForm,
+  .serverMessageComposer.messageComposer.composerForm { margin: 0 8px 9px !important; }
+  .gifPickerPortal,
+  .pollCreatePopover { width: 100% !important; max-width: 100% !important; }
+}

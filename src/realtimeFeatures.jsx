@@ -1846,6 +1846,7 @@ export function ChatPollSystem({ api, chatId, currentUserId, open, onOpenChange 
     if (!open) return undefined;
 
     const closeOutside = (event) => {
+      if (event.target?.closest?.(".composerPollButton")) return;
       if (!pollPanelRef.current?.contains(event.target)) onOpenChange?.(false);
     };
     const closeEscape = (event) => {

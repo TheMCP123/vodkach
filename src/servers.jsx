@@ -67,7 +67,10 @@ export function GifPicker({ onPick, onClose }) {
   const effectiveQuery = query.trim() || categories.find(([name]) => name === category)?.[1] || "";
 
   useEffect(() => {
-    const close = (event) => { if (!panelRef.current?.contains(event.target)) onClose?.(); };
+    const close = (event) => {
+      if (event.target?.closest?.(".gifButton, .dmGifButton")) return;
+      if (!panelRef.current?.contains(event.target)) onClose?.();
+    };
     const escape = (event) => { if (event.key === "Escape") onClose?.(); };
     const timer = window.setTimeout(() => document.addEventListener("pointerdown", close), 0);
     document.addEventListener("keydown", escape);
@@ -220,6 +223,7 @@ function ServerPollSystem({ channelId, onCreated, open, onOpenChange }) {
     if (!open) return undefined;
 
     const closeOutside = (event) => {
+      if (event.target?.closest?.(".composerPollButton")) return;
       if (!pollPanelRef.current?.contains(event.target)) onOpenChange?.(false);
     };
     const closeEscape = (event) => {

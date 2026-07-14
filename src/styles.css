@@ -15021,3 +15021,188 @@ button.active .inlineUiIcon {
   background: transparent !important;
   box-shadow: none !important;
 }
+
+
+/* Patch 121 — final composer emoji sizing/alignment and identical panel toggles. */
+
+/* Header colors exactly match the approved GIF header. */
+.emojiPickerHeader .composerPopoverEyebrow,
+.gifPickerHeader .composerPopoverEyebrow {
+  color: #9da3ae !important;
+}
+
+.emojiPickerHeader > div > strong,
+.gifPickerHeader > div > strong {
+  color: #f4f5f7 !important;
+  font-size: 1.02rem !important;
+  font-weight: 700 !important;
+}
+
+/* Keep the uploaded Emoji icon visually equal to the GIF icon. */
+.emojiPickerHeader .popoverEyebrowIcon,
+.gifPickerHeader .inlineUiIcon {
+  width: 17px !important;
+  height: 17px !important;
+  opacity: .82 !important;
+}
+
+/*
+ * Generic Noto glyph sizing:
+ * larger, centered and with a consistent text baseline in actual messages.
+ */
+.appMessage .notoEmojiGlyph,
+.messageBody .notoEmojiGlyph,
+.messageContent .notoEmojiGlyph,
+.serverMessage .notoEmojiGlyph,
+.serverMessageBody .notoEmojiGlyph,
+.timelinePoll .notoEmojiGlyph {
+  width: 1.34em !important;
+  min-width: 1.34em !important;
+  height: 1.34em !important;
+  min-height: 1.34em !important;
+  margin: 0 .035em !important;
+  font-size: 1em !important;
+  line-height: 1.34em !important;
+  vertical-align: -.27em !important;
+  background-position: center !important;
+  background-size: contain !important;
+}
+
+/*
+ * Type Bar overlay: fixed pixel geometry avoids the tiny/high emoji shown in
+ * the screenshots while leaving caret/input handling on the real textarea.
+ */
+.composerTextOverlay {
+  display: flex !important;
+  align-items: center !important;
+  min-width: 0 !important;
+  height: 32px !important;
+  padding: 3px 0 !important;
+  line-height: 26px !important;
+}
+
+.composerTextOverlay > span {
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  line-height: 26px !important;
+  white-space: pre-wrap !important;
+  overflow-wrap: anywhere !important;
+}
+
+.composerTextOverlay .notoEmojiGlyph {
+  display: inline-block !important;
+  width: 22px !important;
+  min-width: 22px !important;
+  max-width: 22px !important;
+  height: 22px !important;
+  min-height: 22px !important;
+  max-height: 22px !important;
+  margin: 0 2px !important;
+  font-size: 18px !important;
+  line-height: 22px !important;
+  vertical-align: -5px !important;
+  background-position: center !important;
+  background-size: 22px 22px !important;
+}
+
+/* Native textarea and visible overlay use the exact same metrics. */
+.messageComposer .composerTextField > textarea,
+.serverMessageComposer .composerTextField > textarea {
+  padding: 3px 0 !important;
+  font-size: inherit !important;
+  line-height: 26px !important;
+}
+
+/* Selection remains usable without revealing the OS emoji underneath. */
+.messageComposer .composerTextField > textarea::selection,
+.serverMessageComposer .composerTextField > textarea::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: rgba(48,109,246,.70) !important;
+}
+
+.notoEmojiGlyph::selection {
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  background: rgba(48,109,246,.70) !important;
+}
+
+/* Composer Emoji action icon: centered and equal in size to GIF/Poll icons. */
+.messageComposer .composerActions .emojiButton,
+.serverMessageComposer .composerActions .emojiButton {
+  position: static !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  align-self: center !important;
+  width: 32px !important;
+  min-width: 32px !important;
+  max-width: 32px !important;
+  height: 32px !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  padding: 0 !important;
+  background: transparent !important;
+  transform: none !important;
+}
+
+.messageComposer .composerActions .emojiButton .composerActionIcon,
+.serverMessageComposer .composerActions .emojiButton .composerActionIcon {
+  position: static !important;
+  display: block !important;
+  width: 21px !important;
+  min-width: 21px !important;
+  height: 21px !important;
+  min-height: 21px !important;
+  margin: 0 !important;
+  object-fit: contain !important;
+  object-position: center !important;
+  transform: none !important;
+}
+
+/* One identical close button treatment across Emoji, GIF and Poll. */
+.emojiPicker .composerPopoverClose,
+.gifPickerPortal .composerPopoverClose,
+.pollCreatePopover .composerPopoverClose {
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 30px !important;
+  min-width: 30px !important;
+  max-width: 30px !important;
+  height: 30px !important;
+  min-height: 30px !important;
+  max-height: 30px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #989ea9 !important;
+}
+
+.emojiPicker .composerPopoverClose:hover,
+.gifPickerPortal .composerPopoverClose:hover,
+.pollCreatePopover .composerPopoverClose:hover {
+  background: transparent !important;
+  color: #ffffff !important;
+}
+
+.emojiPicker .composerPopoverClose svg,
+.gifPickerPortal .composerPopoverClose svg,
+.pollCreatePopover .composerPopoverClose svg {
+  width: 18px !important;
+  height: 18px !important;
+  stroke-width: 2 !important;
+}
+
+/* Preserve the approved GIF geometry. */
+.gifPickerPortal,
+.gifPickerBody,
+.gifGrid,
+.gifGrid button,
+.gifGrid img {
+  /* Intentionally no layout overrides in this patch. */
+}

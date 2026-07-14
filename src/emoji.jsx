@@ -292,7 +292,7 @@ export function EmojiPicker({ onPick, onClose }) {
             <img className="popoverEyebrowIcon" src="/ui/emojis.svg" alt="" />
             Emojis
           </span>
-          <strong>Find the perfect Emoji</strong>
+          <strong className="emojiPickerTitle">Find the perfect Emoji</strong>
         </div>
         <button
           type="button"

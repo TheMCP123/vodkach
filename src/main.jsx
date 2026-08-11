@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from "react";
 import { createRoot } from "react-dom/client";
+import ForumApp from "./forum.jsx";
 import { createPortal } from "react-dom";
 import {
   ArrowRight,
@@ -5575,5 +5576,5 @@ function AppMessage({
 }
 
 createRoot(document.getElementById("root")).render(
-  isAdminPage ? <AdminApp /> : isWebApp ? <WebApp /> : <Landing />
+  isAdminPage ? <AdminApp /> : isWebApp ? <ForumApp /> : <Landing />
 );

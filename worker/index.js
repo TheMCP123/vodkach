@@ -67,6 +67,9 @@ import * as r63 from "../functions/api/servers/moderation.js";
 import * as r64 from "../functions/api/gifs.js";
 import * as r65 from "../functions/api/admin/servers/index.js";
 import * as r66 from "../functions/api/servers/polls.js";
+import * as r67 from "../functions/api/forum/threads.js";
+import * as r68 from "../functions/api/forum/thread.js";
+import * as r69 from "../functions/api/forum/replies.js";
 
 const ROUTES = new Map([
   ["/api/access/retry", r0],
@@ -135,7 +138,10 @@ const ROUTES = new Map([
   ["/api/servers/moderation", r63],
   ["/api/gifs", r64],
   ["/api/admin/servers", r65],
-  ["/api/servers/polls", r66]
+  ["/api/servers/polls", r66],
+  ["/api/forum/threads", r67],
+  ["/api/forum/thread", r68],
+  ["/api/forum/replies", r69]
 ]);
 
 function normalizePath(pathname) {
